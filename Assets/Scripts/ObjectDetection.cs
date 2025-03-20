@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 using PassthroughCameraSamples;
 
 public class ObjectDetection : MonoBehaviour
@@ -11,9 +12,9 @@ public class ObjectDetection : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
 
     public ModelAsset objectDetector;
-    public WebCamTextureManager webCamTextureManager;
     public RenderTexture output;
- 
+    public WebCamTextureManager webCamTextureManager;
+
     public Texture2D modelInput;
 
     Texture2D modelAnnotation;
@@ -33,45 +34,104 @@ public class ObjectDetection : MonoBehaviour
 
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
 
-        webcamTexture = new WebCamTexture(WebCamTexture.devices[1].name); // change device index to find correct one
+        foreach (var v in WebCamTexture.devices)
+        {
+            Debug.Log(v.name);
+            Debug.Log(v.kind);
+            Debug.Log(v.depthCameraName);
+        }
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(webcamTexture != null)
+        if (webcamTexture == null)
         {
-            var prevActive = RenderTexture.active;
-            if (!playing)
+            SetWebCam();
+
+            if (webcamTexture != null && !playing)
             {
-                //webcamTexture = webCamTextureManager.WebCamTexture;
-                webcamTexture.Play();
+                StartCoroutine(ProcessImage());
                 playing = true;
             }
+        }
 
+    }
+
+    void SetWebCam()
+    {
+
+        if (webCamTextureManager != null)
+        {
+            if (webCamTextureManager.WebCamTexture != null)
+            {
+                webcamTexture = webCamTextureManager.WebCamTexture;
+                webcamTexture.Play();
+            }
+        }
+        else
+        {
+            webcamTexture = new WebCamTexture(WebCamTexture.devices[1].name); // change device index to find correct one
+
+            webcamTexture.Play();
+        }
+    }
+
+
+    Texture2D GetImageFromWebcam()
+    {
+        var image = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.RGBAFloat, false);
+        image.SetPixels(webcamTexture.GetPixels());
+        image.Apply();
+
+        return image;
+    }
+
+    void DrawBoundingBox(Texture2D image, BoundingBox bbox)
+    {
+        var colorTest = new Color32[bbox.Width * bbox.Height];
+        image.SetPixels32(bbox.x1, bbox.y1, bbox.Width, bbox.Height, colorTest);
+    }
+
+    IEnumerator ProcessImage()
+    {
+        int layersPerFrame = 20;
+        while (true)
+        {
+            var prevActive = RenderTexture.active;
             if (modelInput)
             {
                 Destroy(modelInput);
             }
-            modelInput = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.RGBAFloat,false);
-            modelInput.SetPixels(webcamTexture.GetPixels());
-            modelInput.Apply();
 
-            var tf = new TextureTransform().SetDimensions(640,640,3);
+            modelInput = GetImageFromWebcam();
+
+            var tf = new TextureTransform().SetDimensions(640, 640, 3);
 
             var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
+
             TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
-            objectDetectionWorker.Schedule(modelInputTensor);
+
+            var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
+
+            int framesTaken = 0;
+            while (detectionScheduler.MoveNext())
+            {
+                if (framesTaken % layersPerFrame == 0 && framesTaken > 0)
+                {
+                    yield return null;
+                }
+
+                framesTaken++;
+            }
 
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
-
-            TextureConverter.RenderToTexture(modelInputTensor, output, tf);
 
             List<BoundingBox> bboxes = new List<BoundingBox>();
             for (int i = 0; i < modelOut.shape[2]; i++)
             {
-                if (modelOut[0,4,i] > CONFIDENCE_LEVEL)
+                if (modelOut[0, 4, i] > CONFIDENCE_LEVEL)
                 {
                     float x = modelOut[0, 0, i];
                     float y = modelOut[0, 1, i];
@@ -82,27 +142,29 @@ public class ObjectDetection : MonoBehaviour
                     int x1 = (int)(x - w / 2);
                     int x2 = (int)(x + w / 2);
 
-                    int y1 = (int)(640-y - h / 2);
-                    int y2 = (int)(640-y + h / 2);
+                    int y1 = (int)(640 - y - h / 2);
+                    int y2 = (int)(640 - y + h / 2);
 
                     bboxes.Add(new BoundingBox(x1, y1, x2, y2));
                 }
             }
 
-            
 
-            if(modelAnnotation)
+            if (modelAnnotation)
             {
                 Destroy(modelAnnotation);
             }
 
+
+            TextureConverter.RenderToTexture(modelInputTensor, output, tf);
+
             RenderTexture.active = output;
             modelAnnotation = new Texture2D(640, 640, TextureFormat.RGBA32, false);
-            modelAnnotation.ReadPixels(new Rect(0,0,640,640),0,0);
+            modelAnnotation.ReadPixels(new Rect(0, 0, 640, 640), 0, 0);
+
             foreach (var bbox in bboxes)
             {
-                var colorTest = new Color32[bbox.Width*bbox.Height];
-                modelAnnotation.SetPixels32(bbox.x1,bbox.y1,bbox.Width,bbox.Height,colorTest);
+                DrawBoundingBox(modelAnnotation, bbox);
             }
 
             modelAnnotation.Apply();
@@ -113,15 +175,18 @@ public class ObjectDetection : MonoBehaviour
             modelOut.Dispose();
 
             RenderTexture.active = prevActive;
-        }
 
+            yield return null;
+        }
     }
 
     private void OnApplicationQuit()
     {
-        webcamTexture.Stop();
-
-        Destroy(webcamTexture);
+        if(webcamTexture != null)
+        {
+            webcamTexture.Stop();
+            Destroy(webcamTexture);
+        }
     }
 }
 
@@ -139,7 +204,7 @@ public struct BoundingBox
     public BoundingBox(int x1, int y1, int x2, int y2)
     {
 
-        if(x1 >= x2 || y1 > y2)
+        if (x1 >= x2 || y1 > y2)
         {
             throw new ArgumentException("x1 must be smaller than x2 and y1 must be smaller than y2");
         }
@@ -174,6 +239,6 @@ public struct BoundingBox
 
     public Rect ToRect()
     {
-        return new Rect(x1,y1,x2-x1,y2-y1);
+        return new Rect(x1, y1, x2 - x1, y2 - y1);
     }
 }

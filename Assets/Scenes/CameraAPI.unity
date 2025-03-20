@@ -2535,9 +2535,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da81a8a10cb956e4ea98dccc376c4ad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectDetector: {fileID: 5022602860645237092, guid: 262cd4d10a4a11949a2be6c617ad0103, type: 3}
-  webCamTextureManager: {fileID: 417283143}
+  objectDetector: {fileID: 5022602860645237092, guid: e3c537500c0a94d4dbf918b528b3b176, type: 3}
   output: {fileID: 8400000, guid: 3404329f5e73b784eaf0f0afd9f54d60, type: 2}
+  webCamTextureManager: {fileID: 0}
   modelInput: {fileID: 0}
   step: 0
 --- !u!4 &408591664
