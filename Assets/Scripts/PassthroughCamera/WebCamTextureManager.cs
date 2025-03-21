@@ -27,10 +27,12 @@ namespace PassthroughCameraSamples
 
         private void Awake()
         {
+            Debug.Log("a");
             PCD.DebugMessage(LogType.Log, $"{nameof(WebCamTextureManager)}.{nameof(Awake)}() was called");
             Assert.AreEqual(1, FindObjectsByType<WebCamTextureManager>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                 $"PCA: Passthrough Camera: more than one {nameof(WebCamTextureManager)} component. Only one instance is allowed at a time. Current instance: {name}");
 #if UNITY_ANDROID
+            Debug.Log("b");
             CameraPermissions.AskCameraPermissions();
 #endif
         }
@@ -86,11 +88,14 @@ namespace PassthroughCameraSamples
         {
             while (true)
             {
+                Debug.Log(1);
                 var devices = WebCamTexture.devices;
                 if (PassthroughCameraUtils.EnsureInitialized() && PassthroughCameraUtils.CameraEyeToCameraIdMap.TryGetValue(Eye, out var cameraData))
                 {
+                    Debug.Log(2);
                     if (cameraData.index < devices.Length)
                     {
+                        Debug.Log(3);
                         var deviceName = devices[cameraData.index].name;
                         WebCamTexture webCamTexture;
                         if (RequestedResolution == Vector2Int.zero)
@@ -102,12 +107,15 @@ namespace PassthroughCameraSamples
                         {
                             webCamTexture = new WebCamTexture(deviceName, RequestedResolution.x, RequestedResolution.y);
                         }
+                        Debug.Log(4);
                         // There is a bug in the current implementation of WebCamTexture: if 'Play()' is called at the same frame the WebCamTexture was created, this error is logged and the WebCamTexture object doesn't work:
                         //     Camera2: SecurityException java.lang.SecurityException: validateClientPermissionsLocked:1325: Callers from device user 0 are not currently allowed to connect to camera "66"
                         //     Camera2: Timeout waiting to open camera.
                         // Waiting for one frame is important and prevents the bug.
                         yield return null;
                         webCamTexture.Play();
+
+                        Debug.Log(5);
                         var currentResolution = new Vector2Int(webCamTexture.width, webCamTexture.height);
                         if (RequestedResolution != Vector2Int.zero && RequestedResolution != currentResolution)
                         {

@@ -6,41 +6,39 @@ using System.Collections.Generic;
 using System;
 using System.Collections;
 using PassthroughCameraSamples;
+using System.Runtime.CompilerServices;
 
 public class ObjectDetection : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-
     public ModelAsset objectDetector;
     public RenderTexture output;
     public WebCamTextureManager webCamTextureManager;
 
     public Texture2D modelInput;
-
-    Texture2D modelAnnotation;
+    public Transform testTransofmr;
 
     Worker objectDetectionWorker;
     private readonly float CONFIDENCE_LEVEL = 0.3f;
 
+    public List<GameObject> brickObjs;
+
     WebCamTexture webcamTexture;
+
+    public GameObject plsworkobject;
 
     bool playing;
 
     public bool step;
 
+    int testRun;
+
     public async void Start()
     {
+        Debug.Log("AAAAAAAAAAAAAAAAAAAA");
         var detectionModel = ModelLoader.Load(objectDetector);
-
+        Debug.Log("BBBBBBBBBBBBBBBBBBBB");
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-
-        foreach (var v in WebCamTexture.devices)
-        {
-            Debug.Log(v.name);
-            Debug.Log(v.kind);
-            Debug.Log(v.depthCameraName);
-        }
-
+        Debug.Log("CCCCCCCCCCCCCCCCCCCC");
     }
 
     // Update is called once per frame
@@ -52,11 +50,18 @@ public class ObjectDetection : MonoBehaviour
 
             if (webcamTexture != null && !playing)
             {
+                Debug.Log("DDDDDDDDDDDDDDDDDDDD");
                 StartCoroutine(ProcessImage());
                 playing = true;
             }
         }
 
+
+        if(testRun > 5)
+        {
+            StartCoroutine(ProcessImage());
+        }
+        testRun++;
     }
 
     void SetWebCam()
@@ -66,8 +71,10 @@ public class ObjectDetection : MonoBehaviour
         {
             if (webCamTextureManager.WebCamTexture != null)
             {
+                Debug.LogWarning("Starting Webcam");
                 webcamTexture = webCamTextureManager.WebCamTexture;
                 webcamTexture.Play();
+                Debug.LogWarning("Started Webcam");
             }
         }
         else
@@ -90,29 +97,56 @@ public class ObjectDetection : MonoBehaviour
 
     void DrawBoundingBox(Texture2D image, BoundingBox bbox)
     {
-        var colorTest = new Color32[bbox.Width * bbox.Height];
-        image.SetPixels32(bbox.x1, bbox.y1, bbox.Width, bbox.Height, colorTest);
+        // Ensure that the bounding box is within the image's bounds
+        int x1 = Mathf.Max(bbox.x1, 0);
+        int y1 = Mathf.Max(bbox.y1, 0);
+        int x2 = Mathf.Min(bbox.x2, image.width);
+        int y2 = Mathf.Min(bbox.y2, image.height);
+
+        // Calculate the width and height of the bounding box within valid bounds
+        int width = x2 - x1;
+        int height = y2 - y1;
+
+        // If the bounding box is valid (non-zero size), draw it
+        if (width > 0 && height > 0)
+        {
+            int centerX = x1 + width / 2;
+            int centerY = y1 + height / 2;
+            var color = image.GetPixel(centerX, centerY);
+            var colorTest = new Color32[width * height];
+            for (int i = 0; i < colorTest.Length; i++)
+            {
+                colorTest[i] = color; // Set to red color for the bounding box
+            }
+
+            // Draw the bounding box on the image
+            image.SetPixels32(x1, y1, width, height, colorTest);
+        }
     }
 
     IEnumerator ProcessImage()
     {
-        int layersPerFrame = 20;
+        brickObjs = new();
+        int layersPerFrame = 5;
         while (true)
         {
+            Debug.LogWarning("Info1");
             var prevActive = RenderTexture.active;
             if (modelInput)
             {
                 Destroy(modelInput);
             }
 
+            var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
+            Debug.LogWarning("Info2");
             modelInput = GetImageFromWebcam();
-
+            Debug.LogWarning("Info3");
             var tf = new TextureTransform().SetDimensions(640, 640, 3);
 
             var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
 
             TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
-
+            Debug.LogWarning("Info4");
             var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
 
             int framesTaken = 0;
@@ -120,14 +154,15 @@ public class ObjectDetection : MonoBehaviour
             {
                 if (framesTaken % layersPerFrame == 0 && framesTaken > 0)
                 {
+                    testRun = 0;
                     yield return null;
                 }
 
                 framesTaken++;
             }
-
+            Debug.LogWarning("Info5");
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
-
+            Debug.LogWarning("Info6");
             List<BoundingBox> bboxes = new List<BoundingBox>();
             for (int i = 0; i < modelOut.shape[2]; i++)
             {
@@ -149,30 +184,37 @@ public class ObjectDetection : MonoBehaviour
                 }
             }
 
+            float scaleX = webcamTexture.width / 640f;
+            float scaleY = webcamTexture.height / 640f;
 
-            if (modelAnnotation)
+            Debug.LogWarning("Info7");
+            foreach (var v in brickObjs)
             {
-                Destroy(modelAnnotation);
+                Destroy(v);
             }
 
+            brickObjs = new();
 
-            TextureConverter.RenderToTexture(modelInputTensor, output, tf);
-
-            RenderTexture.active = output;
-            modelAnnotation = new Texture2D(640, 640, TextureFormat.RGBA32, false);
-            modelAnnotation.ReadPixels(new Rect(0, 0, 640, 640), 0, 0);
 
             foreach (var bbox in bboxes)
             {
-                DrawBoundingBox(modelAnnotation, bbox);
+                var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
+                var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
+                var rayDirectionInWorld = pose.rotation * camRay.direction;
+
+                if(Physics.Raycast(new Ray(pose.position, rayDirectionInWorld),out RaycastHit hit,1000f))
+                {
+                    var hitObj = Instantiate(plsworkobject, hit.point,Quaternion.identity);
+
+
+                    brickObjs.Add(hitObj);
+                }
             }
-
-            modelAnnotation.Apply();
-            GetComponent<Renderer>().material.mainTexture = modelAnnotation;
-
+            Debug.LogWarning("Info8");
             modelInputTensor.Dispose();
 
             modelOut.Dispose();
+            Debug.LogWarning("Info9");
 
             RenderTexture.active = prevActive;
 
@@ -213,6 +255,11 @@ public struct BoundingBox
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
+    }
+
+    public Vector2Int GetCenter()
+    {
+        return new Vector2Int(x1+(x2-x1)/2, y1+(y2-y1)/2);
     }
 
     public int GetArea()

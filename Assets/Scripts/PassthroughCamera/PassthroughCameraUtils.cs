@@ -131,7 +131,7 @@ namespace PassthroughCameraSamples
         {
             var index = cameraEye == PassthroughCameraEye.Left ? 0 : 1;
 
-            if (s_cachedCameraPosesRelativeToHead[index] == null)
+            if (true)
             {
                 var cameraId = GetCameraIdByEye(cameraEye);
                 var cameraCharacteristics = s_cameraManager.Call<AndroidJavaObject>("getCameraCharacteristics", cameraId);
