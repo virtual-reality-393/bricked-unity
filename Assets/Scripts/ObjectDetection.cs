@@ -19,6 +19,7 @@ public class ObjectDetection : MonoBehaviour
 
     Worker objectDetectionWorker;
     private readonly float CONFIDENCE_LEVEL = 0.3f;
+    private readonly float NMS_THRESHOLD = 0.4f; // IoU threshold for NMS
 
     public List<GameObject> brickObjs;
 
@@ -79,7 +80,7 @@ public class ObjectDetection : MonoBehaviour
         }
         else
         {
-            webcamTexture = new WebCamTexture(WebCamTexture.devices[1].name); // change device index to find correct one
+            webcamTexture = new WebCamTexture(WebCamTexture.devices[0].name); // change device index to find correct one
 
             webcamTexture.Play();
         }
@@ -196,7 +197,7 @@ public class ObjectDetection : MonoBehaviour
             brickObjs = new();
 
 
-            foreach (var bbox in bboxes)
+            foreach (var bbox in ApplyNMS(bboxes))
             {
                 var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
                 var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
@@ -220,6 +221,43 @@ public class ObjectDetection : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private List<BoundingBox> ApplyNMS(List<BoundingBox> bboxes)
+    {
+        // Sort bounding boxes by confidence score (higher first)
+        bboxes = bboxes.OrderByDescending(b => b.GetArea()).ToList();
+
+        List<BoundingBox> result = new List<BoundingBox>();
+
+        while (bboxes.Count > 0)
+        {
+            BoundingBox currentBox = bboxes[0];
+            bboxes.RemoveAt(0);
+
+            result.Add(currentBox);
+
+            // Remove boxes that overlap with current box (IoU > NMS_THRESHOLD)
+            bboxes = bboxes.Where(b => CalculateIoU(currentBox, b) < NMS_THRESHOLD).ToList();
+        }
+
+        return result;
+    }
+
+    private float CalculateIoU(BoundingBox box1, BoundingBox box2)
+    {
+        Rect rect1 = box1.ToRect();
+        Rect rect2 = box2.ToRect();
+
+        float intersectionArea = Mathf.Max(0, Mathf.Min(rect1.xMax, rect2.xMax) - Mathf.Max(rect1.xMin, rect2.xMin)) *
+                                Mathf.Max(0, Mathf.Min(rect1.yMax, rect2.yMax) - Mathf.Max(rect1.yMin, rect2.yMin));
+
+        float box1Area = rect1.width * rect1.height;
+        float box2Area = rect2.width * rect2.height;
+
+        float unionArea = box1Area + box2Area - intersectionArea;
+
+        return intersectionArea / unionArea; // IoU = intersection area / union area
     }
 
     private void OnApplicationQuit()
