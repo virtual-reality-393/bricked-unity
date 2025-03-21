@@ -21,6 +21,7 @@ public class ObjectDetection : MonoBehaviour
 
     Worker objectDetectionWorker;
     private readonly float CONFIDENCE_LEVEL = 0.3f;
+    private readonly float NMS_THRESHOLD = 0.4f; // IoU threshold for NMS
 
     WebCamTexture webcamTexture;
 
@@ -72,7 +73,7 @@ public class ObjectDetection : MonoBehaviour
         }
         else
         {
-            webcamTexture = new WebCamTexture(WebCamTexture.devices[1].name); // change device index to find correct one
+            webcamTexture = new WebCamTexture(WebCamTexture.devices[0].name); // change device index to find correct one
 
             webcamTexture.Play();
         }
@@ -90,8 +91,31 @@ public class ObjectDetection : MonoBehaviour
 
     void DrawBoundingBox(Texture2D image, BoundingBox bbox)
     {
-        var colorTest = new Color32[bbox.Width * bbox.Height];
-        image.SetPixels32(bbox.x1, bbox.y1, bbox.Width, bbox.Height, colorTest);
+        // Ensure that the bounding box is within the image's bounds
+        int x1 = Mathf.Max(bbox.x1, 0);
+        int y1 = Mathf.Max(bbox.y1, 0);
+        int x2 = Mathf.Min(bbox.x2, image.width);
+        int y2 = Mathf.Min(bbox.y2, image.height);
+
+        // Calculate the width and height of the bounding box within valid bounds
+        int width = x2 - x1;
+        int height = y2 - y1;
+
+        // If the bounding box is valid (non-zero size), draw it
+        if (width > 0 && height > 0)
+        {
+            int centerX = x1 + width/2;
+            int centerY = y1 + height/2;
+            var color = image.GetPixel(centerX, centerY);
+            var colorTest = new Color32[width * height];
+            for (int i = 0; i < colorTest.Length; i++)
+            {
+                colorTest[i] = color; // Set to red color for the bounding box
+            }
+
+            // Draw the bounding box on the image
+            image.SetPixels32(x1, y1, width, height, colorTest);
+        }
     }
 
     IEnumerator ProcessImage()
@@ -149,6 +173,8 @@ public class ObjectDetection : MonoBehaviour
                 }
             }
 
+            // Apply NMS to remove overlapping bounding boxes
+            List<BoundingBox> nmsBboxes = ApplyNMS(bboxes);
 
             if (modelAnnotation)
             {
@@ -162,7 +188,7 @@ public class ObjectDetection : MonoBehaviour
             modelAnnotation = new Texture2D(640, 640, TextureFormat.RGBA32, false);
             modelAnnotation.ReadPixels(new Rect(0, 0, 640, 640), 0, 0);
 
-            foreach (var bbox in bboxes)
+            foreach (var bbox in nmsBboxes)
             {
                 DrawBoundingBox(modelAnnotation, bbox);
             }
@@ -178,6 +204,43 @@ public class ObjectDetection : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private List<BoundingBox> ApplyNMS(List<BoundingBox> bboxes)
+    {
+        // Sort bounding boxes by confidence score (higher first)
+        bboxes = bboxes.OrderByDescending(b => b.GetArea()).ToList();
+
+        List<BoundingBox> result = new List<BoundingBox>();
+
+        while (bboxes.Count > 0)
+        {
+            BoundingBox currentBox = bboxes[0];
+            bboxes.RemoveAt(0);
+
+            result.Add(currentBox);
+
+            // Remove boxes that overlap with current box (IoU > NMS_THRESHOLD)
+            bboxes = bboxes.Where(b => CalculateIoU(currentBox, b) < NMS_THRESHOLD).ToList();
+        }
+
+        return result;
+    }
+
+    private float CalculateIoU(BoundingBox box1, BoundingBox box2)
+    {
+        Rect rect1 = box1.ToRect();
+        Rect rect2 = box2.ToRect();
+
+        float intersectionArea = Mathf.Max(0, Mathf.Min(rect1.xMax, rect2.xMax) - Mathf.Max(rect1.xMin, rect2.xMin)) *
+                                Mathf.Max(0, Mathf.Min(rect1.yMax, rect2.yMax) - Mathf.Max(rect1.yMin, rect2.yMin));
+
+        float box1Area = rect1.width * rect1.height;
+        float box2Area = rect2.width * rect2.height;
+
+        float unionArea = box1Area + box2Area - intersectionArea;
+
+        return intersectionArea / unionArea; // IoU = intersection area / union area
     }
 
     private void OnApplicationQuit()
