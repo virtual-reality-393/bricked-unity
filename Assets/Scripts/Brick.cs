@@ -4,36 +4,31 @@ using UnityEngine;
 public class Brick
 {
     public string colorName;
-    public Color brickColor;
-    public BoundingBox boundingBox;
+    public Color BrickColor => GameUtils.nameToColor[colorName];
     public Vector3 worldPos;
     
-    public Brick(string colorName, Color color, BoundingBox boundingBox, Vector3 worldPos)
+    public Brick(string colorName,Vector3 worldPos)
     {
         this.colorName = colorName;
-        this.brickColor = color;
-        this.boundingBox = boundingBox;
         this.worldPos = worldPos;
     }
 
-    public Brick()
+    Brick()
     {
         this.colorName = "";
-        this.brickColor = Color.white;
-        this.boundingBox = new BoundingBox();
         this.worldPos = Vector3.zero;
     }
 
     public GameObject Draw()
     {
-        var cube = GameObject.Instantiate(GameManager.Instance.brickPrefab , worldPos, Quaternion.identity);
-        cube.GetComponent<Renderer>().material.color = brickColor;
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab , worldPos, Quaternion.identity);
+        cube.GetComponent<Renderer>().material.color = BrickColor;
         return cube;
     }
 
     public GameObject Draw(Color color)
     {
-        var cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = color;
         return cube;
     }
@@ -44,7 +39,6 @@ public class Brick
 public struct PythonBrick
 {
     public string color;
-    //public Color brickColor;
     public int[] box;
     public int[] center;
 

@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/MoveGame.unity
-    guid: 62cefb7eec693d9448f1593316b28c2c
+    path: Assets/Scenes/RaycastTest.unity
+    guid: a2205a2ed00e23b45b9fb8d26992c962
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 152c26631e7d9ca49b14bb507bfcdbb4, type: 2}

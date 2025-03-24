@@ -1437,9 +1437,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 202246611}
-  - component: {fileID: 202246610}
-  - component: {fileID: 202246613}
-  - component: {fileID: 202246612}
+  - component: {fileID: 202246614}
   m_Layer: 0
   m_Name: DetectionManager
   m_TagString: Untagged
@@ -1447,28 +1445,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &202246610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 202246607}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da81a8a10cb956e4ea98dccc376c4ad6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectDetector: {fileID: 5022602860645237092, guid: e3c537500c0a94d4dbf918b528b3b176, type: 3}
-  output: {fileID: 8400000, guid: 3404329f5e73b784eaf0f0afd9f54d60, type: 2}
-  webCamTextureManager: {fileID: 337597775}
-  environmentDepthManager: {fileID: 202246613}
-  environmentRaycastManager: {fileID: 202246612}
-  modelInput: {fileID: 0}
-  testTransofmr: {fileID: 75825068}
-  brickObjs: []
-  plsworkobject: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
-  step: 0
 --- !u!4 &202246611
 Transform:
   m_ObjectHideFlags: 0
@@ -1484,7 +1460,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &202246612
+--- !u!114 &202246614
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1493,26 +1469,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 202246607}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d8affdff7ba47d892cc734baac9ac71, type: 3}
+  m_Script: {fileID: 11500000, guid: 228b42baded3eab4c92f8789edbdeb15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &202246613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 202246607}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71a155ece80369d4e99bdaf5e59169b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _occlusionShadersMode: 2
-  _removeHands: 0
-  CustomTrackingSpace: {fileID: 0}
-  <MaskMeshFilters>k__BackingField: []
-  _cameraRig: {fileID: 872218651}
+  output: {fileID: 0}
+  environmentDepthManager: {fileID: 337597779}
+  webCamTextureManager: {fileID: 337597775}
+  environmentRaycastManager: {fileID: 337597778}
+  modelInput: {fileID: 0}
+  testTransofmr: {fileID: 0}
+  brickObjs: []
+  plsworkobject: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  step: 0
 --- !u!1 &203207076
 GameObject:
   m_ObjectHideFlags: 0
@@ -2606,6 +2574,8 @@ GameObject:
   - component: {fileID: 337597777}
   - component: {fileID: 337597775}
   - component: {fileID: 337597776}
+  - component: {fileID: 337597779}
+  - component: {fileID: 337597778}
   m_Layer: 0
   m_Name: WebcamTextureManager
   m_TagString: Untagged
@@ -2657,6 +2627,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &337597778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337597774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8affdff7ba47d892cc734baac9ac71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &337597779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337597774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71a155ece80369d4e99bdaf5e59169b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _occlusionShadersMode: 2
+  _removeHands: 0
+  CustomTrackingSpace: {fileID: 0}
+  <MaskMeshFilters>k__BackingField: []
+  _cameraRig: {fileID: 872218651}
 --- !u!1 &359413830
 GameObject:
   m_ObjectHideFlags: 0

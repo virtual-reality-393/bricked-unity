@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class MoveingGame : MonoBehaviour
 {
-    public ObjectDetection objectDetection;
+    public ObjectDetector objectDetection;
 
     public float Distans = 0.2f;
 
@@ -52,7 +52,7 @@ public class MoveingGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.bricks;
+        List<Brick> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
 
         drawnBricks.ForEach(Destroy);
@@ -74,7 +74,7 @@ public class MoveingGame : MonoBehaviour
     string tempColor2 = "green";
     private void Play()
     {
-        List<Brick> bricks = objectDetection.bricks;
+        List<Brick> bricks = objectDetection.GetBricks();
         string[] colors = { "red", "green", "blue", "yellow" };
 
         // If the task is completed, choose new colors

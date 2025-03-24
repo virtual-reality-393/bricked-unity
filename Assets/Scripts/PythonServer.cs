@@ -17,7 +17,7 @@ public class PythonServer
     public bool closed => webSocket.State == WebSocketState.Closed;
 
     // URL of the WebSocket server
-    private string serverUri = "ws://localhost:8765";
+    private string serverUri = "ws://192.168.1.103:8765";
 
     // Start is called before the first frame update
     public async Task StartServer()

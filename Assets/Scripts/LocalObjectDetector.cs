@@ -11,44 +11,20 @@ using Meta.XR;
 using Meta.XR.EnvironmentDepth;
 using PassthroughCameraSamples;
 
-public class ObjectDetection : MonoBehaviour
+public class LocalObjectDetector : ObjectDetector
 {
     public ModelAsset objectDetector;
-    public RenderTexture output;
-    public EnvironmentDepthManager environmentDepthManager;
-    public EnvironmentRaycastManager environmentRaycastManager;
-    private WebCamTextureManager webCamTextureManager;
-
-    public Texture2D modelInput;
-    public Transform testTransofmr;
+    public Transform imageTransform;
 
     Worker objectDetectionWorker;
-    private readonly float CONFIDENCE_LEVEL = 0.3f;
     private readonly float NMS_THRESHOLD = 0.4f; // IoU threshold for NMS
-
-    public List<GameObject> brickObjs;
-
-    WebCamTexture webcamTexture;
-
-    public GameObject plsworkobject;
-
+    private readonly int LAYERS_PER_FRAME = 5;
     bool playing;
 
-    public bool step;
-
-    int testRun;
-
-    public List<Brick> bricks;
-    public Dictionary<string, Color> nameToColor = new Dictionary<string, Color>()
-    {
-        {"green", Color.green },
-        {"blue", Color.blue },
-        {"yellow", Color.yellow},
-        {"red", Color.red},
-    };
+    private List<Brick> bricksInternal;
  
 
-    public async void Start()
+    void Start()
     {
         var detectionModel = ModelLoader.Load(objectDetector); ;
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
@@ -69,13 +45,6 @@ public class ObjectDetection : MonoBehaviour
                 playing = true;
             }
         }
-
-
-        if (testRun > 5)
-        {
-            StartCoroutine(ProcessImage());
-        }
-        testRun++;
     }
 
     void SetWebCam()
@@ -137,8 +106,7 @@ public class ObjectDetection : MonoBehaviour
 
     IEnumerator ProcessImage()
     {
-        brickObjs = new();
-        int layersPerFrame = 5;
+        
         while (true)
         {
             var prevActive = RenderTexture.active;
@@ -159,9 +127,8 @@ public class ObjectDetection : MonoBehaviour
             int framesTaken = 0;
             while (detectionScheduler.MoveNext())
             {
-                if (framesTaken % layersPerFrame == 0 && framesTaken > 0)
+                if (framesTaken % LAYERS_PER_FRAME == 0 && framesTaken > 0)
                 {
-                    testRun = 0;
                     yield return null;
                 }
 
@@ -194,13 +161,6 @@ public class ObjectDetection : MonoBehaviour
             float scaleX = webcamTexture.width / 640f;
             float scaleY = webcamTexture.height / 640f;
 
-            foreach (var v in brickObjs)
-            {
-                Destroy(v);
-            }
-
-            brickObjs = new();
-
             bboxes = ApplyNMS(bboxes);
 
 
@@ -212,11 +172,7 @@ public class ObjectDetection : MonoBehaviour
 
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
-                    var hitObj = Instantiate(plsworkobject, hit.point, Quaternion.identity);
-
-                    hitObj.transform.forward = camRay.direction;
-
-                    brickObjs.Add(hitObj);
+                    bricksInternal.Add(new Brick("green",hit.point));
                 }
             }
 
@@ -274,6 +230,15 @@ public class ObjectDetection : MonoBehaviour
             webcamTexture.Stop();
             Destroy(webcamTexture);
         }
+    }
 
+    public override List<Brick> GetBricks()
+    {
+        var res = new List<Brick>();
+        foreach(var brick in bricksInternal)
+        {
+            res.Add(brick);
+        }
+        return res;
     }
 }
