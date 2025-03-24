@@ -1,3 +1,4 @@
+// Removed the using directive for OpenCvSharp as it is not used in the provided code
 using UnityEngine;
 using Unity.Sentis;
 using System.Linq;
@@ -37,6 +38,15 @@ public class ObjectDetection : MonoBehaviour
     public bool step;
 
     int testRun;
+
+    public List<Brick> bricks;
+    public Dictionary<string, Color> nameToColor = new Dictionary<string, Color>()
+    {
+        {"green", Color.green },
+        {"blue", Color.blue },
+        {"yellow", Color.yellow},
+        {"red", Color.red},
+    };
 
     public async void Start()
     {

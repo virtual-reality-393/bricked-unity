@@ -1,0 +1,39 @@
+using UnityEngine;
+
+public class Brick
+{
+    public string colorName;
+    public Color brickColor;
+    public BoundingBox boundingBox;
+    public Vector3 worldPos;
+    
+    public Brick(string colorName, Color color, BoundingBox boundingBox, Vector3 worldPos)
+    {
+        this.colorName = colorName;
+        this.brickColor = color;
+        this.boundingBox = boundingBox;
+        this.worldPos = worldPos;
+    }
+
+    public Brick()
+    {
+        this.colorName = "";
+        this.brickColor = Color.white;
+        this.boundingBox = new BoundingBox();
+        this.worldPos = Vector3.zero;
+    }
+
+    public GameObject Draw()
+    {
+        var cube = GameObject.Instantiate(GameManager.Instance.brickPrefab , worldPos, Quaternion.identity);
+        cube.GetComponent<Renderer>().material.color = brickColor;
+        return cube;
+    }
+
+    public GameObject Draw(Color color)
+    {
+        var cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        cube.GetComponent<Renderer>().material.color = color;
+        return cube;
+    }
+}

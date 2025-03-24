@@ -54,20 +54,20 @@ public class GameHelper : MonoBehaviour
     }
 }
 
-[Serializable]
-public class Brick
-{
-    public string color;
-    public int[] box;
-    public int[] center;
-    public bool in_stack;
+//[Serializable]
+//public class Brick
+//{
+//    public string color;
+//    public int[] box;
+//    public int[] center;
+//    public bool in_stack;
 
 
-    public override string ToString()
-    {
-        return $"({color},{string.Join(",", box)},{string.Join(",", center)},{in_stack})";
-    }
-}
+//    public override string ToString()
+//    {
+//        return $"({color},{string.Join(",", box)},{string.Join(",", center)},{in_stack})";
+//    }
+//}
 
 [Serializable]
 public class Stack
