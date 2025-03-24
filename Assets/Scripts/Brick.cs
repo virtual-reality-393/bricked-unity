@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Brick
@@ -35,5 +36,28 @@ public class Brick
         var cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = color;
         return cube;
+    }
+}
+
+
+[Serializable]
+public struct PythonBrick
+{
+    public string color;
+    //public Color brickColor;
+    public int[] box;
+    public int[] center;
+
+    public PythonBrick(string color, int[] box, int[] center)
+    {
+        this.color = color;
+        this.box = box;
+        this.center = center;
+    }
+
+
+    public BoundingBox GetBoundingBox()
+    {
+        return new BoundingBox(box[0], box[1], box[2], box[3]);
     }
 }
