@@ -1,3 +1,4 @@
+// Removed the using directive for OpenCvSharp as it is not used in the provided code
 using UnityEngine;
 using Unity.Sentis;
 using System.Linq;
@@ -7,6 +8,7 @@ using System;
 using System.Collections;
 using PassthroughCameraSamples;
 using System.Runtime.CompilerServices;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class ObjectDetection : MonoBehaviour
 {
@@ -33,13 +35,19 @@ public class ObjectDetection : MonoBehaviour
 
     int testRun;
 
+    public List<Brick> bricks;
+    public Dictionary<string, Color> nameToColor = new Dictionary<string, Color>()
+    {
+        {"green", Color.green },
+        {"blue", Color.blue },
+        {"yellow", Color.yellow},
+        {"red", Color.red},
+    };
+
     public async void Start()
     {
-        Debug.Log("AAAAAAAAAAAAAAAAAAAA");
         var detectionModel = ModelLoader.Load(objectDetector);
-        Debug.Log("BBBBBBBBBBBBBBBBBBBB");
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-        Debug.Log("CCCCCCCCCCCCCCCCCCCC");
     }
 
     // Update is called once per frame
@@ -51,7 +59,6 @@ public class ObjectDetection : MonoBehaviour
 
             if (webcamTexture != null && !playing)
             {
-                Debug.Log("DDDDDDDDDDDDDDDDDDDD");
                 StartCoroutine(ProcessImage());
                 playing = true;
             }
@@ -128,10 +135,10 @@ public class ObjectDetection : MonoBehaviour
     IEnumerator ProcessImage()
     {
         brickObjs = new();
+        bricks = new();
         int layersPerFrame = 5;
         while (true)
         {
-            Debug.LogWarning("Info1");
             var prevActive = RenderTexture.active;
             if (modelInput)
             {
@@ -139,15 +146,12 @@ public class ObjectDetection : MonoBehaviour
             }
 
             var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
-            Debug.LogWarning("Info2");
             modelInput = GetImageFromWebcam();
-            Debug.LogWarning("Info3");
             var tf = new TextureTransform().SetDimensions(640, 640, 3);
 
             var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
 
             TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
-            Debug.LogWarning("Info4");
             var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
 
             int framesTaken = 0;
@@ -161,9 +165,7 @@ public class ObjectDetection : MonoBehaviour
 
                 framesTaken++;
             }
-            Debug.LogWarning("Info5");
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
-            Debug.LogWarning("Info6");
             List<BoundingBox> bboxes = new List<BoundingBox>();
             for (int i = 0; i < modelOut.shape[2]; i++)
             {
@@ -188,13 +190,13 @@ public class ObjectDetection : MonoBehaviour
             float scaleX = webcamTexture.width / 640f;
             float scaleY = webcamTexture.height / 640f;
 
-            Debug.LogWarning("Info7");
             foreach (var v in brickObjs)
             {
                 Destroy(v);
             }
 
             brickObjs = new();
+            bricks = new();
 
 
             foreach (var bbox in ApplyNMS(bboxes))
@@ -205,17 +207,21 @@ public class ObjectDetection : MonoBehaviour
 
                 if(Physics.Raycast(new Ray(pose.position, rayDirectionInWorld),out RaycastHit hit,1000f))
                 {
-                    var hitObj = Instantiate(plsworkobject, hit.point,Quaternion.identity);
+                    //var hitObj = Instantiate(plsworkobject, hit.point,Quaternion.identity);
+                    //brickObjs.Add(hitObj);
 
+                    //Color color = modelInput.GetPixel(bbox.GetCenter().x,bbox.GetCenter().y);
+                    //var hsv = GameUtils.RgbToHsv((int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255));
+                    //var colorName = GameUtils.GetColorName((int)hsv.H, (int)hsv.S, (int)hsv.V);
+                    string colorName = GameUtils.GetAverageColorName(modelInput, bbox);
+                    Brick brick = new Brick(colorName, nameToColor[colorName], bbox, hit.point);
+                    bricks.Add(brick);
 
-                    brickObjs.Add(hitObj);
                 }
             }
-            Debug.LogWarning("Info8");
             modelInputTensor.Dispose();
 
             modelOut.Dispose();
-            Debug.LogWarning("Info9");
 
             RenderTexture.active = prevActive;
 
