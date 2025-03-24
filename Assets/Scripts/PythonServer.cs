@@ -73,11 +73,8 @@ public class PythonServer
     // Method to close the WebSocket connection when the app is quitting
     public async Task OnApplicationQuit()
     {
-        if (webSocket != null && webSocket.State == WebSocketState.Open)
-        {
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing connection", CancellationToken.None);
-            webSocket.Dispose();
-            Debug.Log("WebSocket connection closed.");
-        }
+        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing connection", CancellationToken.None);
+        webSocket.Dispose();
+        Debug.Log("WebSocket connection closed.");
     }
 }

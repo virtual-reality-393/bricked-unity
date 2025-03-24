@@ -5,14 +5,19 @@ using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Collections;
-using PassthroughCameraSamples;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 public class ObjectDetection : MonoBehaviour
 {
     public ModelAsset objectDetector;
     public RenderTexture output;
-    public WebCamTextureManager webCamTextureManager;
+    //public EnvironmentDepthManager environmentDepthManager;
+    //public EnvironmentRaycastManager environmentRaycastManager;
+
+    string base64Img = "aaaaaaa";
+
+    PythonServer server;
 
     public Texture2D modelInput;
     public Transform testTransofmr;
@@ -35,55 +40,66 @@ public class ObjectDetection : MonoBehaviour
 
     public async void Start()
     {
-        Debug.Log("AAAAAAAAAAAAAAAAAAAA");
-        var detectionModel = ModelLoader.Load(objectDetector);
-        Debug.Log("BBBBBBBBBBBBBBBBBBBB");
+        var detectionModel = ModelLoader.Load(objectDetector); ;
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-        Debug.Log("CCCCCCCCCCCCCCCCCCCC");
+        //environmentDepthManager.enabled = true;
+        SetWebCam();
+        server = new PythonServer();
+        await server.StartServer();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (webcamTexture == null)
+        //if (webcamTexture == null)
+        //{
+        //    SetWebCam();
+
+        //    if (webcamTexture != null && !playing)
+        //    {
+        //        StartCoroutine(ProcessImage());
+        //        playing = true;
+        //    }
+        //}
+
+
+        //if(testRun > 5)
+        //{
+        //    StartCoroutine(ProcessImage());
+        //}
+        //testRun++;
+
+        if(server.started && !playing)
         {
-            SetWebCam();
+            playing = true;
 
-            if (webcamTexture != null && !playing)
-            {
-                Debug.Log("DDDDDDDDDDDDDDDDDDDD");
-                StartCoroutine(ProcessImage());
-                playing = true;
-            }
+            ProcessImageOnServer();
         }
-
-
-        if(testRun > 5)
-        {
-            StartCoroutine(ProcessImage());
-        }
-        testRun++;
     }
 
     void SetWebCam()
     {
 
-        if (webCamTextureManager != null)
-        {
-            if (webCamTextureManager.WebCamTexture != null)
-            {
-                Debug.LogWarning("Starting Webcam");
-                webcamTexture = webCamTextureManager.WebCamTexture;
-                webcamTexture.Play();
-                Debug.LogWarning("Started Webcam");
-            }
-        }
-        else
-        {
-            webcamTexture = new WebCamTexture(WebCamTexture.devices[0].name); // change device index to find correct one
+        //if (webCamTextureManager != null)
+        //{
+        //    if (webCamTextureManager.WebCamTexture != null)
+        //    {
+        //        webcamTexture = webCamTextureManager.WebCamTexture;
+        //        webcamTexture.Play();
+        //    }
+        //}
+        //else
+        //{
+        webcamTexture = new WebCamTexture("QuickCam for Notebooks Deluxe"); // change device index to find correct one
 
-            webcamTexture.Play();
-        }
+        Debug.Log(webcamTexture.isPlaying);
+        Debug.Log(webcamTexture.isReadable);
+
+        webcamTexture.Play();
+
+        Debug.Log(webcamTexture.isPlaying);
+        Debug.Log(webcamTexture.isReadable);
+        //}
     }
 
 
@@ -125,103 +141,128 @@ public class ObjectDetection : MonoBehaviour
         }
     }
 
-    IEnumerator ProcessImage()
+
+    async Task ProcessImageOnServer()
     {
-        brickObjs = new();
-        int layersPerFrame = 5;
-        while (true)
+        while(true)
         {
-            Debug.LogWarning("Info1");
-            var prevActive = RenderTexture.active;
+
+            //var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
+            //var tf = new TextureTransform().SetDimensions(640, 640, 3);
+            //var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
+
             if (modelInput)
             {
                 Destroy(modelInput);
             }
 
-            var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
-            Debug.LogWarning("Info2");
             modelInput = GetImageFromWebcam();
-            Debug.LogWarning("Info3");
-            var tf = new TextureTransform().SetDimensions(640, 640, 3);
 
-            var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
-
-            TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
-            Debug.LogWarning("Info4");
-            var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
-
-            int framesTaken = 0;
-            while (detectionScheduler.MoveNext())
-            {
-                if (framesTaken % layersPerFrame == 0 && framesTaken > 0)
-                {
-                    testRun = 0;
-                    yield return null;
-                }
-
-                framesTaken++;
-            }
-            Debug.LogWarning("Info5");
-            var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
-            Debug.LogWarning("Info6");
-            List<BoundingBox> bboxes = new List<BoundingBox>();
-            for (int i = 0; i < modelOut.shape[2]; i++)
-            {
-                if (modelOut[0, 4, i] > CONFIDENCE_LEVEL)
-                {
-                    float x = modelOut[0, 0, i];
-                    float y = modelOut[0, 1, i];
-                    float w = modelOut[0, 2, i];
-                    float h = modelOut[0, 3, i];
+            var base64Image = Convert.ToBase64String(modelInput.EncodeToJPG());
 
 
-                    int x1 = (int)(x - w / 2);
-                    int x2 = (int)(x + w / 2);
+            Debug.Log("Sending Message");
+            Debug.Log(base64Image.Length);
+            await server.SendMessage(base64Image);
 
-                    int y1 = (int)(640 - y - h / 2);
-                    int y2 = (int)(640 - y + h / 2);
-
-                    bboxes.Add(new BoundingBox(x1, y1, x2, y2));
-                }
-            }
-
-            float scaleX = webcamTexture.width / 640f;
-            float scaleY = webcamTexture.height / 640f;
-
-            Debug.LogWarning("Info7");
-            foreach (var v in brickObjs)
-            {
-                Destroy(v);
-            }
-
-            brickObjs = new();
-
-
-            foreach (var bbox in ApplyNMS(bboxes))
-            {
-                var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
-                var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
-                var rayDirectionInWorld = pose.rotation * camRay.direction;
-
-                if(Physics.Raycast(new Ray(pose.position, rayDirectionInWorld),out RaycastHit hit,1000f))
-                {
-                    var hitObj = Instantiate(plsworkobject, hit.point,Quaternion.identity);
-
-
-                    brickObjs.Add(hitObj);
-                }
-            }
-            Debug.LogWarning("Info8");
-            modelInputTensor.Dispose();
-
-            modelOut.Dispose();
-            Debug.LogWarning("Info9");
-
-            RenderTexture.active = prevActive;
-
-            yield return null;
+            await server.ReceiveMessages();
+            Debug.Log("Received Message");
         }
     }
+
+    //IEnumerator ProcessImage()
+    //{
+    //    brickObjs = new();
+    //    int layersPerFrame = 5;
+    //    while (true)
+    //    {
+    //        var prevActive = RenderTexture.active;
+    //        if (modelInput)
+    //        {
+    //            Destroy(modelInput);
+    //        }
+
+    //        var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
+    //        var tf = new TextureTransform().SetDimensions(640, 640, 3);
+    //        var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
+
+    //        modelInput = GetImageFromWebcam();
+
+    //        TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
+    //        var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
+
+    //        int framesTaken = 0;
+    //        while (detectionScheduler.MoveNext())
+    //        {
+    //            if (framesTaken % layersPerFrame == 0 && framesTaken > 0)
+    //            {
+    //                testRun = 0;
+    //                yield return null;
+    //            }
+
+    //            framesTaken++;
+    //        }
+
+    //        var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
+
+    //        List<BoundingBox> bboxes = new List<BoundingBox>();
+    //        for (int i = 0; i < modelOut.shape[2]; i++)
+    //        {
+    //            if (modelOut[0, 4, i] > CONFIDENCE_LEVEL)
+    //            {
+    //                float x = modelOut[0, 0, i];
+    //                float y = modelOut[0, 1, i];
+    //                float w = modelOut[0, 2, i];
+    //                float h = modelOut[0, 3, i];
+
+
+    //                int x1 = (int)(x - w / 2);
+    //                int x2 = (int)(x + w / 2);
+
+    //                int y1 = (int)(640 - y - h / 2);
+    //                int y2 = (int)(640 - y + h / 2);
+
+    //                bboxes.Add(new BoundingBox(x1, y1, x2, y2));
+    //            }
+    //        }
+
+    //        float scaleX = webcamTexture.width / 640f;
+    //        float scaleY = webcamTexture.height / 640f;
+
+    //        foreach (var v in brickObjs)
+    //        {
+    //            Destroy(v);
+    //        }
+
+    //        brickObjs = new();
+
+    //        bboxes = ApplyNMS(bboxes);
+
+
+    //        foreach (var bbox in bboxes)
+    //        {
+    //            var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
+    //            var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
+    //            var rayDirectionInWorld = pose.rotation * camRay.direction;
+
+    //            if(environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld),out EnvironmentRaycastHit hit,1000f))
+    //            {
+    //                var hitObj = Instantiate(plsworkobject, hit.point,Quaternion.identity);
+
+    //                hitObj.transform.forward = camRay.direction;
+
+    //                brickObjs.Add(hitObj);
+    //            }
+    //        }
+
+    //        modelInputTensor.Dispose();
+    //        modelOut.Dispose();
+
+    //        RenderTexture.active = prevActive;
+
+    //        yield return null;
+    //    }
+    //}
 
     private List<BoundingBox> ApplyNMS(List<BoundingBox> bboxes)
     {
@@ -264,9 +305,12 @@ public class ObjectDetection : MonoBehaviour
     {
         if(webcamTexture != null)
         {
+            Debug.LogWarning("Destroying Webcam Texture");
             webcamTexture.Stop();
             Destroy(webcamTexture);
         }
+
+        server.OnApplicationQuit();
     }
 }
 
