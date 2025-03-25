@@ -26,9 +26,10 @@ public class LocalObjectDetector : ObjectDetector
 
     void Start()
     {
-        var detectionModel = ModelLoader.Load(objectDetector); ;
+        var detectionModel = ModelLoader.Load(objectDetector);
+        bricksInternal = new List<Brick>();
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-        //environmentDepthManager.enabled = true;
+        environmentDepthManager.enabled = true;
         SetWebCam();
     }
 
@@ -106,9 +107,9 @@ public class LocalObjectDetector : ObjectDetector
 
     IEnumerator ProcessImage()
     {
-        
         while (true)
         {
+            bricksInternal = new List<Brick>();
             var prevActive = RenderTexture.active;
             if (modelInput)
             {
@@ -172,7 +173,10 @@ public class LocalObjectDetector : ObjectDetector
 
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
-                    bricksInternal.Add(new Brick("green",hit.point));
+                    Color color = modelInput.GetPixel(screenPoint.x, screenPoint.y);
+                    var (h, s, v) = GameUtils.RgbToHsv(color);
+                    string colorName = GameUtils.GetColorName((int)h, (int)s, (int)v);
+                    bricksInternal.Add(new Brick(colorName,hit.point));
                 }
             }
 

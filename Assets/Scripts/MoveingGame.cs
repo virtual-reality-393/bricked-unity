@@ -7,7 +7,7 @@ public class MoveingGame : MonoBehaviour
 {
     public ObjectDetector objectDetection;
 
-    public float Distans = 0.2f;
+    public float Distans = 0.05f;
 
     private Brick target;
     private Brick toMove;
@@ -27,7 +27,7 @@ public class MoveingGame : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        bricksInFrame = new Dictionary<string, int>{{ "red", 0 },{ "green", 0 },{ "blue", 0 },{ "yellow", 0 }};
+        bricksInFrame = new Dictionary<string, int> { { "red", 0 }, { "green", 0 }, { "blue", 0 }, { "yellow", 0 }, { "magenta", 0 } };
 
         // Initialize LineRenderer
         //lineRenderer = gameObject.AddComponent<LineRenderer>();
@@ -61,21 +61,21 @@ public class MoveingGame : MonoBehaviour
         foreach (var brick in bricks)
         {
             bricksInFrame[brick.colorName]++;
-            GameObject cube = brick.Draw(Color.white);
+            GameObject cube = brick.Draw();
             drawnBricks.Add(cube);
         }
 
         if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1) || bricks.Count == 4)
         {
-            state = "play";
+            //state = "play";
         }
     }
-    string tempColor1 = "red";
-    string tempColor2 = "green";
+    string tempColor1 = "yellow";
+    string tempColor2 = "blue";
     private void Play()
     {
         List<Brick> bricks = objectDetection.GetBricks();
-        string[] colors = { "red", "green", "blue", "yellow" };
+        //string[] colors = { "red", "green", "blue", "yellow" };
 
         // If the task is completed, choose new colors
         //if (taskComplet)
@@ -111,20 +111,22 @@ public class MoveingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            GameObject cube = brick.Draw();
-            drawnBricks.Add(cube);
-        }
-        //if (target != null)
-        //{
-        //    GameObject targetBrick = target.Draw(Color.magenta);
-        //    drawnBricks.Add(targetBrick);
-        //}
+            if (target != null)
+            {
+                GameObject targetBrick = target.Draw(Color.magenta);
+                drawnBricks.Add(targetBrick);
+            }
 
-        //if (toMove != null)
-        //{
-        //    GameObject toMoveBrick = toMove.Draw(Color.cyan);
-        //    drawnBricks.Add(toMoveBrick);
-        //}
+            if (toMove != null)
+            {
+                GameObject toMoveBrick = toMove.Draw(Color.cyan);
+                drawnBricks.Add(toMoveBrick);
+            }
+
+            //GameObject cube = brick.Draw();
+            //drawnBricks.Add(cube);
+        }
+
 
 
         // Draw a line between target and toMove
@@ -137,7 +139,7 @@ public class MoveingGame : MonoBehaviour
         {
             if (Vector3.Distance(target.worldPos, toMove.worldPos) <= Distans)
             {
-                taskComplet = false;
+                taskComplet = true;
                 tempColor1 = "blue";
                 tempColor2 = "yellow";
             }
@@ -179,6 +181,6 @@ public class MoveingGame : MonoBehaviour
 
     private void ResetBricksInFrame()
     {
-        bricksInFrame = new Dictionary<string, int> { { "red", 0 }, { "green", 0 }, { "blue", 0 }, { "yellow", 0 } };
+        bricksInFrame = new Dictionary<string, int> { { "red", 0 }, { "green", 0 }, { "blue", 0 }, { "yellow", 0 }, { "magenta", 0 } };
     }
 }

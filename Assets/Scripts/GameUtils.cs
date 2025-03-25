@@ -10,6 +10,7 @@ public static class GameUtils
         {"blue", Color.blue },
         {"yellow", Color.yellow},
         {"red", Color.red},
+        {"magenta", Color.magenta},
     };
     public static string GetColorName(int h, int s, int v)
     {
@@ -102,6 +103,11 @@ public static class GameUtils
         }
 
         return (h, s * 100, v * 100); // Return H, S, and V (S and V in percentage)
+    }
+
+    public static (double H, double S, double V) RgbToHsv(Color color)
+    {
+        return RgbToHsv((int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255));
     }
 
 
