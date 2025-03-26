@@ -63,47 +63,47 @@ public class MoveingGame : MonoBehaviour
             bricksInFrame[brick.colorName]++;
             GameObject cube = brick.Draw();
             drawnBricks.Add(cube);
+    
         }
 
-        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1) || bricks.Count == 4)
+        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1))// || bricks.Count == 4)
         {
-            //state = "play";
+            state = "play";
         }
     }
-    string tempColor1 = "yellow";
-    string tempColor2 = "blue";
+   
     private void Play()
     {
         List<Brick> bricks = objectDetection.GetBricks();
-        //string[] colors = { "red", "green", "blue", "yellow" };
+        string[] colors = { "red", "green", "blue", "yellow" };
 
-        // If the task is completed, choose new colors
-        //if (taskComplet)
-        //{
-        //    System.Random random = new();
-        //    int targetColorIndex = random.Next(0, colors.Length);
-        //    int toMoveColorIndex = random.Next(0, colors.Length);
+        //If the task is completed, choose new colors
+        if (taskComplet)
+        {
+            System.Random random = new();
+            int targetColorIndex = random.Next(0, colors.Length);
+            int toMoveColorIndex = random.Next(0, colors.Length);
 
-        //    if (targetColorIndex == toMoveColorIndex)
-        //    {
-        //        if (targetColorIndex == 1)
-        //        {
-        //            toMoveColorIndex = 0;
-        //        }
-        //        else
-        //        {
-        //            toMoveColorIndex = 1;
-        //        }
-        //    }
+            if (targetColorIndex == toMoveColorIndex)
+            {
+                if (targetColorIndex == 1)
+                {
+                    toMoveColorIndex = 0;
+                }
+                else
+                {
+                    toMoveColorIndex = 1;
+                }
+            }
 
-        //    targetColor = colors[targetColorIndex];
-        //    toMoveColor = colors[toMoveColorIndex];
+            targetColor = colors[targetColorIndex];
+            toMoveColor = colors[toMoveColorIndex];
 
-        //    taskComplet = false;
-        //}
+            taskComplet = false;
+        }
 
-        target = GetBrickWithColor(bricks, tempColor1);
-        toMove = GetBrickWithColor(bricks, tempColor2);
+        target = GetBrickWithColor(bricks, targetColor);
+        toMove = GetBrickWithColor(bricks, toMoveColor);
 
         // clear old visualization and make new
         drawnBricks.ForEach(Destroy);
@@ -113,7 +113,7 @@ public class MoveingGame : MonoBehaviour
         {
             if (target != null)
             {
-                GameObject targetBrick = target.Draw(Color.magenta);
+                GameObject targetBrick = target.Draw(Color.cyan);
                 drawnBricks.Add(targetBrick);
             }
 
@@ -140,8 +140,6 @@ public class MoveingGame : MonoBehaviour
             if (Vector3.Distance(target.worldPos, toMove.worldPos) <= Distans)
             {
                 taskComplet = true;
-                tempColor1 = "blue";
-                tempColor2 = "yellow";
             }
         }
 

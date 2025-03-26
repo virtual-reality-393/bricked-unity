@@ -105,20 +105,22 @@ public static class GameUtils
         return (h, s * 100, v * 100); // Return H, S, and V (S and V in percentage)
     }
 
-    public static (double H, double S, double V) RgbToHsv(Color color)
-    {
-        return RgbToHsv((int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255));
-    }
+    //public static (double H, double S, double V) RgbToHsv(Color color)
+    //{
+    //    return RgbToHsv((int)(color.r * 255), (int)(color.g * 255), (int)(color.b * 255));
+    //}
 
 
-    public static string GetAverageColorName(Texture2D texture, BoundingBox box)
+    public static string GetAverageColorName(Texture2D texture, BoundingBox box, Vector2Int screenpoint)
     {
-        int x = (int)box.GetCenter().x;
-        int y = (int)box.GetCenter().y;
+        int x = screenpoint.x;
+        int y = screenpoint.y;
+
+        float scale = 0.1f;
 
         //var hvsTex = ConvertRGBToHSV(texture);
 
-        Color[] pixels = texture.GetPixels(x, y, box.Width, box.Height);
+        Color[] pixels = texture.GetPixels(x, y, (int)(box.Width * scale), (int)(box.Height * scale));
 
         double h = 0, s = 0, v = 0;
 
@@ -147,6 +149,28 @@ public static class GameUtils
         float h, s, v;
         Color.RGBToHSV(color, out h, out s, out v);
         return (h, s, v);
+    }
+
+    public static string GetClosestColorName(Color color)
+    {
+        // Get the closest color name based on the given color
+        string closestColorName = "unknown";
+        float closestDistance = float.MaxValue;
+        foreach (var kvp in nameToColor)
+        {
+            float distance = GetColorDistance(color, kvp.Value);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestColorName = kvp.Key;
+            }
+        }
+        return closestColorName;
+    }
+
+    private static float GetColorDistance(Color color1, Color color2)
+    {
+        return Mathf.Sqrt(Mathf.Pow(color1.r - color2.r, 2) + Mathf.Pow(color1.g - color2.g, 2) + Mathf.Pow(color1.b - color2.b, 2));
     }
 
     public static Texture2D ConvertRGBToHSV(Texture2D inputTexture)

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Meta.XR;
 using Meta.XR.EnvironmentDepth;
 using PassthroughCameraSamples;
+using System.Security.Cryptography;
 
 public class LocalObjectDetector : ObjectDetector
 {
@@ -109,7 +110,6 @@ public class LocalObjectDetector : ObjectDetector
     {
         while (true)
         {
-            bricksInternal = new List<Brick>();
             var prevActive = RenderTexture.active;
             if (modelInput)
             {
@@ -135,6 +135,8 @@ public class LocalObjectDetector : ObjectDetector
 
                 framesTaken++;
             }
+
+            bricksInternal = new List<Brick>();
 
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
 
@@ -174,8 +176,10 @@ public class LocalObjectDetector : ObjectDetector
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
                     Color color = modelInput.GetPixel(screenPoint.x, screenPoint.y);
-                    var (h, s, v) = GameUtils.RgbToHsv(color);
-                    string colorName = GameUtils.GetColorName((int)h, (int)s, (int)v);
+                    //var (h, s, v) = GameUtils.RgbToHsv(color);
+                    //string colorName = GameUtils.GetColorName((int)h, (int)s, (int)v);
+                    //string colorName = GameUtils.GetAverageColorName(modelInput, bbox, screenPoint);
+                    string colorName = GameUtils.GetClosestColorName(color);
                     bricksInternal.Add(new Brick(colorName,hit.point));
                 }
             }
@@ -239,10 +243,21 @@ public class LocalObjectDetector : ObjectDetector
     public override List<Brick> GetBricks()
     {
         var res = new List<Brick>();
-        foreach(var brick in bricksInternal)
+        foreach (var brick in bricksInternal)
         {
             res.Add(brick);
         }
         return res;
     }
+
+    public override List<DebugBrick> GetDebugBricks()
+    {
+        var res = new List<DebugBrick>();
+        foreach (var brick in bricksInternal)
+        {
+            res.Add((DebugBrick)brick);
+        }
+        return res;
+    }
+
 }

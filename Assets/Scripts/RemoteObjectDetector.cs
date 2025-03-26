@@ -180,5 +180,10 @@ public class RemoteObjectDetector : ObjectDetector
 
         return bricks;
     }
+
+    public override List<DebugBrick> GetDebugBricks()
+    {
+        throw new NotImplementedException();
+    }
 }
 
