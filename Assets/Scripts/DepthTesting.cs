@@ -4,16 +4,18 @@ using UnityEngine;
 
 public class DepthTesting : MonoBehaviour
 {
-    public EnvironmentDepthManager environmentDepthManager;
-    public EnvironmentRaycastManager environmentRaycastManager;
-    void Start()
-    {
-        
-    }
+    public RenderTexture rend;
 
     // Update is called once per frame
     void Update()
     {
-        
+        var text = Shader.GetGlobalTexture(Shader.PropertyToID("_EnvironmentDepthTexture"));
+
+        if(text)
+        {
+            Graphics.Blit(text, rend);
+        }
+
     }
+
 }

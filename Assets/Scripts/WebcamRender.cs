@@ -1,25 +1,38 @@
-using PassthroughCameraSamples;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule.Util;
+using UnityEngine.Rendering.Universal;
 
-public class WebcamRender : MonoBehaviour
+public class DepthRenderFeature : ScriptableRendererFeature
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public WebCamTextureManager textureManager;
+    private DepthTexturePass depthPass;
+    public Material renderMaterial;
 
-    public bool started;
-    void Start()
+    class DepthTexturePass : ScriptableRenderPass
     {
+        public DepthTexturePass(Material renderMaterial)
+        {
+            this.renderMaterial = renderMaterial;
+        }
         
+
+        public Material renderMaterial;
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            var resData = frameData.Get<UniversalResourceData>();
+            RenderGraphUtils.BlitMaterialParameters parameters = new(resData.activeColorTexture, resData.activeColorTexture, renderMaterial, 0);
+            renderGraph.AddBlitPass(parameters, "DepthTexturePass");
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        if(!started)
-        {
-            GetComponent<Renderer>().material.mainTexture = textureManager.WebCamTexture;
-            textureManager.WebCamTexture.Play();
-            started = true;
-        }
+        renderer.EnqueuePass(depthPass);
+    }
+
+    public override void Create()
+    {
+        depthPass = new DepthTexturePass(renderMaterial);
     }
 }

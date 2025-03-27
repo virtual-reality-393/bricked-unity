@@ -15,17 +15,17 @@ using Unity.Sentis;
 
 public class RemoteObjectDetector : ObjectDetector
 {
-
-    PythonServer server;
-    List<Brick> bricksInternal;
-    Task processingTask;
-    bool playing;
+    private PythonServer _server;
+    private List<Brick> _bricksInternal;
+    private Task _processingTask;
+    private bool _playing;
 
     async void Start()
     {
+        _bricksInternal = new List<Brick>();
         SetWebCam();
-        server = new PythonServer();
-        await server.StartServer();
+        _server = new PythonServer();
+        await _server.StartServer();
     }
 
     // Update is called once per frame
@@ -36,13 +36,13 @@ public class RemoteObjectDetector : ObjectDetector
             SetWebCam();
         }
 
-        if (server.started && !playing && webcamTexture != null)
+        if (_server.started && !_playing && webcamTexture != null)
         {
-            playing = true;
+            _playing = true;
 
-            processingTask = ProcessImages();
+            _processingTask = ProcessImages();
 
-            processingTask.Start();
+            _processingTask.Start();
         }
 
 
@@ -94,7 +94,7 @@ public class RemoteObjectDetector : ObjectDetector
         {
             try
             {
-                if (webcamTexture == null)
+                if (!webcamTexture)
                 {
                     Thread.Sleep(100);
                     continue;
@@ -111,9 +111,9 @@ public class RemoteObjectDetector : ObjectDetector
                 var base64Image = Convert.ToBase64String(modelInput.EncodeToJPG());
                 PythonBrick[] pythonBricks = await GetBricksFromServer(base64Image);
 
-                lock(bricksInternal)
+                lock(_bricksInternal)
                 {
-                    bricksInternal.Clear();
+                    _bricksInternal.Clear();
 
                     foreach (var brick in pythonBricks)
                     {
@@ -125,7 +125,9 @@ public class RemoteObjectDetector : ObjectDetector
 
                         if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                         {
-                            bricksInternal.Add(new Brick(brick.color,hit.point));
+                            _bricksInternal.Add(new Brick(brick.color,hit.point));
+
+                            Debug.Log(brick);
                         }
                     }
                 }
@@ -139,8 +141,8 @@ public class RemoteObjectDetector : ObjectDetector
 
     private async Task<PythonBrick[]> GetBricksFromServer(string base64Image)
     {
-        await server.SendMessage(base64Image);
-        var result = (await server.ReceiveMessages())[0];
+        await _server.SendMessage(base64Image);
+        var result = (await _server.ReceiveMessages())[0];
         var bricks = JsonConvert.DeserializeObject<PythonBrick[]>(result);
 
         return bricks;
@@ -155,12 +157,12 @@ public class RemoteObjectDetector : ObjectDetector
             Destroy(webcamTexture);
         }
 
-        server.OnApplicationQuit();
+        _server.OnApplicationQuit();
 
 
-        if(processingTask != null)
+        if(_processingTask != null)
         {
-            processingTask.Dispose();
+            _processingTask.Dispose();
         }
 
 
@@ -170,9 +172,9 @@ public class RemoteObjectDetector : ObjectDetector
     {
         var bricks = new List<Brick>();
 
-        lock (bricksInternal)
+        lock (_bricksInternal)
         {
-            foreach (var brick in bricksInternal)
+            foreach (var brick in _bricksInternal)
             {
                 bricks.Add(brick);
             }
