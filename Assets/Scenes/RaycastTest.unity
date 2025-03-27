@@ -1472,15 +1472,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 228b42baded3eab4c92f8789edbdeb15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  output: {fileID: 0}
   environmentDepthManager: {fileID: 337597779}
-  webCamTextureManager: {fileID: 337597775}
   environmentRaycastManager: {fileID: 337597778}
-  modelInput: {fileID: 0}
-  testTransofmr: {fileID: 0}
-  brickObjs: []
-  plsworkobject: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
-  step: 0
+  webCamTextureManager: {fileID: 337597775}
 --- !u!1 &203207076
 GameObject:
   m_ObjectHideFlags: 0
