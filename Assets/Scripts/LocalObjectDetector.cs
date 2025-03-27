@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Meta.XR;
 using Meta.XR.EnvironmentDepth;
 using PassthroughCameraSamples;
+using System.Security.Cryptography;
 
 public class LocalObjectDetector : ObjectDetector
 {
@@ -26,9 +27,10 @@ public class LocalObjectDetector : ObjectDetector
 
     void Start()
     {
-        var detectionModel = ModelLoader.Load(objectDetector); ;
+        var detectionModel = ModelLoader.Load(objectDetector);
+        bricksInternal = new List<Brick>();
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-        //environmentDepthManager.enabled = true;
+        environmentDepthManager.enabled = true;
         SetWebCam();
     }
 
@@ -106,7 +108,6 @@ public class LocalObjectDetector : ObjectDetector
 
     IEnumerator ProcessImage()
     {
-        
         while (true)
         {
             var prevActive = RenderTexture.active;
@@ -134,6 +135,8 @@ public class LocalObjectDetector : ObjectDetector
 
                 framesTaken++;
             }
+
+            bricksInternal = new List<Brick>();
 
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
 
@@ -172,7 +175,12 @@ public class LocalObjectDetector : ObjectDetector
 
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
-                    bricksInternal.Add(new Brick("green",hit.point));
+                    Color color = modelInput.GetPixel(screenPoint.x, screenPoint.y);
+                    //var (h, s, v) = GameUtils.RgbToHsv(color);
+                    //string colorName = GameUtils.GetColorName((int)h, (int)s, (int)v);
+                    //string colorName = GameUtils.GetAverageColorName(modelInput, bbox, screenPoint);
+                    string colorName = GameUtils.GetClosestColorName(color);
+                    bricksInternal.Add(new Brick(colorName,hit.point));
                 }
             }
 
@@ -235,10 +243,21 @@ public class LocalObjectDetector : ObjectDetector
     public override List<Brick> GetBricks()
     {
         var res = new List<Brick>();
-        foreach(var brick in bricksInternal)
+        foreach (var brick in bricksInternal)
         {
             res.Add(brick);
         }
         return res;
     }
+
+    public override List<DebugBrick> GetDebugBricks()
+    {
+        var res = new List<DebugBrick>();
+        foreach (var brick in bricksInternal)
+        {
+            res.Add((DebugBrick)brick);
+        }
+        return res;
+    }
+
 }

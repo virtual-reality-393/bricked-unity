@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ public class Brick
         this.worldPos = worldPos;
     }
 
-    Brick()
+    public Brick()
     {
         this.colorName = "";
         this.worldPos = Vector3.zero;
@@ -31,6 +32,48 @@ public class Brick
         var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = color;
         return cube;
+    }
+
+}
+
+
+public class DebugBrick : Brick
+{
+    public Color brickColor;
+
+    DebugBrick()
+    {
+        this.colorName = "";
+        this.worldPos = Vector3.zero;
+        this.brickColor = Color.white;
+    }
+    public DebugBrick(string colorName, Vector3 worldPos)
+    {
+        this.colorName = colorName;
+        this.worldPos = worldPos;
+        this.brickColor = GameUtils.nameToColor[colorName];
+    }
+    public DebugBrick(string colorName, Vector3 worldPos, Color color)
+    {
+        this.colorName = colorName;
+        this.worldPos = worldPos;
+        this.brickColor = color;
+    }
+
+
+    public GameObject[] DebugDraw()
+    {
+        GameObject[] res = new GameObject[2];
+
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[colorName];
+        res[0] = cube;
+
+        var cube2 = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos+new Vector3(0,0.03f,0), Quaternion.identity);
+        cube2.GetComponent<Renderer>().material.color = brickColor;
+        res[1] = cube2;
+
+        return res;
     }
 }
 

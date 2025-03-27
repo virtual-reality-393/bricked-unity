@@ -20,4 +20,6 @@ public abstract class ObjectDetector : MonoBehaviour
     protected readonly float CONFIDENCE_LEVEL = 0.3f;
 
     public abstract List<Brick> GetBricks();
+
+    public abstract List<DebugBrick> GetDebugBricks();
 }
