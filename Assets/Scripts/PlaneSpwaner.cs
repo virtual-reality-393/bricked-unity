@@ -33,8 +33,8 @@ public class PlaneSpwaner : MonoBehaviour
                     bounds.Expand(-0.2f);
                     GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
                     plane.transform.position = anchor.gameObject.transform.position;
-                    plane.transform.rotation = Quaternion.identity;
-                    plane.transform.localScale =new Vector3(bounds.size.z, 1, bounds.size.x)/10;
+                    plane.transform.rotation = Quaternion.Euler(anchor.gameObject.transform.localRotation.eulerAngles + new Vector3(-90,0,-180));
+                    plane.transform.localScale =new Vector3(bounds.size.x, 1, bounds.size.z)/10;
                     plane.transform.parent = objectHolder.transform;
                     plane.GetComponent<Renderer>().material.color = Color.green;
                 }
