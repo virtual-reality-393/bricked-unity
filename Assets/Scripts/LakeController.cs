@@ -4,19 +4,19 @@ public class LakeController : MonoBehaviour
 {
     private static readonly int Spheres = Shader.PropertyToID("_Spheres");
     public Material waterMaterial;  // Reference to the material with the water shader
-    public Transform[] spheres;     // Array of spheres in the scene, representing the centers
+    public Vector3[] spheres;     // Array of spheres in the scene, representing the centers
 
-    [HideInInspector]public float radius = 0;
+    public float radius = 1;
 
     void Update()
     {
         // Create a list of sphere data (position + radius)
-        Vector4[] sphereData = new Vector4[spheres.Length];
+        Vector4[] sphereData = new Vector4[16];
         
         for (int i = 0; i < spheres.Length; i++)
         {
             // The radius is arbitrary, you can adjust it as needed
-            sphereData[i] = new Vector4(spheres[i].position.x, spheres[i].position.y, spheres[i].position.z, radius);
+            sphereData[i] = new Vector4(spheres[i].x, spheres[i].y, spheres[i].z, radius);
         }
 
         // Set the sphere data to the shader material

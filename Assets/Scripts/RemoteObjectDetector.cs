@@ -131,6 +131,8 @@ public class RemoteObjectDetector : ObjectDetector
                         }
                     }
                 }
+                HandleBricksDetected(GetBricks());
+                
             }
             catch (Exception e)
             {
@@ -187,5 +189,6 @@ public class RemoteObjectDetector : ObjectDetector
     {
         throw new NotImplementedException();
     }
+    
 }
 
