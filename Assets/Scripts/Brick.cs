@@ -97,4 +97,11 @@ public struct PythonBrick
     {
         return new BoundingBox(box[0], box[1], box[2], box[3]);
     }
+    
+    public override string ToString()
+    {
+        return $"PythonBrick [Color: {color}, Box: ({string.Join(", ", box)}), Center: ({string.Join(", ", center)})]";
+    }
+
+    
 }
