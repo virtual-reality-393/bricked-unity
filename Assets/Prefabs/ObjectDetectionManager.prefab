@@ -9,11 +9,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4999945467761645157}
-  - component: {fileID: 1799215223522337966}
-  - component: {fileID: 5748208583045527587}
-  - component: {fileID: 7431549432755179979}
+  - component: {fileID: -3726682467360130247}
+  - component: {fileID: -7162470643357140542}
+  - component: {fileID: 3605090485821131825}
+  - component: {fileID: 3833997170424929186}
+  - component: {fileID: 1935338273218789133}
   m_Layer: 0
-  m_Name: DepthManager
+  m_Name: ObjectDetectionManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -34,7 +36,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1799215223522337966
+--- !u!114 &-3726682467360130247
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,12 +45,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 4317745354091833694}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 628a499ae5ae58146b70d924de58a2c2, type: 3}
+  m_Script: {fileID: 11500000, guid: 228b42baded3eab4c92f8789edbdeb15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  environmentDepthManager: {fileID: 5748208583045527587}
-  environmentRaycastManager: {fileID: 7431549432755179979}
---- !u!114 &5748208583045527587
+  environmentDepthManager: {fileID: -7162470643357140542}
+  environmentRaycastManager: {fileID: 3605090485821131825}
+  webCamTextureManager: {fileID: 3833997170424929186}
+--- !u!114 &-7162470643357140542
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -65,7 +68,7 @@ MonoBehaviour:
   CustomTrackingSpace: {fileID: 0}
   <MaskMeshFilters>k__BackingField: []
   _cameraRig: {fileID: 0}
---- !u!114 &7431549432755179979
+--- !u!114 &3605090485821131825
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -77,3 +80,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d8affdff7ba47d892cc734baac9ac71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3833997170424929186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4317745354091833694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 136389349e451c040abc16455efa6445, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Eye: 0
+  RequestedResolution: {x: 0, y: 0}
+  CameraPermissions: {fileID: 1935338273218789133}
+--- !u!114 &1935338273218789133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4317745354091833694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21065a13196ce1b41bcadcb8949b0d2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PermissionRequestsOnStartup:
+  - com.oculus.permission.USE_SCENE
