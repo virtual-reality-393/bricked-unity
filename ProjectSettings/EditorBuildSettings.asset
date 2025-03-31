@@ -8,9 +8,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/MoveGame.unity
     guid: 62cefb7eec693d9448f1593316b28c2c
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TabelPlane.unity
     guid: 5f63e97123beec54fa52bced4b8da2cc
+  - enabled: 1
+    path: Assets/Scenes/StackGame.unity
+    guid: 1ded8386dfa3c6c4ebd207d8280d3a7a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 152c26631e7d9ca49b14bb507bfcdbb4, type: 2}

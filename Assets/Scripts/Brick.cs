@@ -34,6 +34,14 @@ public class Brick
         return cube;
     }
 
+    public GameObject DrawSmall()
+    {
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        cube.GetComponent<Renderer>().material.color = BrickColor;
+        cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        return cube;
+    }
+
 }
 
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class GameUtils
@@ -199,5 +200,52 @@ public static class GameUtils
 
         return hsvTexture;
 
+    }
+
+    public static List<string> GenetateStack(List<string> sortedList)
+    {
+        System.Random rng = new System.Random();
+        List<string> shuffled = sortedList.OrderBy(x => rng.Next()).ToList();
+
+        List<string> res = new List<string>();
+        for (int i = 0; i < shuffled.Count; i++)
+        {
+            if (i == 0)
+            {
+                res.Add(shuffled[i]);
+            }
+            else if (shuffled[i] == shuffled[i - 1])
+            {
+                continue;
+            }
+            else
+            {
+                res.Add(shuffled[i]);
+            }
+        }
+        return res;
+    }
+
+    public static List<string> GenetateStack(Dictionary<string, int> input)
+    {
+        List<string> sortedList = GenerateListFromDict(input);
+        return GenetateStack(sortedList);
+    }
+
+    public static List<string> GenerateListFromDict(Dictionary<string, int> input)
+    {
+        List<string> result = new List<string>();
+
+        // Loop through each key-value pair in the dictionary
+        foreach (var pair in input)
+        {
+            // Add the key to the result list "value" number of times
+            for (int i = 0; i < pair.Value; i++)
+            {
+                result.Add(pair.Key);
+            }
+        }
+
+        return result;
     }
 }

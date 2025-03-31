@@ -115,6 +115,12 @@ public class PlaceGame : MonoBehaviour
 
     }
 
+    public void NewTable()
+    {
+        DestroySpawnPositions();
+        taskComplet = true;
+    }
+
     private void DestroySpawnPositions()
     {
         foreach (Transform item in spawnPositions.transform)

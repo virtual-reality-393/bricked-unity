@@ -5306,7 +5306,7 @@ MonoBehaviour:
     e33: 1
   SceneSettings:
     DataSource: 2
-    RoomIndex: -1
+    RoomIndex: 1
     RoomPrefabs:
     - {fileID: 5618556046422172173, guid: 4b454e8ccd6764ccdbcd91586969863f, type: 3}
     - {fileID: 5618556046422172173, guid: 029ede24e76b24d0888dc235dd0b96f2, type: 3}
@@ -11132,6 +11132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objectHolder: {fileID: 2047617434}
+  camRig: {fileID: 549699691}
 --- !u!4 &2047617436
 Transform:
   m_ObjectHideFlags: 0
