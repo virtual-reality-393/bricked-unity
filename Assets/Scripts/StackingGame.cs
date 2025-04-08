@@ -52,7 +52,7 @@ public class StackingGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         DestroySpawnPositions();
 
@@ -66,9 +66,9 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -83,7 +83,7 @@ public class StackingGame : MonoBehaviour
 
     private void Play()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
@@ -94,9 +94,9 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -157,15 +157,15 @@ public class StackingGame : MonoBehaviour
 
     }
 
-    public List<string> SortGameObjectsByY(List<Brick> objects)
+    public List<string> SortGameObjectsByY(List<DetectedObject> objects)
     {
         // Sort the list using a custom comparison based on the Y-coordinate
         objects.Sort((obj1, obj2) => obj1.worldPos.y.CompareTo(obj2.worldPos.y));
 
         List<string> res = new List<string>();
-        foreach (Brick b in objects)
+        foreach (DetectedObject b in objects)
         {
-            res.Add(b.colorName);
+            res.Add(b.labelName);
         }
 
         return res;
@@ -185,11 +185,11 @@ public class StackingGame : MonoBehaviour
             Destroy(item.gameObject);
         }
     }
-    private Brick GetBrickWithColor(List<Brick> bricks, string color)
+    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }
@@ -222,7 +222,5 @@ public class StackingGame : MonoBehaviour
         newText.fontSize = 1;
         newText.alignment = TextAlignmentOptions.Center;
         newText.color = color;
-        
-
     }
 }

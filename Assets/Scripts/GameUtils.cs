@@ -112,7 +112,7 @@ public static class GameUtils
     //}
 
 
-    public static string GetAverageColorName(Texture2D texture, BoundingBox box, Vector2Int screenpoint)
+    public static string GetAverageColorName(Texture2D texture, DetectionBox box, Vector2Int screenpoint)
     {
         int x = screenpoint.x;
         int y = screenpoint.y;

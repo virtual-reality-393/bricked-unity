@@ -9,8 +9,8 @@ public class MoveingGame : MonoBehaviour
 
     public float Distans = 0.05f;
 
-    private Brick target;
-    private Brick toMove;
+    private DetectedObject target;
+    private DetectedObject toMove;
 
 
     bool taskComplet = true;
@@ -52,7 +52,7 @@ public class MoveingGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
 
         drawnBricks.ForEach(Destroy);
@@ -60,7 +60,7 @@ public class MoveingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.Draw();
             drawnBricks.Add(cube);
     
@@ -74,7 +74,7 @@ public class MoveingGame : MonoBehaviour
    
     private void Play()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         string[] colors = { "red", "green", "blue", "yellow" };
 
         //If the task is completed, choose new colors
@@ -145,11 +145,11 @@ public class MoveingGame : MonoBehaviour
 
     }
 
-    private Brick GetBrickWithColor(List<Brick> bricks, string color)
+    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }
@@ -157,7 +157,7 @@ public class MoveingGame : MonoBehaviour
         return null;
     }
 
-    private float[,] DistMat(List<Brick> bricks)
+    private float[,] DistMat(List<DetectedObject> bricks)
     {
         float[,] distArr = new float[bricks.Count, bricks.Count];
         for (int i = 0; i < bricks.Count; i++)

@@ -9,11 +9,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4999945467761645157}
-  - component: {fileID: -3726682467360130247}
   - component: {fileID: -7162470643357140542}
   - component: {fileID: 3605090485821131825}
   - component: {fileID: 3833997170424929186}
   - component: {fileID: 1935338273218789133}
+  - component: {fileID: 1114747798342542014}
   m_Layer: 0
   m_Name: ObjectDetectionManager
   m_TagString: Untagged
@@ -36,21 +36,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-3726682467360130247
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4317745354091833694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 228b42baded3eab4c92f8789edbdeb15, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  environmentDepthManager: {fileID: -7162470643357140542}
-  environmentRaycastManager: {fileID: 3605090485821131825}
-  webCamTextureManager: {fileID: 3833997170424929186}
 --- !u!114 &-7162470643357140542
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,3 +94,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PermissionRequestsOnStartup:
   - com.oculus.permission.USE_SCENE
+--- !u!114 &1114747798342542014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4317745354091833694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da81a8a10cb956e4ea98dccc376c4ad6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  environmentDepthManager: {fileID: -7162470643357140542}
+  environmentRaycastManager: {fileID: 3605090485821131825}
+  webCamTextureManager: {fileID: 3833997170424929186}
+  objectDetector: {fileID: 5022602860645237092, guid: f6138d73609c65f44bc5c29d1b2c7b78, type: 3}

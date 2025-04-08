@@ -50,6 +50,7 @@ public class PythonServer
         {
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            
         }
     }
 

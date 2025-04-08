@@ -45,7 +45,7 @@ public class PlaceGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         DestroySpawnPositions();
  
@@ -54,7 +54,7 @@ public class PlaceGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.Draw();
             drawnBricks.Add(cube);
 
@@ -70,7 +70,7 @@ public class PlaceGame : MonoBehaviour
 
     private void Play()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
 
         
 
@@ -91,11 +91,11 @@ public class PlaceGame : MonoBehaviour
         {
             for (int i = 0; i < spawnPositions.transform.childCount; i++)
             {
-                Brick brick = GetBrickWithColor(bricks, colors[i]);
-                if (brick != null)
+                DetectedObject detectedObject = GetBrickWithColor(bricks, colors[i]);
+                if (detectedObject != null)
                 {
                     GameObject point = spawnPositions.transform.GetChild(i).gameObject;
-                    dists[i] = Vector3.Distance(point.transform.position, brick.worldPos);
+                    dists[i] = Vector3.Distance(point.transform.position, detectedObject.worldPos);
                     if (dists[i] < Distans)
                     {
                         point.GetComponent<Renderer>().material.color = Color.cyan;
@@ -129,11 +129,11 @@ public class PlaceGame : MonoBehaviour
         }
     }
 
-    private Brick GetBrickWithColor(List<Brick> bricks, string color)
+    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }

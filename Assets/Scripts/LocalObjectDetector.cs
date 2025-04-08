@@ -11,26 +11,31 @@ using Meta.XR;
 using Meta.XR.EnvironmentDepth;
 using PassthroughCameraSamples;
 using System.Security.Cryptography;
+using TMPro;
 
 public class LocalObjectDetector : ObjectDetector
 {
     public ModelAsset objectDetector;
-    public Transform imageTransform;
 
     Worker objectDetectionWorker;
     private readonly float NMS_THRESHOLD = 0.4f; // IoU threshold for NMS
     private readonly int LAYERS_PER_FRAME = 5;
     bool playing;
 
-    private List<Brick> bricksInternal;
- 
+    private List<DetectedObject> bricksInternal;
+    private Tensor<float> modelInputTensor;
+    private TextureTransform tf;
+    public Transform centerCam;
+    public Transform canvas;
+
 
     void Start()
     {
         var detectionModel = ModelLoader.Load(objectDetector);
-        bricksInternal = new List<Brick>();
+        bricksInternal = new List<DetectedObject>();
         objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
-        environmentDepthManager.enabled = true;
+        tf = new TextureTransform().SetDimensions(640, 640, 3);
+        modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
         SetWebCam();
     }
 
@@ -41,11 +46,12 @@ public class LocalObjectDetector : ObjectDetector
         {
             SetWebCam();
 
-            if (webcamTexture != null && !playing)
-            {
-                StartCoroutine(ProcessImage());
-                playing = true;
-            }
+        }
+        
+        if (webcamTexture != null && !playing)
+        {
+            StartCoroutine(ProcessImage());
+            playing = true;
         }
     }
 
@@ -77,7 +83,7 @@ public class LocalObjectDetector : ObjectDetector
         return image;
     }
 
-    void DrawBoundingBox(Texture2D image, BoundingBox bbox)
+    void DrawBoundingBox(Texture2D image, DetectionBox bbox)
     {
         // Ensure that the bounding box is within the image's bounds
         int x1 = Mathf.Max(bbox.x1, 0);
@@ -108,23 +114,15 @@ public class LocalObjectDetector : ObjectDetector
 
     IEnumerator ProcessImage()
     {
+        List<GameObject> debugObjects = new List<GameObject>();
         while (true)
         {
-            var prevActive = RenderTexture.active;
-            if (modelInput)
-            {
-                Destroy(modelInput);
-            }
-
+            
+            Debug.LogError("1");
             var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
-            var tf = new TextureTransform().SetDimensions(640, 640, 3);
-            var modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
-
-            modelInput = GetImageFromWebcam();
-
-            TextureConverter.ToTensor(modelInput, modelInputTensor, tf);
+            TextureConverter.ToTensor(webcamTexture, modelInputTensor, tf);
             var detectionScheduler = objectDetectionWorker.ScheduleIterable(modelInputTensor);
-
+            Debug.LogError("2");
             int framesTaken = 0;
             while (detectionScheduler.MoveNext())
             {
@@ -135,38 +133,44 @@ public class LocalObjectDetector : ObjectDetector
 
                 framesTaken++;
             }
-
-            bricksInternal = new List<Brick>();
+            Debug.LogError("3");
+            bricksInternal = new List<DetectedObject>();
 
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
 
-            List<BoundingBox> bboxes = new List<BoundingBox>();
+            List<DetectionBox> bboxes = new List<DetectionBox>();
+
+
+            float maxConf = 0;
             for (int i = 0; i < modelOut.shape[2]; i++)
             {
-                if (modelOut[0, 4, i] > CONFIDENCE_LEVEL)
+                for (int j = 0; j < modelOut.shape[1]-4; j++)
                 {
-                    float x = modelOut[0, 0, i];
-                    float y = modelOut[0, 1, i];
-                    float w = modelOut[0, 2, i];
-                    float h = modelOut[0, 3, i];
+                    maxConf = Mathf.Max(maxConf, modelOut[0, 4 + j, i]);
+                    if (modelOut[0, 4+j, i] > CONFIDENCE_LEVEL)
+                    {
+                        
+                        float x = modelOut[0, 0, i];
+                        float y = modelOut[0, 1, i];
+                        float w = modelOut[0, 2, i];
+                        float h = modelOut[0, 3, i];
 
 
-                    int x1 = (int)(x - w / 2);
-                    int x2 = (int)(x + w / 2);
+                        int x1 = (int)(x - w / 2);
+                        int x2 = (int)(x + w / 2);
 
-                    int y1 = (int)(640 - y - h / 2);
-                    int y2 = (int)(640 - y + h / 2);
+                        int y1 = (int)(640 - y - h / 2);
+                        int y2 = (int)(640 - y + h / 2);
 
-                    bboxes.Add(new BoundingBox(x1, y1, x2, y2));
+                        bboxes.Add(new DetectionBox(j,x1, y1, x2, y2));
+                    }
                 }
             }
-
+            Debug.LogError(maxConf);
             float scaleX = webcamTexture.width / 640f;
             float scaleY = webcamTexture.height / 640f;
-
+            Debug.LogError("5");
             bboxes = ApplyNMS(bboxes);
-
-
             foreach (var bbox in bboxes)
             {
                 var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
@@ -175,34 +179,64 @@ public class LocalObjectDetector : ObjectDetector
 
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
-                    Color color = modelInput.GetPixel(screenPoint.x, screenPoint.y);
-                    //var (h, s, v) = GameUtils.RgbToHsv(color);
-                    //string colorName = GameUtils.GetColorName((int)h, (int)s, (int)v);
-                    //string colorName = GameUtils.GetAverageColorName(modelInput, bbox, screenPoint);
-                    string colorName = GameUtils.GetClosestColorName(color);
-                    bricksInternal.Add(new Brick(colorName,hit.point));
+
+                    bricksInternal.Add(new DetectedObject(bbox.label,detectedLabelIdxToLabelName[bbox.label],hit.point));
                 }
             }
+            Debug.LogError("6");
+            foreach (var v in debugObjects)
+            {
+                Destroy(v);
+            }
+            debugObjects =  new List<GameObject>();
+            
+            foreach (Transform t in canvas.transform)
+            {
+                Destroy(t.gameObject);
+            }
 
-            modelInputTensor.Dispose();
-            modelOut.Dispose();
-
-            RenderTexture.active = prevActive;
+            foreach (var v in bricksInternal)
+            {
+                AddText(v.labelName,v.worldPos,Color.magenta);
+                debugObjects.Add(v.Draw());
+                Debug.LogError("7");
+            }
+            HandleBricksDetected(GetBricks());
 
             yield return null;
         }
     }
+    
+    public void AddText(string text, Vector3 position, Color color)
+    {
+        // Create a new GameObject for the text and set its attributes.
+        GameObject newGameObject = new GameObject();
+        RectTransform rect = newGameObject.AddComponent<RectTransform>();
+        rect.position = position + new Vector3(0,0.03f, 0);
+        rect.rotation = Quaternion.identity;
+        rect.LookAt(centerCam);
+        rect.Rotate(Vector3.up, 180);
+        rect.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        newGameObject.transform.SetParent(canvas.transform);
+        TextMeshPro newText = newGameObject.AddComponent<TextMeshPro>();
 
-    private List<BoundingBox> ApplyNMS(List<BoundingBox> bboxes)
+        // Set specific TextMeshPro settings, extend this as you see fit.
+        newText.text = text;
+        newText.fontSize = 1;
+        newText.alignment = TextAlignmentOptions.Center;
+        newText.color = color;
+    }
+
+    private List<DetectionBox> ApplyNMS(List<DetectionBox> bboxes)
     {
         // Sort bounding boxes by confidence score (higher first)
         bboxes = bboxes.OrderByDescending(b => b.GetArea()).ToList();
 
-        List<BoundingBox> result = new List<BoundingBox>();
+        List<DetectionBox> result = new List<DetectionBox>();
 
         while (bboxes.Count > 0)
         {
-            BoundingBox currentBox = bboxes[0];
+            DetectionBox currentBox = bboxes[0];
             bboxes.RemoveAt(0);
 
             result.Add(currentBox);
@@ -214,7 +248,7 @@ public class LocalObjectDetector : ObjectDetector
         return result;
     }
 
-    private float CalculateIoU(BoundingBox box1, BoundingBox box2)
+    private float CalculateIoU(DetectionBox box1, DetectionBox box2)
     {
         Rect rect1 = box1.ToRect();
         Rect rect2 = box2.ToRect();
@@ -240,24 +274,15 @@ public class LocalObjectDetector : ObjectDetector
         }
     }
 
-    public override List<Brick> GetBricks()
+    public override List<DetectedObject> GetBricks()
     {
-        var res = new List<Brick>();
+        var res = new List<DetectedObject>();
         foreach (var brick in bricksInternal)
         {
             res.Add(brick);
         }
         return res;
     }
-
-    public override List<DebugBrick> GetDebugBricks()
-    {
-        var res = new List<DebugBrick>();
-        foreach (var brick in bricksInternal)
-        {
-            res.Add((DebugBrick)brick);
-        }
-        return res;
-    }
+    
 
 }

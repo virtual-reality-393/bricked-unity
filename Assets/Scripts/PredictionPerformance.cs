@@ -60,7 +60,7 @@ public class PredictionPerformance : MonoBehaviour
 
             var modelOut = (objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
 
-            List<BoundingBox> bboxes = new List<BoundingBox>();
+            List<DetectionBox> bboxes = new List<DetectionBox>();
             for (int i = 0; i < modelOut.shape[2]; i++)
             {
                 if (modelOut[0, 4, i] > CONFIDENCE_LEVEL)
@@ -77,7 +77,7 @@ public class PredictionPerformance : MonoBehaviour
                     int y1 = (int)(640 - y - h / 2);
                     int y2 = (int)(640 - y + h / 2);
 
-                    bboxes.Add(new BoundingBox(x1, y1, x2, y2));
+                    bboxes.Add(new DetectionBox(0,x1, y1, x2, y2));
                 }
             }
 
@@ -102,16 +102,16 @@ public class PredictionPerformance : MonoBehaviour
 
 
 
-    private List<BoundingBox> ApplyNMS(List<BoundingBox> bboxes)
+    private List<DetectionBox> ApplyNMS(List<DetectionBox> bboxes)
     {
         // Sort bounding boxes by confidence score (higher first)
         bboxes = bboxes.OrderByDescending(b => b.GetArea()).ToList();
 
-        List<BoundingBox> result = new List<BoundingBox>();
+        List<DetectionBox> result = new List<DetectionBox>();
 
         while (bboxes.Count > 0)
         {
-            BoundingBox currentBox = bboxes[0];
+            DetectionBox currentBox = bboxes[0];
             bboxes.RemoveAt(0);
 
             result.Add(currentBox);
@@ -123,7 +123,7 @@ public class PredictionPerformance : MonoBehaviour
         return result;
     }
 
-    private float CalculateIoU(BoundingBox box1, BoundingBox box2)
+    private float CalculateIoU(DetectionBox box1, DetectionBox box2)
     {
         Rect rect1 = box1.ToRect();
         Rect rect2 = box2.ToRect();
