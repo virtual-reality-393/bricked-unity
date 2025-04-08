@@ -1,3 +1,4 @@
+using Meta.XR.MRUtilityKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -247,5 +248,50 @@ public static class GameUtils
         }
 
         return result;
+    }
+
+    public static List<GameObject> GeneratePointsOnTable(Transform parent, GameObject prefab, int numOfPoinst, bool random = true)
+    {
+        List<GameObject> res = new List<GameObject>(numOfPoinst);
+        if (random)
+        {
+            res = GenerateRandomPointsOnTable(parent, prefab, numOfPoinst);
+        }
+        else
+        {
+            res = GenerateFixedPointsOnTable(parent, prefab, numOfPoinst);
+        }
+        return res;
+    }
+
+    private static List<GameObject> GenerateRandomPointsOnTable(Transform parent, GameObject prefab, int numOfPoinst)
+    {
+        FindSpawnPositions findSpawnPositions = parent.GetComponent<FindSpawnPositions>();
+        findSpawnPositions.SpawnAmount = numOfPoinst;
+        findSpawnPositions.StartSpawn();
+        List<GameObject> res = new List<GameObject>(numOfPoinst);
+        foreach (Transform t in parent)
+        {
+            res.Add(t.gameObject);
+        }
+        return res;
+    }
+
+    private static List<GameObject> GenerateFixedPointsOnTable(Transform parent, GameObject prefab, int numOfPoinst)
+    {
+        throw new NotImplementedException();
+    }
+    
+
+    public static Brick GetBrickWithColor(List<Brick> bricks, string color)
+    {
+        foreach (var brick in bricks)
+        {
+            if (brick.colorName == color)
+            {
+                return brick;
+            }
+        }
+        return null;
     }
 }
