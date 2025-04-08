@@ -18,11 +18,13 @@ public class StackingGame : MonoBehaviour
     public GameObject canvas;
 
     public float distans = 0.05f;
+    public float threshold = 0.06f;
 
     bool taskComplet = true;
+    bool makeNewStack = true;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
-    Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 1 }, { "blue", 1 }, { "yellow", 1 }, { "magenta", 0 } };
+    Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 2 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
 
     List<string> stackToBuild = new List<string>();
 
@@ -30,15 +32,57 @@ public class StackingGame : MonoBehaviour
 
     List<GameObject> drawnBricks = new List<GameObject>();
 
+    MRUKRoom room;
+    List<MRUKAnchor> anchors = new();
+
+    Vector3 displayPos = new Vector3();
+    Vector3 debugDisplayPos = new Vector3();
+
+    private bool runOnce = true;
+
+    private int stackHeight = 2;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _findSpawnPositions = spawnPositions.GetComponent<FindSpawnPositions>();
+        //displayPos = new GameObject().transform;
+        //DebugDisplayPos = new GameObject().transform;
     }
+        
 
     // Update is called once per frame
     void Update()
     {
+        if (runOnce)
+        {
+            room = MRUK.Instance.GetCurrentRoom();
+            Debug.LogWarning(room != null);
+            if (room != null)
+            {
+                anchors = room.Anchors;
+                foreach (MRUKAnchor anchor in anchors)
+                {
+                    if (anchor.Label == MRUKAnchor.SceneLabels.TABLE)
+                    {
+                        displayPos = anchor.gameObject.transform.position + new Vector3(0,0,0.2f);
+                       // displayPos.rotation = Quaternion.Euler(anchor.gameObject.transform.localRotation.eulerAngles + new Vector3(-90, 0, -180));
+                    }
+                }
+                runOnce = false;
+            }
+
+            if (!runOnce)
+            {
+                debugDisplayPos = displayPos + new Vector3(0.2f, 0, 0);
+                //Brick b = new Brick("red", displayPos);
+                //b.Draw(Color.magenta);
+                //Brick b2 = new Brick("green", DebugDisplayPos);
+                //b2.Draw(Color.cyan);
+            }
+            
+        }
+
         if (state == "setup")
         {
             Setup();
@@ -52,7 +96,7 @@ public class StackingGame : MonoBehaviour
 
     private void Setup()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
+        List<Brick> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         DestroySpawnPositions();
 
@@ -66,14 +110,14 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.labelName]++;
+            bricksInFrame[brick.colorName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
             drawnBricks.Add(cube);
 
         }
 
-        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1))// || bricks.Count == 4)
+        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 2 && bricksInFrame["blue"] == 2 && bricksInFrame["yellow"] == 3))// || bricks.Count == 4)
         {
             drawnBricks.ForEach(Destroy);
             drawnBricks.Clear();
@@ -83,7 +127,7 @@ public class StackingGame : MonoBehaviour
 
     private void Play()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
+        List<Brick> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
@@ -94,78 +138,139 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.labelName]++;
+            bricksInFrame[brick.colorName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
             drawnBricks.Add(cube);
 
         }
-        DestroyCubes();
+        DestroyCubes(1);
 
         //If the task is completed, choose new colors
-        if (taskComplet)
+        if (taskComplet && makeNewStack)
         {
             //Make stack to build and place it on table
             stackToBuild = GameUtils.GenetateStack(briksToBuildStack);
             _findSpawnPositions.StartSpawn();
-            Vector3 pos = spawnPositions.transform.GetChild(0).transform.position;
-
-            for (int i = 0; i < stackToBuild.Count; i++)
-            {
-                GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + new Vector3(0,0.03f,0) * i, Quaternion.identity, spawnPositions.transform);
-                cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(stackToBuild[i]);
-            }
+            //Vector3 pos = spawnPositions.transform.GetChild(0).transform.position;
+            stackHeight = 2;
+            DisplayStackToBuild(stackHeight);
 
             taskComplet = false;
+            makeNewStack = false;
         }
         else
         {
-            AddText("Stact to build", spawnPositions.transform.GetChild(0).transform.position + new Vector3(0, 0.03f, 0) * stackToBuild.Count, Color.white);
-            //Tjeck stacks in frame    
-            List<string> bricksColorSorted = SortGameObjectsByY(bricks);
-
-            Vector3 pos = spawnPositions.transform.GetChild(1).transform.position;
-            for (int i = 0; i < bricksColorSorted.Count; i++)
+            AddText("Debug info", debugDisplayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
+            if (taskComplet)
             {
-                GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform);
-                cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(bricksColorSorted[i]);
+                AddText("Seprate bricks", displayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
             }
-            AddText("Curret stack", pos + new Vector3(0, 0.03f, 0) * bricksColorSorted.Count, Color.white);
+            else
+            {
+                AddText("Stack to build", displayPos + new Vector3(0, 0.03f, 0) * stackHeight, Color.white, 2);
+            }
+
+            //Tjeck stacks in frame    
+
+            float[,] distArr = new float[1,1];
+            if (bricks.Count > 1)
+            {
+                distArr = DistMat(bricks);
+            }
+
+            int[,] ids = new int[bricks.Count, 2];
+            ids = closestBricks(distArr);
+
+            List<List<int>> stacks = FindConnectedComponents(ids);
+            List<List<string>> stacksColor = new List<List<string>>();
+            Vector3 pos = debugDisplayPos; // spawnPositions.transform.GetChild(1).transform.position;
+            Vector3 offset = new Vector3(0, 0, 0);
+            foreach (var stack in stacks)
+            {
+                List<string> stackColorRow = new List<string>();
+                if (stack.Count > 2)
+                {
+                    float y1 = bricks[stack[0]].worldPos.y;
+                    float y2 = bricks[stack[stack.Count - 1]].worldPos.y;
+                    if (y2 < y1)
+                    {
+                        stack.Reverse();
+                    }
+                }
+
+                stack.Sort((a, b) => bricks[a].worldPos.y.CompareTo(bricks[b].worldPos.y));
+                for (int i = 0; i < stack.Count; i++)
+                {
+                    GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
+                    cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(bricks[stack[i]].colorName);
+                    stackColorRow.Add(bricks[stack[i]].colorName);
+                }
+                offset += new Vector3(0.05f, 0, 0);
+                stacksColor.Add(stackColorRow);
+            }
+
+
 
             bool b = false;
-            if (stackToBuild.Count == bricksColorSorted.Count)
+            foreach (var stack in stacksColor)
             {
-                b = true;
-                for (int i = 0; i < stackToBuild.Count; i++)
+                if (stackHeight == stack.Count)
                 {
-                    b = b && stackToBuild[i] == bricksColorSorted[i];
-                    if (!b)
+                    b = true;
+                    for (int i = 0; i < stackHeight; i++)
                     {
-                        break;
+                        b = b && stackToBuild[i] == stack[i];
+                        if (!b)
+                        {
+                            break;
+                        }
                     }
                 }
             }
 
-            if (b || bricks.Count == 6)
+
+            if (b)
             {
-                DestroySpawnPositions();
-                taskComplet = true;
+                stackHeight++;
+                DisplayStackToBuild(stackHeight);
             }
 
+            if (stackHeight > stackToBuild.Count)
+            {
+                taskComplet = true;
+                DestroyCubes(0);
+            }
+
+            int numBricks = GameUtils.GenerateListFromDict(briksToBuildStack).Count;
+            if (taskComplet && stacks.Count == numBricks)
+            {
+                makeNewStack = true;
+                DestroySpawnPositions();
+            }
 
         }
-
     }
 
-    public List<string> SortGameObjectsByY(List<DetectedObject> objects)
+    private void DisplayStackToBuild(int stackHight)
+    {
+        DestroyCubes(0);
+        for (int i = 0; i < stackHight; i++)
+        {
+            GameObject cube = Instantiate(GameManager.Instance.brickPrefab, displayPos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(0));
+            cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(stackToBuild[i]);
+        }
+    }
+
+    public List<string> SortGameObjectsByY(List<Brick> objects)
     {
         // Sort the list using a custom comparison based on the Y-coordinate
         objects.Sort((obj1, obj2) => obj1.worldPos.y.CompareTo(obj2.worldPos.y));
 
         List<string> res = new List<string>();
-        foreach (DetectedObject b in objects)
+        foreach (Brick b in objects)
         {
-            res.Add(b.labelName);
+            res.Add(b.colorName);
         }
 
         return res;
@@ -178,18 +283,18 @@ public class StackingGame : MonoBehaviour
             Destroy(item.gameObject);
         }
     }
-    private void DestroyCubes()
+    private void DestroyCubes(int i)
     {
-        foreach (Transform item in cubeParent.transform)
+        foreach (Transform item in cubeParent.transform.GetChild(i))
         {
             Destroy(item.gameObject);
         }
     }
-    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
+    private Brick GetBrickWithColor(List<Brick> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.labelName == color)
+            if (brick.colorName == color)
             {
                 return brick;
             }
@@ -204,7 +309,7 @@ public class StackingGame : MonoBehaviour
 
 
     // Method to add a text to the UI with specified attributes.
-    public void AddText(string text, Vector3 position, Color color)
+    public void AddText(string text, Vector3 position, Color color, float fontsize = 1)
     {
         // Create a new GameObject for the text and set its attributes.
         GameObject newGameObject = new GameObject();
@@ -219,8 +324,102 @@ public class StackingGame : MonoBehaviour
 
         // Set specific TextMeshPro settings, extend this as you see fit.
         newText.text = text;
-        newText.fontSize = 1;
+        newText.fontSize = fontsize;
         newText.alignment = TextAlignmentOptions.Center;
         newText.color = color;
+
+    }
+    int[] GetTwoLowestIndices(float[] arr)
+    {
+        return arr
+            .Select((value, index) => new { Value = value, Index = index }) // Pair values with indices
+            .OrderBy(x => x.Value) // Sort by value
+            .Take(2) // Take the two lowest
+            .Select(x => x.Index) // Extract indices
+            .ToArray();
+    }
+
+    private int[,] closestBricks(float[,] distArr)
+    {
+        int[,] ids = new int[distArr.GetLength(0), 2];
+        for (int i = 0; i < distArr.GetLength(0); i++)
+        {
+            float[] row = new float[distArr.GetLength(1)];
+            for (int j = 0; j < distArr.GetLength(1); j++)
+            {
+                row[j] = distArr[i, j];
+            }
+
+            int[] rowId = GetTwoLowestIndices(row);
+            ids[i, 0] = distArr[i, rowId[0]] < threshold ? rowId[0] : -1;
+            ids[i, 1] = distArr[i, rowId[1]] < threshold ? rowId[1] : -1;
+        }
+        return ids;
+    }
+
+    private float[,] DistMat(List<Brick> bricks)
+    {
+        float[,] distArr = new float[bricks.Count, bricks.Count];
+        for (int i = 0; i < bricks.Count; i++)
+        {
+            for (int j = 0; j < bricks.Count; j++)
+            {
+                if (i == j)
+                {
+                    distArr[i, j] = 10000;
+                }
+                else
+                {
+                    distArr[i, j] = Vector3.Distance(bricks[i].worldPos, bricks[j].worldPos);
+                }
+            }
+        }
+        return distArr;
+    }
+
+
+    List<List<int>> FindConnectedComponents(int[,] graph)
+    {
+        int n = graph.GetLength(0);
+        List<List<int>> components = new List<List<int>>();
+        HashSet<int> visited = new HashSet<int>();
+
+        for (int i = 0; i < n; i++)
+        {
+            if (!visited.Contains(i))
+            {
+                List<int> component = new List<int>();
+                DFS(graph, i, visited, component);
+                components.Add(component);
+            }
+        }
+
+        return components;
+    }
+
+    void DFS(int[,] graph, int node, HashSet<int> visited, List<int> component)
+    {
+        Stack<int> stack = new Stack<int>();
+        stack.Push(node);
+
+        while (stack.Count > 0)
+        {
+            int curr = stack.Pop();
+            if (!visited.Contains(curr))
+            {
+                visited.Add(curr);
+                component.Add(curr);
+
+                // Add connected nodes to stack
+                for (int j = 0; j < 2; j++)
+                {
+                    int neighbor = graph[curr, j];
+                    if (neighbor != -1 && !visited.Contains(neighbor))
+                    {
+                        stack.Push(neighbor);
+                    }
+                }
+            }
+        }
     }
 }
