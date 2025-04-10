@@ -19,7 +19,7 @@ public class SandboxGame : BaseGame
     protected override void OnBricksDetected(object sender, ObjectDetectedEventArgs e)
     {
         var managerBricks = brickManager.bricks;
-        e.Bricks = managerBricks.Select(x => new DetectedObject(0,x.Key.name, x.Key.transform.position)).ToList(); 
+        e.DetectedObjects = managerBricks.Select(x => new DetectedObject(0,x.Key.name, x.Key.transform.position)).ToList(); 
         HandleLakeBricks(e);
         HandleForestBricks(e);
     }
@@ -32,7 +32,7 @@ public class SandboxGame : BaseGame
 
     private void HandleForestBricks(ObjectDetectedEventArgs e)
     {
-        var bricks = e.Bricks;
+        var bricks = e.DetectedObjects;
         
         foreach (var treeObj in _trees)
         {
@@ -63,7 +63,7 @@ public class SandboxGame : BaseGame
 
     private void HandleLakeBricks(ObjectDetectedEventArgs e)
     {
-        var bricks = e.Bricks;
+        var bricks = e.DetectedObjects;
         Vector3[] blueBricks = new Vector3[16];
         int i = 0;
         foreach (var brick in bricks)

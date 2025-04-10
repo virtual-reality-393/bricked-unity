@@ -3,12 +3,13 @@ using Meta.XR.EnvironmentDepth;
 using Meta.XR;
 using PassthroughCameraSamples;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 public abstract class ObjectDetector : MonoBehaviour
 {
 
-    public static Dictionary<int, string> detectedLabelIdxToLabelName = new Dictionary<int, string>
+    public static readonly ReadOnlyDictionary<int, string> DetectedLabelIdxToLabelName = new(new Dictionary<int, string>
     {
         {0,"red"},
         {1,"green"},
@@ -20,7 +21,8 @@ public abstract class ObjectDetector : MonoBehaviour
         {7,"sheep"},
         {8,"pig"},
         {9,"human"},
-    };
+    });
+    
     [SerializeField]
     protected EnvironmentDepthManager environmentDepthManager;
     [SerializeField]
@@ -30,28 +32,26 @@ public abstract class ObjectDetector : MonoBehaviour
     protected WebCamTexture webcamTexture;
 
     protected readonly float CONFIDENCE_LEVEL = 0.3f;
-    
-    public delegate void ObjectDetectedEventHandler(ObjectDetectedEventArgs plane);
 
-    public EventHandler<ObjectDetectedEventArgs> OnBricksDetected;
+    public EventHandler<ObjectDetectedEventArgs> OnObjectsDetected;
 
     public abstract List<DetectedObject> GetBricks();
     
 
-    protected virtual void HandleBricksDetected(List<DetectedObject> bricks)
+    protected virtual void HandleBricksDetected(List<DetectedObject> detectedObjects)
     {
-        OnBricksDetected?.Invoke(this,new ObjectDetectedEventArgs(bricks));
+        OnObjectsDetected?.Invoke(this,new ObjectDetectedEventArgs(detectedObjects));
     }
 }
 
 
 public class ObjectDetectedEventArgs : EventArgs
 {
-    public List<DetectedObject> Bricks;
+    public List<DetectedObject> DetectedObjects;
 
-    public ObjectDetectedEventArgs(List<DetectedObject> bricks)
+    public ObjectDetectedEventArgs(List<DetectedObject> detectedObjects)
     {
-        this.Bricks = bricks;
+        this.DetectedObjects = detectedObjects;
     }
 }
 

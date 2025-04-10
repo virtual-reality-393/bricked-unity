@@ -20,7 +20,7 @@ public abstract class BaseGame : MonoBehaviour
         GameState = GameState.Awake;
         
         
-        objectDetector.OnBricksDetected += OnBricksDetected;
+        objectDetector.OnObjectsDetected += OnBricksDetected;
     }
 
     protected virtual void OnPlaneSpawned(object sender, PlaneSpawnedEventArgs e)

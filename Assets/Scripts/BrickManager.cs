@@ -18,7 +18,7 @@ public class BrickManager : MonoBehaviour
     public List<KVPair<GameObject,int>> bricks = new List<KVPair<GameObject,int>>();
     void Awake()
     {
-        detector.OnBricksDetected += OnBricksDetected;
+        detector.OnObjectsDetected += OnBricksDetected;
 
         StartCoroutine(DecreaseLifetime());
     }
@@ -41,7 +41,7 @@ public class BrickManager : MonoBehaviour
 
     private void OnBricksDetected(object sender, ObjectDetectedEventArgs e)
     {
-        var detectedBricks = e.Bricks;
+        var detectedBricks = e.DetectedObjects;
 
         var bricksToAdd = new List<KVPair<GameObject,int>>();
         foreach (var detectedBrick in detectedBricks)
