@@ -10,9 +10,7 @@ using TMPro;
 public class LocalObjectDetector : ObjectDetector
 {
     public ModelAsset objectDetector;
-    public Transform centerCam;
-    public Transform canvas;
-    
+
     private Worker _objectDetectionWorker;
     private bool _playing;
     private List<DetectedObject> _internalDetection;
