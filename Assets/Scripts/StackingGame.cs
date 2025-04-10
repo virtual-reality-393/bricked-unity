@@ -96,7 +96,7 @@ public class StackingGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         DestroySpawnPositions();
 
@@ -110,9 +110,9 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -127,7 +127,7 @@ public class StackingGame : MonoBehaviour
 
     private void Play()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
@@ -138,9 +138,9 @@ public class StackingGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -203,8 +203,8 @@ public class StackingGame : MonoBehaviour
                 for (int i = 0; i < stack.Count; i++)
                 {
                     GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
-                    cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(bricks[stack[i]].colorName);
-                    stackColorRow.Add(bricks[stack[i]].colorName);
+                    cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(bricks[stack[i]].labelName);
+                    stackColorRow.Add(bricks[stack[i]].labelName);
                 }
                 offset += new Vector3(0.05f, 0, 0);
                 stacksColor.Add(stackColorRow);
@@ -262,15 +262,15 @@ public class StackingGame : MonoBehaviour
         }
     }
 
-    public List<string> SortGameObjectsByY(List<Brick> objects)
+    public List<string> SortGameObjectsByY(List<DetectedObject> objects)
     {
         // Sort the list using a custom comparison based on the Y-coordinate
         objects.Sort((obj1, obj2) => obj1.worldPos.y.CompareTo(obj2.worldPos.y));
 
         List<string> res = new List<string>();
-        foreach (Brick b in objects)
+        foreach (DetectedObject b in objects)
         {
-            res.Add(b.colorName);
+            res.Add(b.labelName);
         }
 
         return res;
@@ -290,11 +290,11 @@ public class StackingGame : MonoBehaviour
             Destroy(item.gameObject);
         }
     }
-    private Brick GetBrickWithColor(List<Brick> bricks, string color)
+    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }
@@ -357,7 +357,7 @@ public class StackingGame : MonoBehaviour
         return ids;
     }
 
-    private float[,] DistMat(List<Brick> bricks)
+    private float[,] DistMat(List<DetectedObject> bricks)
     {
         float[,] distArr = new float[bricks.Count, bricks.Count];
         for (int i = 0; i < bricks.Count; i++)

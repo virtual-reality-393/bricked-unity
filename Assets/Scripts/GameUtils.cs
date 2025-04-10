@@ -283,11 +283,11 @@ public static class GameUtils
     }
     
 
-    public static Brick GetBrickWithColor(List<Brick> bricks, string color)
+    public static DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }

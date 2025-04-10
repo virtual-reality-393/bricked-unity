@@ -69,7 +69,7 @@ public class StoryGame : MonoBehaviour
 
     private void Setup()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
 
         drawnBricks.ForEach(Destroy);
@@ -82,9 +82,9 @@ public class StoryGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            bricksInFrame[brick.colorName]++;
+            bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
         }
 
@@ -93,7 +93,7 @@ public class StoryGame : MonoBehaviour
 
             for (int i = 0; i < distArr.Length; i++)
             {
-                Brick b = GetBrickWithColor(bricks, colors[i]);
+                DetectedObject b = GetBrickWithColor(bricks, colors[i]);
                 GameObject cylinder = Instantiate(cylinderPrefab, b.worldPos + displayOfset, Quaternion.identity, cubeParent.transform);
                 cylinder.GetComponent<Renderer>().material.color = Color.white;
             }
@@ -108,7 +108,7 @@ public class StoryGame : MonoBehaviour
 
     private void Play()
     {
-        List<Brick> bricks = objectDetection.GetBricks();
+        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
@@ -122,11 +122,11 @@ public class StoryGame : MonoBehaviour
 
         foreach (var brick in bricks)
         {
-            if (brick.colorName != "red")
+            if (brick.labelName != "red")
             {
-                bricksInFrame[brick.colorName]++;
+                bricksInFrame[brick.labelName]++;
                 GameObject cube = brick.DrawSmall();
-                AddText(brick.colorName + " brick", brick.worldPos, GameUtils.nameToColor[brick.colorName]);
+                AddText(brick.labelName + " brick", brick.worldPos, GameUtils.nameToColor[brick.labelName]);
                 drawnBricks.Add(cube);
             }
         }
@@ -136,11 +136,11 @@ public class StoryGame : MonoBehaviour
             text = "Talk to all the characters";
         }
 
-        Brick player = GetBrickWithColor(bricks, playerColor);
+        DetectedObject player = GetBrickWithColor(bricks, playerColor);
         if (player != null)
         {
             GameObject cubePlayer = player.DrawSmall();
-            AddText("Player", player.worldPos, GameUtils.nameToColor[player.colorName]);
+            AddText("Player", player.worldPos, GameUtils.nameToColor[player.labelName]);
             drawnBricks.Add(cubePlayer);
 
             //If the task is completed, choose new colors
@@ -152,7 +152,7 @@ public class StoryGame : MonoBehaviour
             {
                 for (int i = 0; i < distArr.Length; i++)
                 {
-                    Brick b = GetBrickWithColor(bricks, colors[i]);
+                    DetectedObject b = GetBrickWithColor(bricks, colors[i]);
                     if (b != null)
                     {
                         float dist = Vector3.Distance(b.worldPos + displayOfset, player.worldPos);
@@ -243,11 +243,11 @@ public class StoryGame : MonoBehaviour
         }
     }
 
-    private Brick GetBrickWithColor(List<Brick> bricks, string color)
+    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
         foreach (var brick in bricks)
         {
-            if (brick.colorName == color)
+            if (brick.labelName == color)
             {
                 return brick;
             }
