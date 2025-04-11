@@ -18,8 +18,6 @@ public class SandboxGame : BaseGame
 
     protected override void OnBricksDetected(object sender, ObjectDetectedEventArgs e)
     {
-        var managerBricks = brickManager.bricks;
-        e.DetectedObjects = managerBricks.Select(x => new DetectedObject(0,x.Key.name, x.Key.transform.position)).ToList(); 
         HandleLakeBricks(e);
         HandleForestBricks(e);
     }

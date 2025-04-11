@@ -5,15 +5,17 @@ using UnityEngine;
 public struct DetectionBox
 {
     public readonly int label;
+    public readonly float conf;
     public readonly int x1;
     public readonly int y1;
     public readonly int x2;
     public readonly int y2;
+    
 
     public readonly int Width => x2 - x1;
     public readonly int Height => y2 - y1;
 
-    public DetectionBox(int label, int x1, int y1, int x2, int y2)
+    public DetectionBox(int label,float conf, int x1, int y1, int x2, int y2)
     {
 
         if (x1 >= x2 || y1 > y2)
@@ -26,6 +28,7 @@ public struct DetectionBox
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
+        this.conf = conf;
     }
 
     public Vector2Int GetCenter()
@@ -51,7 +54,7 @@ public struct DetectionBox
             return new DetectionBox();
         }
 
-        return new DetectionBox(label,newx1, newy1, newx2, newy2);
+        return new DetectionBox(label,conf,newx1, newy1, newx2, newy2);
     }
 
 

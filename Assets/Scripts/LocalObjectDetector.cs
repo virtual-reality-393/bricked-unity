@@ -112,7 +112,7 @@ public class LocalObjectDetector : ObjectDetector
                         int y1 = (int)(640 - y - h / 2);
                         int y2 = (int)(640 - y + h / 2);
 
-                        bboxes.Add(new DetectionBox(j,x1, y1, x2, y2));
+                        bboxes.Add(new DetectionBox(j,modelOut[0, 4+j, i],x1, y1, x2, y2));
                     }
                 }
             }
@@ -143,7 +143,7 @@ public class LocalObjectDetector : ObjectDetector
     private List<DetectionBox> ApplyNMS(List<DetectionBox> bboxes)
     {
         // Sort bounding boxes by confidence score (higher first)
-        bboxes = bboxes.OrderByDescending(b => b.GetArea()).ToList();
+        bboxes = bboxes.OrderByDescending(b => b.conf).ToList();
 
         List<DetectionBox> result = new List<DetectionBox>();
 

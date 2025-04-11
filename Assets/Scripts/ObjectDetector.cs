@@ -31,7 +31,7 @@ public abstract class ObjectDetector : MonoBehaviour
     protected WebCamTextureManager webCamTextureManager;
     protected WebCamTexture webcamTexture;
 
-    protected readonly float CONFIDENCE_LEVEL = 0.3f;
+    protected readonly float CONFIDENCE_LEVEL = 0.4f;
 
     public EventHandler<ObjectDetectedEventArgs> OnObjectsDetected;
 

@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -7,119 +9,139 @@ using UnityEngine;
 public class BrickManager : MonoBehaviour
 {
 
+    [Header("Detection Settings")]
     public ObjectDetector detector;
-    public GameObject canvas;
-    public Transform centerCam;
-    public float range;
+    public float distanceThreshold = 0.5f;
+    public int detectionLifetime;
+    public Dictionary<string,List<LifeTimeObject>> LifeTimeObjects = new();
+    public List<KVPair<string, int>> maxInstances = new();
+    private Dictionary<string, List<GameObject>> objectInstances;
     
-    public GameObject brickPrefab;
-    public GameObject brickRadiusPrefab;
-    
-    public List<KVPair<GameObject,int>> bricks = new List<KVPair<GameObject,int>>();
-    void Awake()
+    public static readonly ReadOnlyDictionary<int, string> DetectedLabelIdxToLabelName = new(new Dictionary<int, string>
     {
-        detector.OnObjectsDetected += OnBricksDetected;
+        {0,"red"},
+        {1,"green"},
+        {2,"blue"},
+        {3,"yellow"},
+        {4,"big penguin"},
+        {5,"small penguin"},
+        {6,"lion"},
+        {7,"sheep"},
+        {8,"pig"},
+        {9,"human"},
+    });
 
-        StartCoroutine(DecreaseLifetime());
-    }
-
-    IEnumerator DecreaseLifetime()
+    void Start()
     {
-        while (true)
+
+        detector.OnObjectsDetected += OnObjectDetected;
+        objectInstances = new();
+        foreach (var maxInstance in maxInstances)
         {
-            for (int i = bricks.Count - 1; i >= 0; i--)
-            {
-                if (--bricks[i].Value <= 0)
-                {
-                    Destroy(bricks[i].Key);
-                    bricks.RemoveAt(i);
-                }
-            }
-            yield return new WaitForSeconds(0.2f);
+            objectInstances.Add(maxInstance.Key, new List<GameObject>());
+        }
+        foreach (var labelName in DetectedLabelIdxToLabelName.Values)
+        {
+            LifeTimeObjects.Add(labelName,new List<LifeTimeObject>());
         }
     }
 
-    private void OnBricksDetected(object sender, ObjectDetectedEventArgs e)
+    void OnObjectDetected(object sender, ObjectDetectedEventArgs e)
     {
-        var detectedBricks = e.DetectedObjects;
-
-        var bricksToAdd = new List<KVPair<GameObject,int>>();
-        foreach (var detectedBrick in detectedBricks)
+        foreach (var v in e.DetectedObjects)
         {
-            var relevantBricks = bricks.Where((brick) =>
-                Vector3.Distance(detectedBrick.worldPos, brick.Key.transform.position) < range);
-            
-            var kvPairs = relevantBricks.ToList();
-            if (kvPairs.Count> 0)
+            if (LifeTimeObjects[v.labelName].Count == 0)
             {
-                foreach (var brick in  kvPairs)
-                {
-                    brick.Value = 5;
-                }
+                SpawnLifetimeObject(v);
             }
             else
             {
-                GameObject newBrick = GameObject.Instantiate(brickPrefab);
-                newBrick.transform.position = detectedBrick.worldPos;
+                for (var i = 0; i < LifeTimeObjects[v.labelName].Count; i++)
+                {
+                    var l = LifeTimeObjects[v.labelName][i];
+                    if (Vector3.Distance(l.obj.transform.position, v.worldPos) >= distanceThreshold)
+                    {
+                        SpawnLifetimeObject(v);
+                    }
+                    else
+                    {
+                        l.lifeTime = detectionLifetime;
+                    }
+                }
+            }
+            
+        }
+        
+        UpdateLifetime();
+    }
 
-                // GameObject brickRadius = GameObject.Instantiate(brickRadiusPrefab);
-                //     
-                // brickRadius.transform.localScale  = new Vector3( range*2, 0.005f, range*2);
-                // brickRadius.transform.position = detectedBrick.worldPos;
-                //     
-                // brickRadius.transform.parent = newBrick.transform;    
+    private GameObject SpawnLifetimeObject(DetectedObject v)
+    {
+        if (objectInstances[v.labelName].Count > 0)
+        {
+            objectInstances[v.labelName][0].SetActive(true);
+            return objectInstances[v.labelName][0];
+        }
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        
+        go.transform.position = v.worldPos;
+        
+        LifeTimeObjects[v.labelName].Add(new LifeTimeObject(detectionLifetime,go,v.labelName));
 
-                newBrick.name = detectedBrick.labelName;
-                    
-                newBrick.GetComponent<Renderer>().material.color = Color.cyan;
-                    
-                bricksToAdd.Add(new KVPair<GameObject, int>(newBrick,5));
+        objectInstances[v.labelName].Add(go);
+
+
+        return go;
+    }
+
+
+    private void UpdateLifetime()
+    {
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            foreach (var obj in l)
+            {
+                if(obj.lifeTime <= 0 ) continue;
+                obj.lifeTime--;
+
+                var closeObjs = l.Where((x) => Vector3.Distance(x.obj.transform.position,obj.obj.transform.position) < distanceThreshold && x != obj);
+
+                foreach (var cObj in closeObjs)
+                {
+                    cObj.lifeTime = 0;
+                }
             }
         }
 
-        foreach (var brick in bricksToAdd)
+        foreach (var l in LifeTimeObjects.Values)
         {
-            bricks.Add(brick);
+            for (int i = l.Count-1;i>=0; i--)
+            {
+                if (l[i].lifeTime <= 0)
+                {
+                    Destroy(l[i].obj);
+                    objectInstances[l[i].labelName][0].SetActive(false);
+                    l.RemoveAt(i);
+                }
+            }
         }
-        
-        foreach (Transform t in canvas.transform)
-        {
-            Destroy(t.gameObject);
-        }
-
-        foreach (var brick in bricks)
-        {
-            AddText(brick.Value.ToString(), brick.Key.transform.position,Color.magenta);
-        }
-
     }
-
-    public void AddText(string text, Vector3 position, Color color)
-    {
-        // Create a new GameObject for the text and set its attributes.
-        GameObject newGameObject = new GameObject();
-        RectTransform rect = newGameObject.AddComponent<RectTransform>();
-        rect.position = position + new Vector3(0,0.03f, 0);
-        rect.rotation = Quaternion.identity;
-        rect.LookAt(centerCam);
-        rect.Rotate(Vector3.up, 180);
-        rect.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        newGameObject.transform.SetParent(canvas.transform);
-        TextMeshPro newText = newGameObject.AddComponent<TextMeshPro>();
-
-        // Set specific TextMeshPro settings, extend this as you see fit.
-        newText.text = text;
-        newText.fontSize = 1;
-        newText.alignment = TextAlignmentOptions.Center;
-        newText.color = color;
-    }
-
-    public List<GameObject> GetBrickObjects()
-    {
-        return bricks.Select(brick => brick.Key).ToList();
-    }
-
 }
+
+
+public class LifeTimeObject
+{
+    public float lifeTime;
+    public GameObject obj;
+    public string labelName;
+    public LifeTimeObject(float lifeTime, GameObject obj, string labelName)
+    {
+        this.lifeTime = lifeTime;
+        this.obj = obj;
+        this.labelName = labelName;
+    }
+}
+
 
 public class KVPair<K, V>
 {
@@ -131,5 +153,20 @@ public class KVPair<K, V>
     {
         Key = key;
         Value = value;
+    }
+}
+
+[Serializable]
+public class Triplet<K1,K2,K3>
+{
+    public K1 val1;
+    public K2 val2;
+    public K3 val3;
+
+    public Triplet(K1 val1, K2 val2, K3 val3)
+    {
+        this.val1 = val1;
+        this.val2 = val2;
+        this.val3 = val3;
     }
 }

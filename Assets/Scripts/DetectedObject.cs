@@ -52,6 +52,12 @@ public class DetectedObject
         cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         return cube;
     }
+    
+    public override string ToString()
+    {
+        return $"DetectedObject [LabelIdx: {labelIdx}, LabelName: {labelName}, WorldPos: {worldPos}]";
+    }
+
 
 }
 
@@ -74,7 +80,7 @@ public struct PythonBrick
 
     public DetectionBox GetBoundingBox()
     {
-        return new DetectionBox(0,box[0], box[1], box[2], box[3]);
+        return new DetectionBox(0,0,box[0], box[1], box[2], box[3]);
     }
     
     public override string ToString()
