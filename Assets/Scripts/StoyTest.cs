@@ -1,12 +1,10 @@
 using Meta.XR.MRUtilityKit;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
-using Unity.VisualScripting;
+using System;
 using UnityEngine;
 
-public class StoryGame : MonoBehaviour
+public class StoyTest : MonoBehaviour
 {
     public ObjectDetector objectDetection;
 
@@ -15,20 +13,20 @@ public class StoryGame : MonoBehaviour
     public GameObject canvas;
 
     public Transform centerCam;
-
+    
     public float theshold = 0.05f;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
-   
+
     string state = "setup";
 
     List<GameObject> drawnObjects = new List<GameObject>();
 
-    float[] distArr = new float[3] { 100, 100, 100};
+    float[] distArr = new float[3] { 100, 100, 100 };
     bool[] visits = new bool[3] { false, false, false };
 
-    string[] objectsToDetect = {"red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
-    string[] interactables = { "red","green", "blue", "yellow", "big penguin", "pig", "human" };
+    string[] objectsToDetect = { "red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
+    string[] interactables = { "red", "green", "blue", "yellow", "big penguin", "pig", "human" };
     string playerColor = "small penguin";
     List<DetectedObject> objects = new List<DetectedObject>();
 
@@ -42,10 +40,12 @@ public class StoryGame : MonoBehaviour
 
     private bool runOnce = true;
 
+    JacoDOTest jacoDoTest;
+
     DetectedObject whereDid = new DetectedObject();
     DetectedObject whoDid = new DetectedObject();
 
-    Dictionary<string,string> stroy = new Dictionary<string, string>
+    Dictionary<string, string> stroy = new Dictionary<string, string>
     {
         {"red", "What is this? \nA \"KNIFE !!\". Could this be the murder weapon?"},
         {"green", "There are clear signs of struggle her, but no blod."},
@@ -69,7 +69,9 @@ public class StoryGame : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        objectDetection.OnObjectsDetected += HandleBricksDetected;
+        //objectDetection.OnObjectsDetected += HandleBricksDetected;
+
+        jacoDoTest = GetComponent<JacoDOTest>();
 
         distArr = new float[interactables.Length];
         visits = new bool[interactables.Length];
@@ -130,15 +132,14 @@ public class StoryGame : MonoBehaviour
             Destroy(t.gameObject);
         }
 
-        foreach (var obj in objects)
+        foreach (var lto in jacoDoTest.getlifeTimeObjects())
         {
-            if (bricksInFrame.ContainsKey(obj.labelName))
+            if (bricksInFrame.ContainsKey(lto.labelName))
             {
-                bricksInFrame[obj.labelName]++;
+                bricksInFrame[lto.labelName]++;
             }
-            GameObject cube = obj.DrawSmall();
-            GameUtils.AddText(centerCam, canvas, obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
-            drawnObjects.Add(cube);
+            GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[jacoDoTest.nameToIndex[lto.labelName]]);
+            drawnObjects.Add(lto.obj);
         }
 
         if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
@@ -148,8 +149,8 @@ public class StoryGame : MonoBehaviour
             drawnObjects.Add(startCirkle);
             GameUtils.AddText(centerCam, canvas, "Place player here to start the game", startCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
 
-            DetectedObject player = GameUtils.GetBrickWithColor(objects, playerColor);
-            if (Vector3.Distance(startCirkle.transform.position, player.worldPos) < theshold)
+            LifeTimeObject player = GameUtils.GetLifeTimeObjectWithlabel(jacoDoTest.getlifeTimeObjects(), playerColor);
+            if (Vector3.Distance(startCirkle.transform.position, player.obj.transform.position) < theshold)
             {
                 drawnObjects.ForEach(Destroy);
                 drawnObjects.Clear();
@@ -163,15 +164,14 @@ public class StoryGame : MonoBehaviour
         ResetBricksInFrame();
         drawnObjects.ForEach(Destroy);
         drawnObjects.Clear();
-        foreach (var obj in objects)
+        foreach (var lto in jacoDoTest.getlifeTimeObjects())
         {
-            if (bricksInFrame.ContainsKey(obj.labelName))
+            if (bricksInFrame.ContainsKey(lto.labelName))
             {
-                bricksInFrame[obj.labelName]++;
-                GameObject cube = obj.DrawSmall();
-                GameObject circle = MakeInteractionCirkle(obj.worldPos + offsetDir * -0.05f, Color.white);
-                circle.transform.parent = cube.transform;
-                drawnObjects.Add(cube);
+                bricksInFrame[lto.labelName]++;
+                GameObject circle = MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
+                circle.transform.parent = lto.obj.transform;
+                drawnObjects.Add(lto.obj);
             }
         }
 
@@ -198,21 +198,21 @@ public class StoryGame : MonoBehaviour
                 text = "Talk to all the characters and investigate the various places";
             }
 
-            DetectedObject player = GameUtils.GetBrickWithColor(objects, playerColor);
-            foreach (var obj in objects)
+            LifeTimeObject player = GameUtils.GetLifeTimeObjectWithlabel(jacoDoTest.getlifeTimeObjects(), playerColor);
+            foreach (var lto in jacoDoTest.getlifeTimeObjects())
             {
-                if (obj.labelName != playerColor)
+                if (lto.labelName != playerColor)
                 {
                     float dist = -1;
                     if (player != null)
                     {
-                        dist = Vector3.Distance(obj.worldPos + displayOfset, player.worldPos);
+                        dist = Vector3.Distance(lto.obj.transform.position + displayOfset, player.obj.transform.position);
                     }
-                    GameObject cube = obj.DrawSmall();
-                    GameUtils.AddText(centerCam, canvas, obj.labelName + " plyer dist: " + Math.Round(dist, 2), obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
+
+                    GameUtils.AddText(centerCam, canvas, lto.labelName + " plyer dist: " + Math.Round(dist, 2), lto.obj.transform.position, DetectedObject.labelToDrawColor[jacoDoTest.nameToIndex[lto.labelName]]);
 
                     Color color = Color.white;
-                    int i = Array.IndexOf(interactables, obj.labelName);
+                    int i = Array.IndexOf(interactables, lto.labelName);
                     visits[i] = visits[i] ? true : dist <= theshold;
                     if (visits[i] && dist <= theshold)
                     {
@@ -223,10 +223,10 @@ public class StoryGame : MonoBehaviour
                     {
                         color = Color.cyan;
                     }
-                    GameObject circle = MakeInteractionCirkle(obj.worldPos + offsetDir * -0.05f, color);
-                    circle.transform.parent = cube.transform;
-                    cube.transform.parent = cubeParent.transform;
-                    drawnObjects.Add(cube);
+                    GameObject circle = MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, color);
+                    circle.transform.parent = lto.obj.transform;
+                    lto.obj.transform.parent = cubeParent.transform;
+                    drawnObjects.Add(lto.obj);
                     //drawnBricks.Add(circle);
 
                     //Debug code for skipping the investigating part bye only needing to talk to the "big penguin".
@@ -245,9 +245,9 @@ public class StoryGame : MonoBehaviour
                 GameObject nextCirkle = MakeInteractionCirkle(anchorPoint, Color.gray);
                 nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
                 drawnObjects.Add(nextCirkle);
-                GameUtils.AddText(centerCam, canvas, "Place player here to make accusation", nextCirkle.transform.position + new Vector3(0,0.05f,0), Color.white, 1.5f);
+                GameUtils.AddText(centerCam, canvas, "Place player here to make accusation", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
 
-                if (Vector3.Distance(nextCirkle.transform.position, player.worldPos) < theshold)
+                if (Vector3.Distance(nextCirkle.transform.position, player.obj.transform.position) < theshold)
                 {
                     DestroyCubes();
                     state = "end";
@@ -260,7 +260,7 @@ public class StoryGame : MonoBehaviour
                     }
                 }
             }
-            
+
             GameUtils.AddText(centerCam, canvas, text, displayPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
         }
     }
@@ -403,7 +403,7 @@ public class StoryGame : MonoBehaviour
             {
                 bricksInFrame[obj.labelName]++;
                 GameObject cube = obj.DrawSmall();
-                GameUtils.AddText(centerCam, canvas,obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
+                GameUtils.AddText(centerCam, canvas, obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
                 drawnObjects.Add(cube);
             }
         }
@@ -437,7 +437,7 @@ public class StoryGame : MonoBehaviour
 
     private GameObject MakeInteractionCirkle(Vector3 pos, Color color)
     {
-        GameObject circle = Instantiate(GameManager.Instance.cylinderPrefab, new Vector3(pos.x, displayPos.y-0.01f,pos.z), Quaternion.identity, cubeParent.transform);
+        GameObject circle = Instantiate(GameManager.Instance.cylinderPrefab, new Vector3(pos.x, displayPos.y - 0.01f, pos.z), Quaternion.identity, cubeParent.transform);
         circle.GetComponent<Renderer>().material.color = color;
         circle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
         //circle.transform.parent = cubeParent.transform;
@@ -489,5 +489,4 @@ public class StoryGame : MonoBehaviour
         }
     }
 }
-
 

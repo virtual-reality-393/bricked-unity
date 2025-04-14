@@ -1,42 +1,173 @@
+using Meta.XR.MRUtilityKit;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class JacoDOTest : MonoBehaviour
 {
+    public ObjectDetector objectDetection;
 
-    public Dictionary<string, int> dict = new Dictionary<string, int> { { "red", 1 }, { "green", 3 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
+    public GameObject spawnPositions;
+    public GameObject cubeParent;
+    public GameObject canvas;
 
-    public bool b = true;
+    public Transform centerCam;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Detection Settings")]
+    public float distanceThreshold = 0.01f;
+    public Dictionary<string, List<LifeTimeObject>> LifeTimeObjects = new();
+
+    //float[] distArr = new float[3] { 100, 100, 100 };
+    //bool[] visits = new bool[3] { false, false, false };
+
+    string[] objectsToDetect = { "red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
+    //string[] interactables = { "red", "green", "blue", "yellow", "big penguin", "pig", "human" };
+    //string playerColor = "small penguin";
+    List<DetectedObject> objects = new List<DetectedObject>();
+    public Dictionary<string, int> nameToIndex;
+
+    MRUKRoom room;
+    List<MRUKAnchor> anchors = new();
+    bool runOnce = true;
+
+    Vector3 anchorPoint = new Vector3(0, 0, 0);
+    Vector3 offsetDir = new Vector3(0, 0, 0);
+    Vector3 defaultTextPos = new Vector3();
+
+
+    private void Start()
     {
-
+        objectDetection.OnObjectsDetected += HandleBricksDetected;
+        nameToIndex = ObjectDetector.DetectedLabelIdxToLabelName.ToDictionary(pair => pair.Value, pair => pair.Key);
+        foreach (var labelName in ObjectDetector.DetectedLabelIdxToLabelName.Values)
+        {
+            LifeTimeObjects.Add(labelName, new List<LifeTimeObject>());
+        }
+    }
+    private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
+    {
+        objects = new List<DetectedObject>();
+        e.DetectedObjects.ForEach(obj =>
+        {
+            if (objectsToDetect.Contains(obj.labelName))
+            {
+                objects.Add(obj);
+            }
+        });
+        OnObjectDetected(objects);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (b)
+        if (runOnce)
         {
-            foreach (Transform t in transform)
+            GetRoom();
+        }
+
+        foreach (Transform t in canvas.transform)
+        {
+            Destroy(t.gameObject);
+        }
+
+        GameUtils.AddText(centerCam, canvas, "Running...", defaultTextPos + new Vector3(0,0.1f,0), Color.white, 2f);
+        
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            foreach (var obj in l)
             {
-                Destroy(t.gameObject);
+                GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.obj.transform.position.ToString() + "\nLifetime: " + obj.lifeTime, obj.obj.transform.position + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
+            }
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            foreach (var obj in l)
+            {
+                obj.lifeTime -= Time.deltaTime;
+            }
+        }
+
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            for (int i = l.Count - 1; i >= 0; i--)
+            {
+                if (l[i].lifeTime <= 0)
+                {
+                    Destroy(l[i].obj);
+                    l.RemoveAt(i);
+                }
+            }
+        }
+    }
+
+    void OnObjectDetected(List<DetectedObject> detectedObjects)
+    {
+        //debugObjects.ForEach(Destroy);
+        //debugObjects.Clear();
+        foreach (var v in detectedObjects)
+        {
+            Debug.Log(v);
+            if (LifeTimeObjects[v.labelName].Count == 0)
+            {
+                GameObject go = v.DrawSmall();
+                //go.transform.position = v.worldPos;
+                LifeTimeObjects[v.labelName].Add(new LifeTimeObject(2, go,v.labelName));
+            }
+            else
+            {
+                foreach (var l in LifeTimeObjects[v.labelName])
+                {
+                    if (Vector3.Distance(l.obj.transform.position, v.worldPos) <= distanceThreshold)
+                    {
+                        //GameObject go = v.DrawSmall();
+                        //LifeTimeObjects[v.labelName].Add(new LifeTimeObject(5, go,v.labelName));
+                        l.lifeTime = 1;
+                    }
+                }
             }
 
-            List<string> sorted = GameUtils.GenerateListFromDict(dict);
-            List<string> stack = GameUtils.GenetateStack(sorted);
+        }
+    }
 
-            Vector3 pos = new Vector3(0, 1, 0);
-
-            for (int i = 0; i < stack.Count; i++)
+    public List<LifeTimeObject> getlifeTimeObjects()
+    {
+        List<LifeTimeObject> res = new();
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            if (l.Count >= 0)
             {
-                GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(stack[i]);
-                cube.transform.parent = transform;
-                cube.transform.position = pos * i;
+                res.Add(l[0]);
             }
-            b = false;
+        }
+        return res;
+    }
+
+    private void GetRoom()
+    {
+        room = MRUK.Instance.GetCurrentRoom();
+        Debug.LogWarning(room != null);
+        if (room != null)
+        {
+            anchors = room.Anchors;
+            foreach (MRUKAnchor anchor in anchors)
+            {
+                if (anchor.Label == MRUKAnchor.SceneLabels.TABLE)
+                {
+                    anchorPoint = anchor.gameObject.transform.position;
+                }
+            }
+            runOnce = false;
+        }
+
+        if (!runOnce)
+        {
+            offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
+
+            defaultTextPos = anchorPoint + offsetDir * 0.2f;
+
         }
     }
 }

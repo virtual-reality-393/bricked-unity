@@ -297,6 +297,19 @@ public static class GameUtils
         return null;
     }
 
+    public static LifeTimeObject GetLifeTimeObjectWithlabel(List<LifeTimeObject> lifeTimeObjects, string label)
+    {
+        foreach (var lto in lifeTimeObjects)
+        {
+            if (lto.labelName == label)
+            {
+                return lto;
+            }
+        }
+        return null;
+    }
+
+
     // Method to add a text to the UI with specified attributes.
     public static void AddText(Transform centerCam, GameObject canvas, string text, Vector3 position, Color color, float fontsize = 1)
     {
