@@ -8306,8 +8306,7 @@ MonoBehaviour:
   environmentDepthManager: {fileID: 1756451587}
   environmentRaycastManager: {fileID: 1756451586}
   webCamTextureManager: {fileID: 1756451584}
-  objectDetector: {fileID: 5022602860645237092, guid: e3c537500c0a94d4dbf918b528b3b176, type: 3}
-  imageTransform: {fileID: 0}
+  objectDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
 --- !u!4 &1655954081
 Transform:
   m_ObjectHideFlags: 0
@@ -11215,6 +11214,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
 --- !u!4 &2030986499
 Transform:
   m_ObjectHideFlags: 0
@@ -11246,9 +11246,8 @@ MonoBehaviour:
   spawnPositions: {fileID: 1667328527}
   cubeParent: {fileID: 1164112116}
   canvas: {fileID: 514215521}
-  cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
   centerCam: {fileID: 1908727816}
-  distans: 0.05
+  theshold: 0.05
 --- !u!1 &2039127456
 GameObject:
   m_ObjectHideFlags: 0

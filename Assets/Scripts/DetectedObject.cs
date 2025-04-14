@@ -12,6 +12,7 @@ public class DetectedObject
 
     public static Dictionary<int, Color> labelToDrawColor = new Dictionary<int, Color>
     {
+        {-1, Color.black },
         {0, new Color(1f, 0f, 0f)},
         {1, new Color(0f, 1f, 0f)},
         {2, new Color(0f, 0f, 1f)},
@@ -23,6 +24,13 @@ public class DetectedObject
         {8, new Color(0.5f, 0.5f, 1f)},
         {9, new Color(0.8f, 0.2f, 1f)},
     };
+
+    public DetectedObject()
+    {
+        labelIdx = -1;
+        labelName = "";
+        worldPos = Vector3.zero;
+    }
 
     public DetectedObject(int labelIdx, string labelName, Vector3 worldPos)
     {

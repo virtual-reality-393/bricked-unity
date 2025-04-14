@@ -1,7 +1,9 @@
 using Meta.XR.MRUtilityKit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class StoryGame : MonoBehaviour
@@ -12,41 +14,82 @@ public class StoryGame : MonoBehaviour
     public GameObject cubeParent;
     public GameObject canvas;
 
-    public GameObject cylinderPrefab;
-
     public Transform centerCam;
 
-    private FindSpawnPositions _findSpawnPositions;
-
-    public float distans = 0.05f;
-
-    bool taskComplet = false;
+    public float theshold = 0.05f;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
-    Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 1 }, { "blue", 1 }, { "yellow", 1 }, { "magenta", 0 } };
-
+   
     string state = "setup";
 
     List<GameObject> drawnBricks = new List<GameObject>();
 
     float[] distArr = new float[3] { 100, 100, 100};
     bool[] visits = new bool[3] { false, false, false };
-    string[] colors = {"green", "blue", "yellow" };
-    string playerColor = "red";
+
+    string[] objectsToDetect = {"red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
+    string[] interactables = { "red","green", "blue", "yellow", "big penguin", "pig", "human" };
+    string playerColor = "small penguin";
+    List<DetectedObject> objects = new List<DetectedObject>();
 
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
 
+    Vector3 anchorPoint = new Vector3(0, 0, 0);
+    Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
-    Vector3 debugDisplayPos = new Vector3();
     Vector3 displayOfset = new Vector3(0, 0, -0.05f);
 
     private bool runOnce = true;
 
+    DetectedObject whereDid = new DetectedObject();
+    DetectedObject whoDid = new DetectedObject();
+
+    Dictionary<string,string> stroy = new Dictionary<string, string>
+    {
+        {"red", "What is this? \nA \"KNIFE !!\". Could this be the murder weapon?"},
+        {"green", "There are clear signs of struggle her, but no blod."},
+        {"blue", "This is just a nice lake, it has no connection to the story."},
+        {"yellow", "What's in here? \nit's a lot of blood and something else, something that's soft and covered in blood."},
+        {"big penguin", "This is the victim, there are no \nobvious signs of how the murder was committed."},
+        {"small penguin", "Hey I'm the player."},
+        {"pig", "Dead!! big penguin is dead. I'm not sorry about that, \nbig penguin made a lot of noise tying to fly all the time, it was annoying."},
+        {"human", "Big penguin was a nice one, the only annoying \nthing was the countless attempts to fly away."},
+    };
+
+    int ending = 0;
+    Dictionary<int, string> endings = new Dictionary<int, string>
+    {
+        {0,"You are worng, start over and try again." },
+        {1, "No human did not kill big penguin. \nHuman killed sheap (Thats way there are no sheap)." },
+        {2, "You did it, it was the the pig all along, it wanted to fly befor the big penguin." },
+        {3, "No the big penguin did not kill it self." }
+    };
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _findSpawnPositions = spawnPositions.GetComponent<FindSpawnPositions>();
+        objectDetection.OnObjectsDetected += HandleBricksDetected;
+
+        distArr = new float[interactables.Length];
+        visits = new bool[interactables.Length];
+        for (int i = 0; i < distArr.Length; i++)
+        {
+            distArr[i] = 100;
+            visits[i] = false;
+        }
+    }
+
+    private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
+    {
+        objects = new List<DetectedObject>();
+        e.DetectedObjects.ForEach(obj =>
+        {
+            if (objectsToDetect.Contains(obj.labelName))
+            {
+                objects.Add(obj);
+            }
+        });
     }
 
     // Update is called once per frame
@@ -65,11 +108,18 @@ public class StoryGame : MonoBehaviour
         {
             Play();
         }
+        else if (state == "end")
+        {
+            End();
+        }
+        else if (state == "restart")
+        {
+            Restart();
+        }
     }
 
     private void Setup()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
 
         drawnBricks.ForEach(Destroy);
@@ -80,26 +130,20 @@ public class StoryGame : MonoBehaviour
             Destroy(t.gameObject);
         }
 
-        foreach (var brick in bricks)
+        foreach (var obj in objects)
         {
-            bricksInFrame[brick.labelName]++;
-            GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+            if (bricksInFrame.ContainsKey(obj.labelName))
+            {
+                bricksInFrame[obj.labelName]++;
+            }
+            GameObject cube = obj.DrawSmall();
+            GameUtils.AddText(centerCam, canvas, obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
             drawnBricks.Add(cube);
         }
 
-        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1))// || bricks.Count == 4)
-        {
-
-            for (int i = 0; i < distArr.Length; i++)
-            {
-                DetectedObject b = GetBrickWithColor(bricks, colors[i]);
-                GameObject cylinder = Instantiate(cylinderPrefab, b.worldPos + displayOfset, Quaternion.identity, cubeParent.transform);
-                cylinder.GetComponent<Renderer>().material.color = Color.white;
-            }
-            distArr = new float[3] { 100, 100, 100 };
-            taskComplet = false;
-            
+        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
+          && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
+        {   
             drawnBricks.ForEach(Destroy);
             drawnBricks.Clear();
             state = "play";
@@ -108,98 +152,267 @@ public class StoryGame : MonoBehaviour
 
     private void Play()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
         ResetBricksInFrame();
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
+        foreach (var obj in objects)
+        {
+            if (bricksInFrame.ContainsKey(obj.labelName))
+            {
+                bricksInFrame[obj.labelName]++;
+                GameObject cube = obj.DrawSmall();
+                GameObject circle = MakeInteractionCirkle(obj.worldPos + offsetDir * -0.05f, Color.white);
+                circle.transform.parent = cube.transform;
+                drawnBricks.Add(cube);
+            }
+        }
 
-        string text = "Test text";
+        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
+            && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
+        {
+            //Clear frame
+            drawnBricks.ForEach(Destroy);
+            drawnBricks.Clear();
 
+            DestroyCubes();
+
+            string text = "No player";
+
+            foreach (Transform t in canvas.transform)
+            {
+                Destroy(t.gameObject);
+            }
+            //End clear frame
+
+
+            if (!CheckIfAllVisited())
+            {
+                text = "Talk to all the characters and investigate the various places";
+            }
+
+            DetectedObject player = GameUtils.GetBrickWithColor(objects, playerColor);
+            foreach (var obj in objects)
+            {
+                if (obj.labelName != playerColor)
+                {
+                    float dist = -1;
+                    if (player != null)
+                    {
+                        dist = Vector3.Distance(obj.worldPos + displayOfset, player.worldPos);
+                    }
+                    GameObject cube = obj.DrawSmall();
+                    GameUtils.AddText(centerCam, canvas, obj.labelName + " plyer dist: " + Math.Round(dist, 2), obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
+
+                    Color color = Color.white;
+                    int i = Array.IndexOf(interactables, obj.labelName);
+                    visits[i] = visits[i] ? true : dist <= theshold;
+                    if (visits[i] && dist <= theshold)
+                    {
+                        color = Color.magenta;
+                        text = stroy[interactables[i]];
+                    }
+                    else if (visits[i] && dist > theshold)
+                    {
+                        color = Color.cyan;
+                    }
+                    GameObject circle = MakeInteractionCirkle(obj.worldPos + offsetDir * -0.05f, color);
+                    circle.transform.parent = cube.transform;
+                    cube.transform.parent = cubeParent.transform;
+                    drawnBricks.Add(cube);
+                    //drawnBricks.Add(circle);
+
+                    //Debug code for skipping the investigating part bye only needing to talk to the "big penguin".
+                    //if (visits[Array.IndexOf(interactables, "big penguin")])
+                    //{
+                    //    for (int j = 0; j < visits.Length; j++)
+                    //    {
+                    //        visits[j] = true;
+                    //    }
+                    //}
+                }
+            }
+
+            if (CheckIfAllVisited())
+            {
+                GameObject nextCirkle = MakeInteractionCirkle(anchorPoint, Color.gray);
+                nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
+                drawnBricks.Add(nextCirkle);
+                GameUtils.AddText(centerCam, canvas, "Place player here to make accusation", nextCirkle.transform.position + new Vector3(0,0.05f,0), Color.white, 1.5f);
+
+                if (Vector3.Distance(nextCirkle.transform.position, player.worldPos) < theshold)
+                {
+                    DestroyCubes();
+                    state = "end";
+                    distArr = new float[interactables.Length];
+                    visits = new bool[interactables.Length];
+                    for (int i = 0; i < distArr.Length; i++)
+                    {
+                        distArr[i] = 100;
+                        visits[i] = false;
+                    }
+                }
+            }
+            
+            GameUtils.AddText(centerCam, canvas, text, displayPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
+        }
+    }
+
+    private void End()
+    {
+        ResetBricksInFrame();
+        drawnBricks.ForEach(Destroy);
+        drawnBricks.Clear();
         foreach (Transform t in canvas.transform)
         {
             Destroy(t.gameObject);
         }
 
-        foreach (var brick in bricks)
+        foreach (var obj in objects)
         {
-            if (brick.labelName != "red")
+            if (bricksInFrame.ContainsKey(obj.labelName))
             {
-                bricksInFrame[brick.labelName]++;
-                GameObject cube = brick.DrawSmall();
-                AddText(brick.labelName + " brick", brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+                bricksInFrame[obj.labelName]++;
+                GameObject cube = obj.DrawSmall();
+                GameUtils.AddText(centerCam, canvas, obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
                 drawnBricks.Add(cube);
             }
         }
 
-        if (!CheckIfAllVisited())
+        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
+            && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
         {
-            text = "Talk to all the characters";
-        }
+            drawnBricks.ForEach(Destroy);
+            drawnBricks.Clear();
 
-        DetectedObject player = GetBrickWithColor(bricks, playerColor);
-        if (player != null)
-        {
-            GameObject cubePlayer = player.DrawSmall();
-            AddText("Player", player.worldPos, GameUtils.nameToColor[player.labelName]);
-            drawnBricks.Add(cubePlayer);
-
-            //If the task is completed, choose new colors
-            if (taskComplet)
+            foreach (Transform t in canvas.transform)
             {
-                AddText("Game done", displayPos, Color.white, 2f);
+                Destroy(t.gameObject);
             }
-            else
+
+            GameUtils.AddText(centerCam, canvas, "Make your accusation", displayPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
+
+            GameObject circleWhere = MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * 0.1f, Color.white);
+            drawnBricks.Add(circleWhere);
+            string text = "Where did it happen?";
+            if (whereDid.labelName != "")
             {
-                for (int i = 0; i < distArr.Length; i++)
+                text += "\n" + whereDid.labelName;
+            }
+            GameUtils.AddText(centerCam, canvas, text, circleWhere.transform.position + new Vector3(0, 0.1f, 0), Color.white, 2f);
+            float dist = 1000;
+            for (int i = 0; i < 4; i++)
+            {
+                DetectedObject detectedObject = GameUtils.GetBrickWithColor(objects, interactables[i]);
+                if (Vector3.Distance(circleWhere.transform.position, detectedObject.worldPos) < dist)
                 {
-                    DetectedObject b = GetBrickWithColor(bricks, colors[i]);
-                    if (b != null)
+                    dist = Vector3.Distance(circleWhere.transform.position, detectedObject.worldPos);
+                    if (dist < theshold)
                     {
-                        float dist = Vector3.Distance(b.worldPos + displayOfset, player.worldPos);
-                        distArr[i] = dist;
-
-                        if (distArr[i] < distans)
-                        {
-                            visits[i] = true;
-                            cubeParent.transform.GetChild(i).gameObject.GetComponent<Renderer>().material.color = Color.magenta;
-                        }
+                        whereDid = detectedObject;
                     }
-
-                    if (visits[i] && distArr[i] > distans)
+                    else
                     {
-                        cubeParent.transform.GetChild(i).gameObject.GetComponent<Renderer>().material.color = Color.cyan;
+                        whereDid = new DetectedObject();
                     }
-                }
-
-                //Get id of lowest distance
-                int minIndex = 0;
-                float minValue = distArr[0];
-                for (int i = 1; i < distArr.Length; i++)
-                {
-                    if (distArr[i] < minValue)
-                    {
-                        minValue = distArr[i];
-                        minIndex = i;
-                    }
-                }
-                if (minValue < distans)
-                {
-                    text = "Talk to " + colors[minIndex] + " brick";
-                }
-
-                AddText(text, displayPos, Color.white, 2f);
-
-                if (CheckIfAllVisited())
-                {
-                    DestroyCubes();
-                    taskComplet = true;
-                    visits = new bool[3] { false, false, false };
-                    distArr = new float[3] { 100, 100, 100 };
                 }
             }
+
+            GameObject circleWho = MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * -0.1f, Color.white);
+            drawnBricks.Add(circleWho);
+            text = "Who did it?";
+            if (whoDid.labelName != "")
+            {
+                text += "\n" + whoDid.labelName;
+            }
+            GameUtils.AddText(centerCam, canvas, text, circleWho.transform.position + new Vector3(0, 0.1f, 0), Color.white, 2f);
+            dist = 1000;
+            for (int i = 4; i < interactables.Length; i++)
+            {
+                DetectedObject detectedObject = GameUtils.GetBrickWithColor(objects, interactables[i]);
+                if (Vector3.Distance(circleWho.transform.position, new Vector3(detectedObject.worldPos.x, circleWho.transform.position.y, detectedObject.worldPos.z)) < dist)
+                {
+                    dist = Vector3.Distance(circleWho.transform.position, detectedObject.worldPos);
+                    if (dist < theshold)
+                    {
+                        whoDid = detectedObject;
+                    }
+                    else
+                    {
+                        whoDid = new DetectedObject();
+                    }
+                }
+            }
+
+            if (whereDid.labelName != "" && whoDid.labelName != "")
+            {
+                text = "";
+
+                GameObject nextCirkle = MakeInteractionCirkle(anchorPoint + offsetDir * 0.15f, Color.gray);
+                nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
+                drawnBricks.Add(nextCirkle);
+                GameUtils.AddText(centerCam, canvas, "Place player to confirm accusation", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
+
+                DetectedObject player = GameUtils.GetBrickWithColor(objects, playerColor);
+                if (Vector3.Distance(nextCirkle.transform.position, player.worldPos) < theshold)
+                {
+                    if (whereDid.labelName == "yellow" && whoDid.labelName == "human")
+                    {
+                        ending = 1;
+                    }
+                    else if (whereDid.labelName == "green" && whoDid.labelName == "pig")
+                    {
+                        ending = 2;
+                    }
+                    else if (whoDid.labelName == "big penguin")
+                    {
+                        ending = 3;
+                    }
+                    else
+                    {
+                        ending = 0;
+                    }
+                    state = "restart";
+                }
+            }
+        }
+    }
+
+    private void Restart()
+    {
+        ResetBricksInFrame();
+        drawnBricks.ForEach(Destroy);
+        drawnBricks.Clear();
+        foreach (Transform t in canvas.transform)
+        {
+            Destroy(t.gameObject);
         }
 
+        GameUtils.AddText(centerCam, canvas, endings[ending], displayPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
 
+        foreach (var obj in objects)
+        {
+            if (bricksInFrame.ContainsKey(obj.labelName))
+            {
+                bricksInFrame[obj.labelName]++;
+                GameObject cube = obj.DrawSmall();
+                GameUtils.AddText(centerCam, canvas,obj.labelName, obj.worldPos, DetectedObject.labelToDrawColor[obj.labelIdx]);
+                drawnBricks.Add(cube);
+            }
+        }
+
+        GameObject nextCirkle = MakeInteractionCirkle(anchorPoint + offsetDir * -0.15f, Color.gray);
+        nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
+        drawnBricks.Add(nextCirkle);
+        GameUtils.AddText(centerCam, canvas, "Place player to restart game", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
+
+        if (bricksInFrame[playerColor] == 1)
+        {
+            DetectedObject player = GameUtils.GetBrickWithColor(objects, playerColor);
+            if (Vector3.Distance(nextCirkle.transform.position, player.worldPos) < theshold)
+            {
+                state = "setup";
+            }
+        }
     }
 
     private bool CheckIfAllVisited()
@@ -214,26 +427,16 @@ public class StoryGame : MonoBehaviour
         return true;
     }
 
-    public void AddText(string text, Vector3 position, Color color, float fontsize = 1)
+    private GameObject MakeInteractionCirkle(Vector3 pos, Color color)
     {
-        // Create a new GameObject for the text and set its attributes.
-        GameObject newGameObject = new GameObject();
-        RectTransform rect = newGameObject.AddComponent<RectTransform>();
-        rect.position = position + new Vector3(0, 0.03f, 0);
-        rect.rotation = Quaternion.identity;
-        rect.LookAt(centerCam);
-        rect.Rotate(Vector3.up, 180);
-        rect.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        newGameObject.transform.SetParent(canvas.transform);
-        TextMeshPro newText = newGameObject.AddComponent<TextMeshPro>();
-
-        // Set specific TextMeshPro settings, extend this as you see fit.
-        newText.text = text;
-        newText.fontSize = fontsize;
-        newText.alignment = TextAlignmentOptions.Center;
-        newText.color = color;
-
+        GameObject circle = Instantiate(GameManager.Instance.cylinderPrefab, new Vector3(pos.x, displayPos.y-0.01f,pos.z), Quaternion.identity, cubeParent.transform);
+        circle.GetComponent<Renderer>().material.color = color;
+        circle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
+        //circle.transform.parent = cubeParent.transform;
+        return circle;
     }
+
+
 
     private void DestroyCubes()
     {
@@ -243,27 +446,15 @@ public class StoryGame : MonoBehaviour
         }
     }
 
-    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
-    {
-        foreach (var brick in bricks)
-        {
-            if (brick.labelName == color)
-            {
-                return brick;
-            }
-        }
-        return null;
-    }
-
     private void ResetBricksInFrame()
     {
-        bricksInFrame = new Dictionary<string, int> { { "red", 0 }, { "green", 0 }, { "blue", 0 }, { "yellow", 0 }, { "magenta", 0 } };
+        bricksInFrame = new Dictionary<string, int> { { "red", 0 }, { "green", 0 }, { "blue", 0 }, { "yellow", 0 } ,
+                                                      { "big penguin", 0 }, { "small penguin", 0 }, { "pig", 0 } , {"human",0}};
     }
 
     private void GetRoom()
     {
         room = MRUK.Instance.GetCurrentRoom();
-        Vector3 anchorPoint = new Vector3(0, 0, 0);
         Debug.LogWarning(room != null);
         if (room != null)
         {
@@ -281,14 +472,14 @@ public class StoryGame : MonoBehaviour
 
         if (!runOnce)
         {
-            Vector3 offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
+            offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
 
             displayPos = anchorPoint + offsetDir * 0.2f;
- 
-            debugDisplayPos = displayPos + new Vector3(0.2f, 0, 0);
 
             displayOfset = offsetDir * -0.05f;
 
         }
     }
 }
+
+

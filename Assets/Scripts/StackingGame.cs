@@ -112,7 +112,7 @@ public class StackingGame : MonoBehaviour
         {
             bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+            GameUtils.AddText(centerCam, canvas, brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -140,7 +140,7 @@ public class StackingGame : MonoBehaviour
         {
             bricksInFrame[brick.labelName]++;
             GameObject cube = brick.DrawSmall();
-            AddText(brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
+            GameUtils.AddText(centerCam, canvas, brick.worldPos.ToString(), brick.worldPos, GameUtils.nameToColor[brick.labelName]);
             drawnBricks.Add(cube);
 
         }
@@ -161,14 +161,14 @@ public class StackingGame : MonoBehaviour
         }
         else
         {
-            AddText("Debug info", debugDisplayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
+            GameUtils.AddText(centerCam, canvas, "Debug info", debugDisplayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
             if (taskComplet)
             {
-                AddText("Seprate bricks", displayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
+                GameUtils.AddText(centerCam, canvas, "Seprate bricks", displayPos + new Vector3(0, 0.03f, 0), Color.white, 2);
             }
             else
             {
-                AddText("Stack to build", displayPos + new Vector3(0, 0.03f, 0) * stackHeight, Color.white, 2);
+                GameUtils.AddText(centerCam, canvas, "Stack to build", displayPos + new Vector3(0, 0.03f, 0) * stackHeight, Color.white, 2);
             }
 
             //Tjeck stacks in frame    
@@ -203,7 +203,7 @@ public class StackingGame : MonoBehaviour
                 for (int i = 0; i < stack.Count; i++)
                 {
                     GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
-                    cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(bricks[stack[i]].labelName);
+                    cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[bricks[stack[i]].labelName];
                     stackColorRow.Add(bricks[stack[i]].labelName);
                 }
                 offset += new Vector3(0.05f, 0, 0);
@@ -258,7 +258,7 @@ public class StackingGame : MonoBehaviour
         for (int i = 0; i < stackHight; i++)
         {
             GameObject cube = Instantiate(GameManager.Instance.brickPrefab, displayPos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(0));
-            cube.GetComponent<Renderer>().material.color = GameUtils.GetColorByName(stackToBuild[i]);
+            cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[stackToBuild[i]];
         }
     }
 
@@ -290,17 +290,6 @@ public class StackingGame : MonoBehaviour
             Destroy(item.gameObject);
         }
     }
-    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
-    {
-        foreach (var brick in bricks)
-        {
-            if (brick.labelName == color)
-            {
-                return brick;
-            }
-        }
-        return null;
-    }
 
     private void ResetBricksInFrame()
     {
@@ -308,27 +297,6 @@ public class StackingGame : MonoBehaviour
     }
 
 
-    // Method to add a text to the UI with specified attributes.
-    public void AddText(string text, Vector3 position, Color color, float fontsize = 1)
-    {
-        // Create a new GameObject for the text and set its attributes.
-        GameObject newGameObject = new GameObject();
-        RectTransform rect = newGameObject.AddComponent<RectTransform>();
-        rect.position = position + new Vector3(0,0.03f, 0);
-        rect.rotation = Quaternion.identity;
-        rect.LookAt(centerCam);
-        rect.Rotate(Vector3.up, 180);
-        rect.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-        newGameObject.transform.SetParent(canvas.transform);
-        TextMeshPro newText = newGameObject.AddComponent<TextMeshPro>();
-
-        // Set specific TextMeshPro settings, extend this as you see fit.
-        newText.text = text;
-        newText.fontSize = fontsize;
-        newText.alignment = TextAlignmentOptions.Center;
-        newText.color = color;
-
-    }
     int[] GetTwoLowestIndices(float[] arr)
     {
         return arr
