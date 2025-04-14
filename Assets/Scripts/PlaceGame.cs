@@ -1,5 +1,7 @@
 using Meta.XR.MRUtilityKit;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PlaceGame : MonoBehaviour
@@ -23,10 +25,26 @@ public class PlaceGame : MonoBehaviour
 
     float[] dists = new float[4] { 100, 100, 100, 100 };
 
+    List<DetectedObject> bricks = new List<DetectedObject>();
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         _findSpawnPositions = spawnPositions.GetComponent<FindSpawnPositions>();
+        objectDetection.OnObjectsDetected += HandleBricksDetected;
+    }
+
+    private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
+    {
+        bricks = new List<DetectedObject>();
+        e.DetectedObjects.ForEach(brick =>
+        {
+            if (colors.Contains(brick.labelName))
+            {
+                bricks.Add(brick);
+            }
+        });
     }
 
     // Update is called once per frame
@@ -45,7 +63,7 @@ public class PlaceGame : MonoBehaviour
 
     private void Setup()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
+        
         ResetBricksInFrame();
         DestroySpawnPositions();
  
@@ -70,10 +88,6 @@ public class PlaceGame : MonoBehaviour
 
     private void Play()
     {
-        List<DetectedObject> bricks = objectDetection.GetBricks();
-
-        
-
         //If the task is completed, choose new colors
         if (taskComplet)
         {
@@ -91,7 +105,7 @@ public class PlaceGame : MonoBehaviour
         {
             for (int i = 0; i < spawnPositions.transform.childCount; i++)
             {
-                DetectedObject detectedObject = GetBrickWithColor(bricks, colors[i]);
+                DetectedObject detectedObject = GameUtils.GetBrickWithColor(bricks, colors[i]);
                 if (detectedObject != null)
                 {
                     GameObject point = spawnPositions.transform.GetChild(i).gameObject;
@@ -127,18 +141,6 @@ public class PlaceGame : MonoBehaviour
         {
             Destroy(item.gameObject);
         }
-    }
-
-    private DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
-    {
-        foreach (var brick in bricks)
-        {
-            if (brick.labelName == color)
-            {
-                return brick;
-            }
-        }
-        return null;
     }
 
     private void ResetBricksInFrame()

@@ -1596,8 +1596,7 @@ MonoBehaviour:
   environmentDepthManager: {fileID: 696750141}
   environmentRaycastManager: {fileID: 696750140}
   webCamTextureManager: {fileID: 696750138}
-  objectDetector: {fileID: 5022602860645237092, guid: e3c537500c0a94d4dbf918b528b3b176, type: 3}
-  imageTransform: {fileID: 0}
+  objectDetector: {fileID: 5022602860645237092, guid: 958d7ea439cb0174a8a38cbcfe427c81, type: 3}
 --- !u!4 &202246611
 Transform:
   m_ObjectHideFlags: 0

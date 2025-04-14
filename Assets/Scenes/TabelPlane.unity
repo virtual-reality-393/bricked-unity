@@ -8505,7 +8505,7 @@ PrefabInstance:
     - target: {fileID: 1114747798342542014, guid: 507ab172a3184e64389371387763d488, type: 3}
       propertyPath: objectDetector
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: f6138d73609c65f44bc5c29d1b2c7b78, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
     - target: {fileID: 4317745354091833694, guid: 507ab172a3184e64389371387763d488, type: 3}
       propertyPath: m_Name
       value: ObjectDetectionManager
@@ -8554,8 +8554,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 1114747798342542014, guid: 507ab172a3184e64389371387763d488, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -8608,7 +8607,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1504935223}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 228b42baded3eab4c92f8789edbdeb15, type: 3}
   m_Name: 

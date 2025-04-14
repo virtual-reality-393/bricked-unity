@@ -5,6 +5,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     public GameObject brickPrefab;
+    public GameObject cylinderPrefab;
 
     private void Awake()
     {
