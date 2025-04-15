@@ -26,6 +26,8 @@ public class JacoDOTest : MonoBehaviour
     List<DetectedObject> objects = new List<DetectedObject>();
     public Dictionary<string, int> nameToIndex;
 
+    List<GameObject> drawnObjects = new List<GameObject>();
+
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
     bool runOnce = true;
@@ -34,28 +36,30 @@ public class JacoDOTest : MonoBehaviour
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 defaultTextPos = new Vector3();
 
+    BrickManager brickManager;
 
     private void Start()
     {
-        objectDetection.OnObjectsDetected += HandleBricksDetected;
+        brickManager = GetComponent<BrickManager>();
+        //objectDetection.OnObjectsDetected += HandleBricksDetected;
         nameToIndex = ObjectDetector.DetectedLabelIdxToLabelName.ToDictionary(pair => pair.Value, pair => pair.Key);
-        foreach (var labelName in ObjectDetector.DetectedLabelIdxToLabelName.Values)
-        {
-            LifeTimeObjects.Add(labelName, new List<LifeTimeObject>());
-        }
+        //foreach (var labelName in ObjectDetector.DetectedLabelIdxToLabelName.Values)
+        //{
+        //    LifeTimeObjects.Add(labelName, new List<LifeTimeObject>());
+        //}
     }
-    private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
-    {
-        objects = new List<DetectedObject>();
-        e.DetectedObjects.ForEach(obj =>
-        {
-            if (objectsToDetect.Contains(obj.labelName))
-            {
-                objects.Add(obj);
-            }
-        });
-        OnObjectDetected(objects);
-    }
+    //private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
+    //{
+    //    objects = new List<DetectedObject>();
+    //    e.DetectedObjects.ForEach(obj =>
+    //    {
+    //        if (objectsToDetect.Contains(obj.labelName))
+    //        {
+    //            objects.Add(obj);
+    //        }
+    //    });
+    //    OnObjectDetected(objects);
+    //}
 
     private void Update()
     {
@@ -64,72 +68,97 @@ public class JacoDOTest : MonoBehaviour
             GetRoom();
         }
 
+        drawnObjects.ForEach(Destroy);
+        drawnObjects.Clear();
         foreach (Transform t in canvas.transform)
         {
             Destroy(t.gameObject);
         }
 
-        GameUtils.AddText(centerCam, canvas, "Running...", defaultTextPos + new Vector3(0,0.1f,0), Color.white, 2f);
-        
-        foreach (var l in LifeTimeObjects.Values)
+        GameUtils.AddText(centerCam, canvas, "Running...", defaultTextPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
+
+        //List<DetectedObject> detectedObjects = GetDetectedObjects();
+        //foreach (var obj in detectedObjects)
+        //{
+        //    GameObject go = obj.DrawSmall();
+        //    drawnObjects.Add(go);
+        //    GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.worldPos.ToString(), obj.worldPos + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
+        //}
+
+        foreach (var l in brickManager.LifeTimeObjects.Values)
         {
             foreach (var obj in l)
             {
-                GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.obj.transform.position.ToString() + "\nLifetime: " + obj.lifeTime, obj.obj.transform.position + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
-            }
-        }
-    }
-
-    private void FixedUpdate()
-    {
-        foreach (var l in LifeTimeObjects.Values)
-        {
-            foreach (var obj in l)
-            {
-                obj.lifeTime -= Time.deltaTime;
-            }
-        }
-
-        foreach (var l in LifeTimeObjects.Values)
-        {
-            for (int i = l.Count - 1; i >= 0; i--)
-            {
-                if (l[i].lifeTime <= 0)
+                if (obj.obj != null)
                 {
-                    Destroy(l[i].obj);
-                    l.RemoveAt(i);
+                    GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.obj.transform.position.ToString() + "\nLifetime: " + obj.lifeTime, obj.obj.transform.position + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
                 }
             }
         }
     }
 
-    void OnObjectDetected(List<DetectedObject> detectedObjects)
-    {
-        //debugObjects.ForEach(Destroy);
-        //debugObjects.Clear();
-        foreach (var v in detectedObjects)
-        {
-            Debug.Log(v);
-            if (LifeTimeObjects[v.labelName].Count == 0)
-            {
-                GameObject go = v.DrawSmall();
-                //go.transform.position = v.worldPos;
-                LifeTimeObjects[v.labelName].Add(new LifeTimeObject(2, go,v.labelName));
-            }
-            else
-            {
-                foreach (var l in LifeTimeObjects[v.labelName])
-                {
-                    if (Vector3.Distance(l.obj.transform.position, v.worldPos) <= distanceThreshold)
-                    {
-                        //GameObject go = v.DrawSmall();
-                        //LifeTimeObjects[v.labelName].Add(new LifeTimeObject(5, go,v.labelName));
-                        l.lifeTime = 1;
-                    }
-                }
-            }
+    //private void FixedUpdate()
+    //{
+    //    foreach (var l in LifeTimeObjects.Values)
+    //    {
+    //        foreach (var obj in l)
+    //        {
+    //            obj.lifeTime -= Time.deltaTime;
+    //        }
+    //    }
 
+    //    foreach (var l in LifeTimeObjects.Values)
+    //    {
+    //        for (int i = l.Count - 1; i >= 0; i--)
+    //        {
+    //            if (l[i].lifeTime <= 0)
+    //            {
+    //                Destroy(l[i].obj);
+    //                l.RemoveAt(i);
+    //            }
+    //        }
+    //    }
+    //}
+
+    //void OnObjectDetected(List<DetectedObject> detectedObjects)
+    //{
+    //    //debugObjects.ForEach(Destroy);
+    //    //debugObjects.Clear();
+    //    foreach (var v in detectedObjects)
+    //    {
+    //        //Debug.Log(v);
+    //        if (LifeTimeObjects[v.labelName].Count == 0)
+    //        {
+    //            GameObject go = new GameObject();
+    //            go.transform.position = v.worldPos;
+    //            LifeTimeObjects[v.labelName].Add(new LifeTimeObject(2, go,v.labelName));
+    //        }
+    //        else
+    //        {
+    //            foreach (var l in LifeTimeObjects[v.labelName])
+    //            {
+    //                if (Vector3.Distance(l.obj.transform.position, v.worldPos) <= distanceThreshold)
+    //                {
+    //                    //GameObject go = v.DrawSmall();
+    //                    //LifeTimeObjects[v.labelName].Add(new LifeTimeObject(5, go,v.labelName));
+    //                    l.lifeTime = 1;
+    //                }
+    //            }
+    //        }
+
+    //    }
+    //}
+    public List<DetectedObject> GetDetectedObjects()
+    {
+        List<DetectedObject> res = new();
+        foreach (var l in LifeTimeObjects.Values)
+        {
+            if (l.Count >= 0)
+            {
+                res.Add(new DetectedObject(nameToIndex[l[0].labelName], l[0].labelName, l[0].obj.transform.position));
+            }
         }
+        return res;
     }
 
     public List<LifeTimeObject> getlifeTimeObjects()

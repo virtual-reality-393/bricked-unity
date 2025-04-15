@@ -14,6 +14,7 @@ public class BrickManager : MonoBehaviour
     public float distanceThreshold = 0.5f;
     public int detectionLifetime;
     public Dictionary<string,List<LifeTimeObject>> LifeTimeObjects = new();
+    public string[] objectsToDetect = { "red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
     public List<KVPair<string, int>> maxInstances = new();
     private Dictionary<string, List<GameObject>> objectInstances;
     
@@ -48,7 +49,16 @@ public class BrickManager : MonoBehaviour
 
     void OnObjectDetected(object sender, ObjectDetectedEventArgs e)
     {
-        foreach (var v in e.DetectedObjects)
+        List<DetectedObject> objects = new List<DetectedObject>();
+        e.DetectedObjects.ForEach(obj =>
+        {
+            if (objectsToDetect.Contains(obj.labelName))
+            {
+                objects.Add(obj);
+            }
+        });
+
+        foreach (var v in objects)
         {
             if (LifeTimeObjects[v.labelName].Count == 0)
             {
@@ -77,13 +87,14 @@ public class BrickManager : MonoBehaviour
 
     private GameObject SpawnLifetimeObject(DetectedObject v)
     {
-        if (objectInstances[v.labelName].Count > 0)
+        if (objectInstances[v.labelName].Count > 0 && objectInstances[v.labelName][0] != null)
         {
             objectInstances[v.labelName][0].SetActive(true);
             return objectInstances[v.labelName][0];
         }
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        
+        GameObject go = Instantiate(GameManager.Instance.brickPrefab);
+        go.GetComponent<Renderer>().material.color = DetectedObject.labelToDrawColor[v.labelIdx];
+        go.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         go.transform.position = v.worldPos;
         
         LifeTimeObjects[v.labelName].Add(new LifeTimeObject(detectionLifetime,go,v.labelName));
@@ -120,7 +131,10 @@ public class BrickManager : MonoBehaviour
                 if (l[i].lifeTime <= 0)
                 {
                     Destroy(l[i].obj);
-                    objectInstances[l[i].labelName][0].SetActive(false);
+                    if (objectInstances[l[i].labelName][0] != null)
+                    {
+                        objectInstances[l[i].labelName][0].SetActive(false);
+                    }
                     l.RemoveAt(i);
                 }
             }
@@ -142,7 +156,7 @@ public class LifeTimeObject
     }
 }
 
-
+[Serializable]
 public class KVPair<K, V>
 {
     public K Key;

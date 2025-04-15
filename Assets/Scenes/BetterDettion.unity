@@ -3706,15 +3706,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 507105658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cdf302ade71f455468c05c226dacf424, type: 3}
+  m_Script: {fileID: 11500000, guid: 6265f9b0c0620b049b3e1da3127beaab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectDetection: {fileID: 202246610}
-  spawnPositions: {fileID: 1777527096}
-  cubeParent: {fileID: 610253869}
-  canvas: {fileID: 1492480480}
-  centerCam: {fileID: 1202451541}
-  theshold: 0.05
+  detector: {fileID: 202246610}
+  distanceThreshold: 0.03
+  detectionLifetime: 5
+  maxInstances:
+  - Key: red
+    Value: 1
+  - Key: green
+    Value: 1
+  - Key: blue
+    Value: 1
+  - Key: yellow
+    Value: 1
+  - Key: big penguin
+    Value: 1
+  - Key: small penguin
+    Value: 1
+  - Key: pig
+    Value: 1
+  - Key: human
+    Value: 1
 --- !u!1 &522474421
 GameObject:
   m_ObjectHideFlags: 0
