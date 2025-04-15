@@ -33,12 +33,12 @@ public struct DetectionBox
 
     public Vector2Int GetCenter()
     {
-        return new Vector2Int(xr2Int(xr2Int(xr2Int(x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2);
+        return new Vector2Int(x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2);
     }
 
     public int GetArea()
     {
-        return (x2 - x1)/* * (y2 - y1);*/
+        return (x2 - x1) * (y2 - y1);
     }
 
     public DetectionBox Intersect(DetectionBox otherBox)
