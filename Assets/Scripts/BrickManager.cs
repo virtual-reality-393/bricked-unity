@@ -101,10 +101,11 @@ public class BrickManager : MonoBehaviour
         {
             foreach (var obj in l)
             {
+                
                 if(obj.lifeTime <= 0 ) continue;
                 obj.lifeTime--;
 
-                var closeObjs = l.Where((x) => Vector3.Distance(x.obj.transform.position,obj.obj.transform.position) < distanceThreshold && x != obj);
+                var closeObjs = l.Where(x => Vector3.Distance(x.obj.transform.position,obj.obj.transform.position) < distanceThreshold && x != obj);
 
                 foreach (var cObj in closeObjs)
                 {
@@ -119,9 +120,12 @@ public class BrickManager : MonoBehaviour
             {
                 if (l[i].lifeTime <= 0)
                 {
-                    Destroy(l[i].obj);
                     objectInstances[l[i].labelName][0].SetActive(false);
                     l.RemoveAt(i);
+                }
+                else
+                {
+                    objectInstances[l[i].labelName][0].SetActive(true);
                 }
             }
         }
