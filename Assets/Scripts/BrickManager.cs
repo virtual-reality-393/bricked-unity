@@ -82,8 +82,9 @@ public class BrickManager : MonoBehaviour
             objectInstances[v.labelName][0].SetActive(true);
             return objectInstances[v.labelName][0];
         }
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        
+        GameObject go = Instantiate(GameManager.Instance.brickPrefab);
+        go.GetComponent<Renderer>().material.color = DetectedObject.labelToDrawColor[v.labelIdx];
+        go.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         go.transform.position = v.worldPos;
         
         LifeTimeObjects[v.labelName].Add(new LifeTimeObject(detectionLifetime,go,v.labelName));
@@ -101,7 +102,6 @@ public class BrickManager : MonoBehaviour
         {
             foreach (var obj in l)
             {
-                
                 if(obj.lifeTime <= 0 ) continue;
                 obj.lifeTime--;
 
@@ -146,7 +146,7 @@ public class LifeTimeObject
     }
 }
 
-
+[Serializable]
 public class KVPair<K, V>
 {
     public K Key;

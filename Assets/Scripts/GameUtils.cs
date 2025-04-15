@@ -9,11 +9,17 @@ public static class GameUtils
 {
     public static Dictionary<string, Color> nameToColor = new Dictionary<string, Color>()
     {
-        {"green", Color.green },
-        {"blue", Color.blue },
-        {"yellow", Color.yellow},
-        {"red", Color.red},
-        {"magenta", Color.magenta},
+        { "red", new Color(1f, 0f, 0f) },
+        { "green", new Color(0f, 1f, 0f) },
+        { "blue", new Color(0f, 0f, 1f) },
+        { "yellow", new Color(1f, 1f, 0f) },
+        { "big penguin", new Color(1f, 0.4f, 0.4f) },
+        { "small penguin", new Color(0.4f, 1f, 0.4f) },
+        { "lion", new Color(0.4f, 1f, 1f) },
+        { "sheep", new Color(1f, 1f, 1f) },
+        { "pig", new Color(0.5f, 0.5f, 1f) },
+        { "human", new Color(0.8f, 0.2f, 1f) },
+
     };
 
     ///Old color code
