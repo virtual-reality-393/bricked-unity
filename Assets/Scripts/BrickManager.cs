@@ -15,6 +15,7 @@ public class BrickManager : MonoBehaviour
     public Dictionary<string,List<LifeTimeObject>> LifeTimeObjectsCandidates = new();
     public Dictionary<string,List<LifeTimeObject>> LifeTimeObjects = new();
     public List<KVPair<string, int>> maxInstances = new();
+    private Dictionary<string, int> _maxInstance = new();
     private Dictionary<string, List<GameObject>> objectInstances;
     public int minCandidateLifetime;
     public int maxCandidateLifetime;
@@ -40,6 +41,7 @@ public class BrickManager : MonoBehaviour
         foreach (var maxInstance in maxInstances)
         {
             objectInstances.Add(maxInstance.Key, new List<GameObject>());
+            _maxInstance.Add(maxInstance.Key, maxInstance.Value);
         }
         foreach (var labelName in DetectedLabelIdxToLabelName.Values)
         {
@@ -94,6 +96,10 @@ public class BrickManager : MonoBehaviour
             }
         }
         
+        
+        
+        
+        
         foreach (var candidateList in LifeTimeObjectsCandidates.Values)
         {
             foreach (var lifeTimeObject in candidateList)
@@ -105,11 +111,11 @@ public class BrickManager : MonoBehaviour
 
                 bool shouldSpawnObject = true;
 
-                LifeTimeObjects[lifeTimeObject.labelName].Sort((x,y) => x.lifeTime-y.lifeTime);
+                var orderedLifetime = LifeTimeObjects[lifeTimeObject.labelName].OrderBy((x) => x.lifeTime).ToArray();
                 var checks = 0;
-                for (var i = 0; i < LifeTimeObjects[lifeTimeObject.labelName].Count; i++)
+                for (var i = 0; i < orderedLifetime.Length; i++)
                 {
-                    var l = LifeTimeObjects[lifeTimeObject.labelName][i];
+                    var l = orderedLifetime[i];
                     if (Vector3.Distance(l.obj.transform.position, lifeTimeObject.obj.transform.position) >= distanceThreshold)
                     {
                         if (checks++ < maxInstances[lifeTimeObject.labelIdx].Value)
@@ -124,7 +130,7 @@ public class BrickManager : MonoBehaviour
                     }
                 }
 
-                if (shouldSpawnObject)
+                if (shouldSpawnObject && !(LifeTimeObjects[lifeTimeObject.labelName].Count >= _maxInstance[lifeTimeObject.labelName]))
                 {
                     SpawnLifetimeObject(lifeTimeObject);
                 }
@@ -138,15 +144,19 @@ public class BrickManager : MonoBehaviour
     private GameObject SpawnLifetimeObject(LifeTimeObject v)
     {
         
-        if (objectInstances[v.labelName].Count > 0)
+        if (objectInstances[v.labelName].Count >= _maxInstance[v.labelName])
         {
-            objectInstances[v.labelName][0].SetActive(true);
-            LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,detectionLifetime,objectInstances[v.labelName][0],v.labelName));
-            objectInstances[v.labelName][0].transform.position = v.obj.transform.position;
-            return objectInstances[v.labelName][0];
+            var closestObj = objectInstances[v.labelName].GetClosest(v.obj.transform.position, x => !x.activeSelf);
+            if (closestObj != null)
+            {
+                LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,detectionLifetime,closestObj,v.labelName));
+                closestObj.transform.position = v.obj.transform.position;
+                closestObj.SetActive(true);
+            }
+            return closestObj;
         }
         
-        GameObject go = Instantiate(GameManager.Instance.brickPrefab,v.obj.transform.position,Quaternion.identity);
+        GameObject go = Instantiate(GameManager.Instance.brickPrefab,v.obj.transform.position,GameManager.Instance.brickPrefab.transform.rotation);
         
         go.transform.position = v.obj.transform.position;
         LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,detectionLifetime,go,v.labelName));
