@@ -10,6 +10,7 @@ public class BrickManager : MonoBehaviour
 {
 
     [Header("Detection Settings")]
+    public ObjectDetector detector;
     public float distanceThreshold = 0.5f;
     public int detectionLifetime;
     public Dictionary<string,List<LifeTimeObject>> LifeTimeObjectsCandidates = new();
@@ -35,6 +36,23 @@ public class BrickManager : MonoBehaviour
         {9,"human"},
     });
 
+    void Start()
+    {
+
+        detector.OnObjectsDetected += OnObjectDetected;
+        objectInstances = new();
+        foreach (var maxInstance in maxInstances)
+        {
+            objectInstances.Add(maxInstance.Key, new List<GameObject>());
+            _maxInstance.Add(maxInstance.Key, maxInstance.Value);
+        }
+        foreach (var labelName in DetectedLabelIdxToLabelName.Values)
+        {
+            LifeTimeObjects.Add(labelName,new List<LifeTimeObject>());
+            LifeTimeObjectsCandidates.Add(labelName,new List<LifeTimeObject>());
+        }
+    }
+
     void DetectionStart()
     {
         objectInstances = new();
@@ -49,9 +67,10 @@ public class BrickManager : MonoBehaviour
             LifeTimeObjectsCandidates.Add(labelName,new List<LifeTimeObject>());
         }
     }
-
-    void OnObjectDetected(List<DetectedObject> detectedObjects)
+    
+    void OnObjectDetected(object sender, ObjectDetectedEventArgs objectDetectedEventArgs)
     {
+        var detectedObjects = objectDetectedEventArgs.DetectedObjects;
         foreach (var detectedObject in detectedObjects)
         {
             bool shouldSpawnObject = true;
