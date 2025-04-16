@@ -17,13 +17,6 @@ public class JacoDOTest : MonoBehaviour
     public float distanceThreshold = 0.01f;
     public Dictionary<string, List<LifeTimeObject>> LifeTimeObjects = new();
 
-    //float[] distArr = new float[3] { 100, 100, 100 };
-    //bool[] visits = new bool[3] { false, false, false };
-
-    string[] objectsToDetect = { "red", "green", "blue", "yellow", "big penguin", "small penguin", "pig", "human" };
-    //string[] interactables = { "red", "green", "blue", "yellow", "big penguin", "pig", "human" };
-    //string playerColor = "small penguin";
-    List<DetectedObject> objects = new List<DetectedObject>();
     public Dictionary<string, int> nameToIndex;
 
     List<GameObject> drawnObjects = new List<GameObject>();
@@ -41,25 +34,9 @@ public class JacoDOTest : MonoBehaviour
     private void Start()
     {
         brickManager = GetComponent<BrickManager>();
-        //objectDetection.OnObjectsDetected += HandleBricksDetected;
         nameToIndex = ObjectDetector.DetectedLabelIdxToLabelName.ToDictionary(pair => pair.Value, pair => pair.Key);
-        //foreach (var labelName in ObjectDetector.DetectedLabelIdxToLabelName.Values)
-        //{
-        //    LifeTimeObjects.Add(labelName, new List<LifeTimeObject>());
-        //}
     }
-    //private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
-    //{
-    //    objects = new List<DetectedObject>();
-    //    e.DetectedObjects.ForEach(obj =>
-    //    {
-    //        if (objectsToDetect.Contains(obj.labelName))
-    //        {
-    //            objects.Add(obj);
-    //        }
-    //    });
-    //    OnObjectDetected(objects);
-    //}
+
 
     private void Update()
     {
@@ -77,19 +54,11 @@ public class JacoDOTest : MonoBehaviour
 
         GameUtils.AddText(centerCam, canvas, "Running...", defaultTextPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
 
-        //List<DetectedObject> detectedObjects = GetDetectedObjects();
-        //foreach (var obj in detectedObjects)
-        //{
-        //    GameObject go = obj.DrawSmall();
-        //    drawnObjects.Add(go);
-        //    GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.worldPos.ToString(), obj.worldPos + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
-        //}
-
         foreach (var l in brickManager.LifeTimeObjects.Values)
         {
             foreach (var obj in l)
             {
-                if (obj.obj != null)
+                if (obj.obj.activeSelf)
                 {
                     GameUtils.AddText(centerCam, canvas, obj.labelName + ": " + obj.obj.transform.position.ToString() + "\nLifetime: " + obj.lifeTime, obj.obj.transform.position + new Vector3(0, 0.01f, 0), GameUtils.nameToColor[obj.labelName]);
                 }

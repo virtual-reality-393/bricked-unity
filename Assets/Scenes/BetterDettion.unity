@@ -3729,6 +3729,10 @@ MonoBehaviour:
     Value: 1
   - Key: human
     Value: 1
+  - Key: lion
+    Value: 1
+  - Key: sheep
+    Value: 1
 --- !u!1 &522474421
 GameObject:
   m_ObjectHideFlags: 0

@@ -231,6 +231,13 @@ public class LifeTimeObject
     public GameObject obj;
     public string labelName;
 
+    public LifeTimeObject()
+    {
+        lifeTime = 0;
+        obj = null;
+        labelName = "";
+    }
+
     public LifeTimeObject(int labelIdx, int lifeTime, GameObject obj, string labelName)
     {
         this.labelIdx = labelIdx;
