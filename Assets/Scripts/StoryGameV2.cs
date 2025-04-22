@@ -191,7 +191,7 @@ public class StoryGameV2 : MonoBehaviour
 
             DestroyCubes();
 
-            string text = "Make accusation";
+            string text = "Go make a accusation or investigate some more";
 
             //foreach (Transform t in canvas.transform)
             //{
@@ -286,7 +286,7 @@ public class StoryGameV2 : MonoBehaviour
             {
                 bricksInFrame[lto.labelName]++;
                 DrawLiftTimeObject(lto);
-                GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+                //GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
             }
         }
 
@@ -407,7 +407,7 @@ public class StoryGameV2 : MonoBehaviour
             {
                 bricksInFrame[lto.labelName]++;
                 DrawLiftTimeObject(lto);
-                GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+                //GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
             }
         }
 
