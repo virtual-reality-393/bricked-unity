@@ -173,7 +173,7 @@ public class StoryGameV2 : MonoBehaviour
 
         foreach (var lto in LifeTimeObjects)
         {
-            if (bricksInFrame.ContainsKey(lto.labelName))
+            if (bricksInFrame.ContainsKey(lto.labelName) && lto.labelName != playerColor)
             {
                 bricksInFrame[lto.labelName]++;
                 DrawLiftTimeObject(lto);
@@ -464,7 +464,16 @@ public class StoryGameV2 : MonoBehaviour
         GameObject cube = Instantiate(GameManager.Instance.brickPrefab, lto.obj.transform.position, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]];
         cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-        GameUtils.AddText(centerCam, canvas, lto.labelName + "\nLifetime: " + lto.lifeTime, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+        if (lto.labelName == playerColor)
+        {
+            GameUtils.AddText(centerCam, canvas, playerColor + "\nLifetime: " + lto.lifeTime, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+
+        }
+        else
+        {
+            GameUtils.AddText(centerCam, canvas, lto.labelName + "\nLifetime: " + lto.lifeTime, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+
+        }
         drawnObjects.Add(cube);
     }
 
