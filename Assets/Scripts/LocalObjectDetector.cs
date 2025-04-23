@@ -1,25 +1,30 @@
+using System;
 using UnityEngine;
 using Unity.Sentis;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
+using System.Text;
 using Meta.XR;
 using PassthroughCameraSamples;
 using TMPro;
+using UnityEngine.Experimental.Rendering;
 
 public class LocalObjectDetector : ObjectDetector
 {
     public ModelAsset objectDetector;
-
+    public Letterbox letterbox;
     private Worker _objectDetectionWorker;
     private bool _playing;
     private List<DetectedObject> _internalDetection;
     private Tensor<float> _modelInputTensor;
     private TextureTransform _tf;
-    
-    private const float NmsThreshold = 0.4f; // IoU threshold for NMS
-    private const int LayersPerFrame = 5;
 
+    private RenderTexture _modelInput;
+
+    private const float NmsThreshold = 0.4f; // IoU threshold for NMS
+    private const int LayersPerFrame = 7;
+    
 
     void Start()
     {
@@ -28,6 +33,7 @@ public class LocalObjectDetector : ObjectDetector
         _objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
+        
         SetWebCam();
     }
 
@@ -37,13 +43,18 @@ public class LocalObjectDetector : ObjectDetector
         if (webcamTexture == null)
         {
             SetWebCam();
-
         }
         
         if (webcamTexture != null && !_playing)
         {
+            _modelInput = letterbox.ComputeProcess(webcamTexture,640f);
             StartCoroutine(ProcessImage());
             _playing = true;
+        }
+
+        if (webcamTexture != null)
+        {
+            _modelInput = letterbox.ComputeProcess(webcamTexture,640f);
         }
     }
 
@@ -71,7 +82,8 @@ public class LocalObjectDetector : ObjectDetector
         while (true)
         {
             var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
-            TextureConverter.ToTensor(webcamTexture, _modelInputTensor, _tf);
+            TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
+
             var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
 
             int framesTaken = 0;
@@ -112,18 +124,18 @@ public class LocalObjectDetector : ObjectDetector
                         int y1 = (int)(640 - y - h / 2);
                         int y2 = (int)(640 - y + h / 2);
 
-                        bboxes.Add(new DetectionBox(j,modelOut[0, 4+j, i],x1, y1, x2, y2));
+                        var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
+                        var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
+
+                        bboxes.Add(new DetectionBox(j,modelOut[0, 4+j, i],p1.x, p1.y, p2.x, p2.y));
                     }
                 }
             }
 
-            float scaleX = webcamTexture.width / 640f;
-            float scaleY = webcamTexture.height / 640f;
-            
             bboxes = ApplyNMS(bboxes);
             foreach (var bbox in bboxes)
             {
-                var screenPoint = new Vector2Int((int)(bbox.GetCenter().x * scaleX), (int)((bbox.GetCenter().y) * scaleY));
+                var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
                 var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
                 var rayDirectionInWorld = pose.rotation * camRay.direction;
 
@@ -138,6 +150,41 @@ public class LocalObjectDetector : ObjectDetector
 
             yield return null;
         }
+    }
+    
+    private string GetRawImage()
+    {
+        var modelInput = _modelInputTensor.ReadbackAndClone();
+        // StringBuilder sb = new StringBuilder();
+        
+        for (int i = 0; i < 640; i++)
+        {
+            Debug.LogError($"line {i}:");
+            StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < 640; j++)
+            {
+                sb.Append(modelInput[0,0,i, j]);
+                sb.Append(" ");
+                sb.Append(modelInput[0,1,i, j]);
+                sb.Append(" ");
+                sb.Append(modelInput[0,2,i, j]);
+                if (j != 639)
+                {
+                    sb.Append("|");
+                }
+
+                if (j % 10 == 0)
+                {
+                    Debug.LogError(sb.ToString());
+                    sb  = new StringBuilder();
+                }
+            }
+            Debug.LogError(sb.ToString());
+
+            
+        }
+
+        return "sb.ToString();";
     }
     
     private List<DetectionBox> ApplyNMS(List<DetectionBox> bboxes)

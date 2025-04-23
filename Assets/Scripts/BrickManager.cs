@@ -174,8 +174,8 @@ public class BrickManager : MonoBehaviour
             }
             return closestObj;
         }
-        
-        GameObject go = Instantiate(GameManager.Instance.brickPrefab,v.obj.transform.position,GameManager.Instance.brickPrefab.transform.rotation);
+
+        GameObject go = new GameObject(v.labelName);
         
         go.transform.position = v.obj.transform.position;
         LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,detectionLifetime,go,v.labelName));
