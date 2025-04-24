@@ -406,8 +406,8 @@ public static class GameUtils
         List<int> res = new List<int>();
         for (int i = 0; i < distMat.GetLength(0); i++)
         {
-            int idx = -1;
-            float min = Mathf.Infinity;
+            int idx = 0;
+            float min = 1000;
             for (int j = 0; j < distMat.GetLength(1); j++)
             {
                 if (distMat[i, j] < min)
