@@ -211,6 +211,18 @@ public static class GameUtils
 
     //}
 
+    public static List<GameObject> DrawStack(List<string> stack, Vector3 pos)
+    {
+        List<GameObject> res = new List<GameObject>();
+        for (int i = 0; i < stack.Count; i++)
+        {
+            GameObject cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, pos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity);
+            cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[stack[i]];
+            res.Add(cube);
+        }
+        return res;
+    }
+
     public static List<string> GenetateStack(List<string> sortedList)
     {
         System.Random rng = new System.Random();
@@ -253,6 +265,30 @@ public static class GameUtils
             {
                 result.Add(pair.Key);
             }
+        }
+
+        return result;
+    }
+
+    public static List<List<string>> SplitStackRandomly(List<string> masterStack, int maxSize)
+    {
+        Unity.Mathematics.Random _random = new Unity.Mathematics.Random();
+        var result = new List<List<string>>();
+
+        if (masterStack == null || maxSize <= 0)
+            return result;
+
+        int index = 0;
+        while (index < masterStack.Count)
+        {
+            // Get a random size between 1 and maxSize, but not more than the remaining items
+            int remaining = masterStack.Count - index;
+            int chunkSize = _random.NextInt(1, Math.Min(maxSize, remaining) + 1);
+
+            var chunk = masterStack.GetRange(index, chunkSize);
+            result.Add(chunk);
+
+            index += chunkSize;
         }
 
         return result;
@@ -315,6 +351,33 @@ public static class GameUtils
         return null;
     }
 
+    public static float[,] PointsStackDistansMat(List<List<DetectedObject>> stacks, Transform[] points)
+    {
+        int size1 = points.Length;
+        int size2 = stacks.Count;
+
+        // Create a distance matrix with dimensions (size1 x size2)
+        float[,] distanceMatrix = new float[size1, size2];
+
+        for (int i = 0; i < size1; i++)
+        {
+            for (int j = 0; j < size2; j++)
+            {
+                distanceMatrix[i, j] = Vector3.Distance(points[i].position, stacks[j][0].worldPos);
+            }
+        }
+
+        return distanceMatrix;
+    }
+
+
+    public static GameObject MakeInteractionCirkle(Vector3 pos, Color color)
+    {
+        GameObject circle = GameObject.Instantiate(GameManager.Instance.cylinderPrefab, pos, Quaternion.identity);
+        circle.GetComponent<Renderer>().material.color = color;
+        circle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
+        return circle;
+    }
 
     // Method to add a text to the UI with specified attributes.
     public static void AddText(Transform centerCam, GameObject canvas, string text, Vector3 position, Color color, float fontsize = 1)
@@ -336,5 +399,134 @@ public static class GameUtils
         newText.alignment = TextAlignmentOptions.Center;
         newText.color = color;
 
+    }
+
+    public static List<int> ClosestStacks(float[,] distMat)
+    {
+        List<int> res = new List<int>();
+        for (int i = 0; i < distMat.GetLength(0); i++)
+        {
+            int idx = -1;
+            float min = Mathf.Infinity;
+            for (int j = 0; j < distMat.GetLength(1); j++)
+            {
+                if (distMat[i, j] < min)
+                {
+                    idx = j;
+                }
+            }
+            res.Add(idx);
+        }
+        return res;
+    }
+
+    public static List<string> DetectedObjectListToStringList(List<DetectedObject> detectedObjects)
+    {
+        List<string> res = new List<string>();
+        foreach (var obj in detectedObjects)
+        {
+            res.Add(obj.labelName);
+        }
+        return res;
+    }
+
+    public static int[] GetTwoLowestIndices(float[] arr)
+    {
+        return arr
+            .Select((value, index) => new { Value = value, Index = index }) // Pair values with indices
+            .OrderBy(x => x.Value) // Sort by value
+            .Take(2) // Take the two lowest
+            .Select(x => x.Index) // Extract indices
+            .ToArray();
+    }
+
+    public static int[,] closestBricks(float[,] distArr, float threshold)
+    {
+        int[,] ids = new int[distArr.GetLength(0), 2];
+        for (int i = 0; i < distArr.GetLength(0); i++)
+        {
+            float[] row = new float[distArr.GetLength(1)];
+            for (int j = 0; j < distArr.GetLength(1); j++)
+            {
+                row[j] = distArr[i, j];
+            }
+
+            int[] rowId = GetTwoLowestIndices(row);
+            if(rowId.Length < 2)
+            {
+                ids[i, 0] = -1;
+                ids[i, 1] = -1;
+                continue;
+            }
+            ids[i, 0] = distArr[i, rowId[0]] < threshold ? rowId[0] : -1;
+            ids[i, 1] = distArr[i, rowId[1]] < threshold ? rowId[1] : -1;
+        }
+        return ids;
+    }
+
+    public static float[,] DistMat(List<DetectedObject> bricks)
+    {
+        float[,] distArr = new float[bricks.Count, bricks.Count];
+        for (int i = 0; i < bricks.Count; i++)
+        {
+            for (int j = 0; j < bricks.Count; j++)
+            {
+                if (i == j)
+                {
+                    distArr[i, j] = 10000;
+                }
+                else
+                {
+                    distArr[i, j] = Vector3.Distance(bricks[i].worldPos, bricks[j].worldPos);
+                }
+            }
+        }
+        return distArr;
+    }
+
+
+    public static List<List<int>> FindConnectedComponents(int[,] graph)
+    {
+        int n = graph.GetLength(0);
+        List<List<int>> components = new List<List<int>>();
+        HashSet<int> visited = new HashSet<int>();
+
+        for (int i = 0; i < n; i++)
+        {
+            if (!visited.Contains(i))
+            {
+                List<int> component = new List<int>();
+                DFS(graph, i, visited, component);
+                components.Add(component);
+            }
+        }
+
+        return components;
+    }
+
+    public static void DFS(int[,] graph, int node, HashSet<int> visited, List<int> component)
+    {
+        Stack<int> stack = new Stack<int>();
+        stack.Push(node);
+
+        while (stack.Count > 0)
+        {
+            int curr = stack.Pop();
+            if (!visited.Contains(curr))
+            {
+                visited.Add(curr);
+                component.Add(curr);
+
+                // Add connected nodes to stack
+                for (int j = 0; j < 2; j++)
+                {
+                    int neighbor = graph[curr, j];
+                    if (neighbor != -1 && !visited.Contains(neighbor))
+                    {
+                        stack.Push(neighbor);
+                    }
+                }
+            }
+        }
     }
 }
