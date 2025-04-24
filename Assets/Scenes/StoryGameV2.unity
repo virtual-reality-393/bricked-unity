@@ -537,7 +537,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 94661073}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 36ca807d2eb21274787db0b744173bd4, type: 3}
   m_Name: 
@@ -4517,6 +4517,81 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1347685730}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &944132465
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 944132468}
+  - component: {fileID: 944132467}
+  - component: {fileID: 944132466}
+  m_Layer: 0
+  m_Name: '[BuildingBlock] Spatial Anchor Core'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &944132466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944132465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af86c86a626dba44ba7d1d4ebd5bdad9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _onAnchorCreateCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAnchorsLoadCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAnchorsEraseAllCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAnchorEraseCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &944132467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944132465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b023183069df224080314a560e6e1ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockId: a383f5ea-3856-4c23-a11c-7fdbb9408035
+  instanceId: 67591571-dd4c-435f-a828-b5614fa48ee0
+  version: 1
+  installationRoutineCheckpoint:
+    _installationRoutineId: 
+    _installationVariants: []
+--- !u!4 &944132468
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944132465}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &948900967
 GameObject:
@@ -11362,6 +11437,7 @@ MonoBehaviour:
   canvas: {fileID: 514215521}
   centerCam: {fileID: 1908727816}
   theshold: 0.05
+  offsetDir: {x: 0, y: 0, z: 0}
 --- !u!114 &2030986502
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11376,30 +11452,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   detector: {fileID: 1655954080}
   distanceThreshold: 0.03
-  detectionLifetime: 5
-  maxInstances:
-  - Key: red
-    Value: 1
-  - Key: green
-    Value: 1
-  - Key: blue
-    Value: 1
-  - Key: yellow
-    Value: 1
-  - Key: big penguin
-    Value: 1
-  - Key: small penguin
-    Value: 1
-  - Key: pig
-    Value: 1
-  - Key: human
-    Value: 1
-  - Key: lion
-    Value: 1
-  - Key: sheep
-    Value: 1
+  instanceInfo:
+  - label: red
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 664516743468533436, guid: daa6f3d3e75ae7443b0af047ebe0e7d7, type: 3}
+  - label: green
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 3082369421290598071, guid: aaade54bff07cd547b79c323115544dd, type: 3}
+  - label: blue
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 4026060217736480020, guid: 677fe9a12e4eda34481b65ca9ad495d4, type: 3}
+  - label: yellow
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 7874790369943007266, guid: 0dca8722620dfaa4e87c52e81110b247, type: 3}
+  - label: big penguin
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 0}
+  - label: small penguin
+    defaultLifetime: 3
+    maxInstances: 1
+    prefab: {fileID: 0}
+  - label: lion
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 0}
+  - label: sheep
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 0}
+  - label: pig
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 0}
+  - label: human
+    defaultLifetime: 5
+    maxInstances: 1
+    prefab: {fileID: 0}
   minCandidateLifetime: 3
   maxCandidateLifetime: 5
+  centerCam: {fileID: 0}
+  anchor: {fileID: 0}
 --- !u!1 &2039127456
 GameObject:
   m_ObjectHideFlags: 0
@@ -12469,3 +12566,4 @@ SceneRoots:
   - {fileID: 981924431}
   - {fileID: 1092952577}
   - {fileID: 94661075}
+  - {fileID: 944132468}

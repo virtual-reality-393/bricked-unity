@@ -14,7 +14,7 @@ public class SandboxGame : BaseGame
 
     private List<(Vector3,GameObject)> _trees = new List<(Vector3,GameObject)>();
     
-    public BrickManager brickManager;
+    [FormerlySerializedAs("brickManager")] public DetectedObjectManager detectedObjectManager;
 
     protected override void OnBricksDetected(object sender, ObjectDetectedEventArgs e)
     {

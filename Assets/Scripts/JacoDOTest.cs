@@ -29,11 +29,11 @@ public class JacoDOTest : MonoBehaviour
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 defaultTextPos = new Vector3();
 
-    BrickManager brickManager;
+    DetectedObjectManager _detectedObjectManager;
 
     private void Start()
     {
-        brickManager = GetComponent<BrickManager>();
+        _detectedObjectManager = GetComponent<DetectedObjectManager>();
         nameToIndex = ObjectDetector.DetectedLabelIdxToLabelName.ToDictionary(pair => pair.Value, pair => pair.Key);
     }
 
@@ -54,7 +54,7 @@ public class JacoDOTest : MonoBehaviour
 
         GameUtils.AddText(centerCam, canvas, "Running...", defaultTextPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
 
-        foreach (var l in brickManager.LifeTimeObjects.Values)
+        foreach (var l in _detectedObjectManager.LifeTimeObjects.Values)
         {
             foreach (var obj in l)
             {

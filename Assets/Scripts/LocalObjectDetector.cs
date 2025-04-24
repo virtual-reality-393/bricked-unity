@@ -25,6 +25,7 @@ public class LocalObjectDetector : ObjectDetector
     private const float NmsThreshold = 0.4f; // IoU threshold for NMS
     private const int LayersPerFrame = 7;
     
+    
 
     void Start()
     {
@@ -83,9 +84,10 @@ public class LocalObjectDetector : ObjectDetector
         {
             var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
-
             var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
 
+
+            
             int framesTaken = 0;
             while (detectionScheduler.MoveNext())
             {
@@ -173,7 +175,7 @@ public class LocalObjectDetector : ObjectDetector
                     sb.Append("|");
                 }
 
-                if (j % 10 == 0)
+                if (j % 8 == 0)
                 {
                     Debug.LogError(sb.ToString());
                     sb  = new StringBuilder();

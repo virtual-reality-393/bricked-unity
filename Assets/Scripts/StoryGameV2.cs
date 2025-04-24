@@ -26,7 +26,7 @@ public class StoryGameV2 : MonoBehaviour
     string[] interactables = { "red", "green", "blue", "yellow", "big penguin", "pig", "human" };
     string playerColor = "small penguin";
 
-    BrickManager brickManager;
+    DetectedObjectManager _detectedObjectManager;
     List<LifeTimeObject> LifeTimeObjects = new();
     Dictionary<string, int> nameToIndex;
 
@@ -34,7 +34,7 @@ public class StoryGameV2 : MonoBehaviour
     List<MRUKAnchor> anchors = new();
 
     Vector3 anchorPoint = new Vector3(0, 0, 0);
-    Vector3 offsetDir = new Vector3(0, 0, 0);
+    public Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
     Vector3 displayOfset = new Vector3(0, 0, -0.05f);
 
@@ -46,28 +46,28 @@ public class StoryGameV2 : MonoBehaviour
     Dictionary<string, string> stroy = new Dictionary<string, string>
     {
         {"red", "What is this? \nA \"KNIFE !!\". Could this be the murder weapon?"},
-        {"green", "There are clear signs of struggle her, but no blod."},
+        {"green", "There are clear signs of struggle here, but there is no blood."},
         {"blue", "This is just a nice lake, it has no connection to the story."},
         {"yellow", "What's in here? \nit's a lot of blood and something else, something that's soft and covered in blood."},
         {"big penguin", "This is the victim, there are no \nobvious signs of how the murder was committed."},
-        {"small penguin", "Hey I'm the player."},
-        {"pig", "Dead!! big penguin is dead. I'm not sorry about that, \nbig penguin made a lot of noise tying to fly all the time, it was annoying."},
+        {"small penguin", "Why am i talking to myself?."},
+        {"pig", "Dead!! Big penguin is dead. I'm not sorry about that, \nbig penguin made a lot of noise trying to fly all the time, it was annoying."},
         {"human", "Big penguin was a nice one, the only annoying \nthing was the countless attempts to fly away."},
     };
 
     int ending = 0;
     Dictionary<int, string> endings = new Dictionary<int, string>
     {
-        {0,"You are worng, start over and try again." },
-        {1, "No human did not kill big penguin. \nHuman killed sheap (Thats way there are no sheap)." },
-        {2, "You did it, it was the the pig all along, it wanted to fly befor the big penguin." },
-        {3, "No the big penguin did not kill it self." }
+        {0,"You are wrong, start over and try again." },
+        {1, "No, the human did not kill big penguin. \nHuman killed a sheep (That's way there are no sheep)." },
+        {2, "You did it, it was the the pig all along, it wanted to fly before the big penguin." },
+        {3, "No the big penguin did not kill itself." }
     };
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        brickManager = GetComponent<BrickManager>();
+        _detectedObjectManager = GetComponent<DetectedObjectManager>();
         nameToIndex = ObjectDetector.DetectedLabelIdxToLabelName.ToDictionary(pair => pair.Value, pair => pair.Key);
 
         distArr = new float[interactables.Length];
@@ -82,7 +82,7 @@ public class StoryGameV2 : MonoBehaviour
     private List<LifeTimeObject> GetReleventObjects()
     {
         List<LifeTimeObject> objects = new List<LifeTimeObject>();
-        foreach (var l in brickManager.LifeTimeObjects.Values)
+        foreach (var l in _detectedObjectManager.LifeTimeObjects.Values)
         {
             foreach (var lto in l)
             {
@@ -139,6 +139,8 @@ public class StoryGameV2 : MonoBehaviour
             if (bricksInFrame.ContainsKey(lto.labelName))
             {
                 bricksInFrame[lto.labelName]++;
+
+                lto.obj.transform.forward = -offsetDir;
             }
             DrawLiftTimeObject(lto);
         }
@@ -173,17 +175,17 @@ public class StoryGameV2 : MonoBehaviour
 
         foreach (var lto in LifeTimeObjects)
         {
-            if (bricksInFrame.ContainsKey(lto.labelName) && lto.labelName != playerColor)
+            if (bricksInFrame.ContainsKey(lto.labelName))
             {
                 bricksInFrame[lto.labelName]++;
-                DrawLiftTimeObject(lto);
+                // DrawLiftTimeObject(lto);
                 GameObject circle = MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
                 drawnObjects.Add(circle);
             }
         }
 
-        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
-            && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
+        // if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
+        //     && bricksInFrame["big penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
         {
             //Clear frame
             //drawnObjects.ForEach(Destroy);
@@ -210,13 +212,13 @@ public class StoryGameV2 : MonoBehaviour
             {
                 if (lto.labelName != playerColor)
                 {
-                    float dist = -1;
-                    if (player != null)
+                    float dist = Mathf.Infinity;
+                    if (player.obj)
                     {
                         dist = Vector3.Distance(lto.obj.transform.position + displayOfset, player.obj.transform.position);
                     }
-                    DrawLiftTimeObject(lto);
-                    GameUtils.AddText(centerCam, canvas, lto.labelName + " plyer dist: " + Math.Round(dist, 2), lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
+                    // DrawLiftTimeObject(lto);
+                    // GameUtils.AddText(centerCam, canvas, lto.labelName + " plyer dist: " + Math.Round(dist, 2), lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
 
                     Color color = Color.white;
                     int i = Array.IndexOf(interactables, lto.labelName);
@@ -285,7 +287,7 @@ public class StoryGameV2 : MonoBehaviour
             if (bricksInFrame.ContainsKey(lto.labelName))
             {
                 bricksInFrame[lto.labelName]++;
-                DrawLiftTimeObject(lto);
+                // DrawLiftTimeObject(lto);
                 //GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
             }
         }
@@ -406,7 +408,7 @@ public class StoryGameV2 : MonoBehaviour
             if (bricksInFrame.ContainsKey(lto.labelName))
             {
                 bricksInFrame[lto.labelName]++;
-                DrawLiftTimeObject(lto);
+                // DrawLiftTimeObject(lto);
                 //GameUtils.AddText(centerCam, canvas, lto.labelName, lto.obj.transform.position, DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]]);
             }
         }
