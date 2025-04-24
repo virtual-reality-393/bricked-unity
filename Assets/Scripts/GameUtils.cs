@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public static class GameUtils
 {
@@ -272,7 +273,7 @@ public static class GameUtils
 
     public static List<List<string>> SplitStackRandomly(List<string> masterStack, int maxSize)
     {
-        Unity.Mathematics.Random _random = new Unity.Mathematics.Random();
+        
         var result = new List<List<string>>();
 
         if (masterStack == null || maxSize <= 0)
@@ -283,7 +284,7 @@ public static class GameUtils
         {
             // Get a random size between 1 and maxSize, but not more than the remaining items
             int remaining = masterStack.Count - index;
-            int chunkSize = _random.NextInt(1, Math.Min(maxSize, remaining) + 1);
+            int chunkSize = Random.Range(1, Math.Min(maxSize, remaining) + 1);
 
             var chunk = masterStack.GetRange(index, chunkSize);
             result.Add(chunk);
@@ -313,6 +314,8 @@ public static class GameUtils
         FindSpawnPositions findSpawnPositions = parent.GetComponent<FindSpawnPositions>();
         findSpawnPositions.SpawnAmount = numOfPoinst;
         findSpawnPositions.StartSpawn();
+
+        
         List<GameObject> res = new List<GameObject>(numOfPoinst);
         foreach (Transform t in parent)
         {
@@ -412,12 +415,34 @@ public static class GameUtils
             {
                 if (distMat[i, j] < min)
                 {
+                    min = distMat[i, j];
                     idx = j;
                 }
             }
             res.Add(idx);
         }
         return res;
+    }
+
+    public static bool HaveSameElementAtSameIndex(List<string> list1, List<string> list2)
+    {
+        // Check if both lists have the same number of elements
+        if (list1.Count != list2.Count)
+        {
+            return false;
+        }
+
+        // Loop through the lists and compare the elements at each index
+        for (int i = 0; i < list1.Count; i++)
+        {
+            if (list1[i] != list2[i])
+            {
+                return false;
+            }
+        }
+
+        // If all elements match, return true
+        return true;
     }
 
     public static List<string> DetectedObjectListToStringList(List<DetectedObject> detectedObjects)
