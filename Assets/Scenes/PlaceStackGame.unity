@@ -3579,6 +3579,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
+  emptyGameobjectPrefab: {fileID: 5694847630236803883, guid: 15313580b67e99641b20237245265846, type: 3}
 --- !u!114 &507105661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10356,7 +10357,7 @@ GameObject:
   - component: {fileID: 1777527098}
   - component: {fileID: 1777527097}
   m_Layer: 0
-  m_Name: '[BuildingBlock] Find Spawn Positions'
+  m_Name: Spawn Positions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10369,7 +10370,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1777527096}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d14e43228043c04db9e374568cb89a9, type: 3}
   m_Name: 
@@ -10393,7 +10394,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1777527096}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b023183069df224080314a560e6e1ff, type: 3}
   m_Name: 

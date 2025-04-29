@@ -1,11 +1,7 @@
 using Meta.XR.MRUtilityKit;
-using NUnit.Framework;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using Unity.VisualScripting;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class PlaceStackGame : MonoBehaviour
@@ -117,7 +113,7 @@ public class PlaceStackGame : MonoBehaviour
             DebugMenu();
         }
 
-        if (state == "setup")
+        if (state == "setup" && !runOnce)
         {
             Setup();
         }
@@ -372,7 +368,8 @@ public class PlaceStackGame : MonoBehaviour
             }
             stacksToBuild = GameUtils.SplitStackRandomly(masterStack, maxStackSize);
 
-            spawnPoints = GetSpawnPoints(stacksToBuild.Count);
+            //spawnPoints = GetSpawnPoints(stacksToBuild.Count);
+            spawnPoints = DiskSampledSpawnPoints(stacksToBuild.Count);
 
             for (int i = 0; i < stacksToBuild.Count; i++)
             {
@@ -408,6 +405,37 @@ public class PlaceStackGame : MonoBehaviour
             }
         }
         return true;
+    }
+
+    private Transform[] DiskSampledSpawnPoints(int numberOfPoints)
+    {
+        Transform[] points = new Transform[numberOfPoints];
+        if (tableAnchor.PlaneRect.HasValue)
+        {
+            var tablePlane = tableAnchor.PlaneRect.Value;
+
+            List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
+
+            for (int i = 0; i < numberOfPoints; i++)
+            {
+                var point = allPoints[Random.Range(0, allPoints.Count)];
+
+                var newObject = new GameObject();
+
+                newObject.transform.parent = tableAnchor.transform;
+
+                newObject.transform.position = tableAnchor.transform.position;
+
+                newObject.transform.localPosition = point;
+
+                newObject.transform.parent = spawnPositions.transform;
+
+                points[i] = newObject.transform;
+            }
+
+        }
+
+        return points;
     }
 
     private Transform[] GetSpawnPoints(int numberOfPoints)
@@ -483,26 +511,6 @@ public class PlaceStackGame : MonoBehaviour
                 {
                     tableAnchor = anchor;
                     anchorPoint = anchor.gameObject.transform.position;
-                    // if (anchor.PlaneRect.HasValue)
-                    // {
-                    //     var tablePlane = anchor.PlaneRect.Value;
-                    //
-                    //     foreach (var point in DiskSampling.GenerateDiskSamples(tablePlane,5,50,10))
-                    //     {
-                    //         var newObject = Instantiate(GameManager.Instance.brickPrefab, anchor.transform);
-                    //
-                    //         newObject.transform.localPosition = point;
-                    //
-                    //         newObject.transform.parent = null;
-                    //     }
-                    // }
-                    
-                    
-                    // for (int i = 0; i < 100; i++)
-                    // {
-                    //     
-                    // }
-                    // displayPos.rotation = Quaternion.Euler(anchor.gameObject.transform.localRotation.eulerAngles + new Vector3(-90, 0, -180));
                 }
             }
             runOnce = false;
