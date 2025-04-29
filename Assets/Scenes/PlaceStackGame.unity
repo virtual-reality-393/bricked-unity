@@ -1726,7 +1726,7 @@ SkinnedMeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 236283589}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1782,7 +1782,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 236283589}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73eac66b128fc8749a21623225c34541, type: 3}
   m_Name: 
@@ -2788,7 +2788,7 @@ SkinnedMeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 385684376}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -2844,7 +2844,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 385684376}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73eac66b128fc8749a21623225c34541, type: 3}
   m_Name: 
@@ -3579,7 +3579,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
-  emptyGameobjectPrefab: {fileID: 5694847630236803883, guid: 15313580b67e99641b20237245265846, type: 3}
 --- !u!114 &507105661
 MonoBehaviour:
   m_ObjectHideFlags: 0

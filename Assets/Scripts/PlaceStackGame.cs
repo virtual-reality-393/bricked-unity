@@ -362,11 +362,13 @@ public class PlaceStackGame : MonoBehaviour
         DestroySpawnPositions();
         if (spawnPositions.transform.childCount == 0)
         {
-            while (masterStack.Count < numberOfBricksInGame)
-            {
-                masterStack = GameUtils.GenetateStack(briksToBuildStack);
-            }
-            stacksToBuild = GameUtils.SplitStackRandomly(masterStack, maxStackSize);
+            // while (masterStack.Count < numberOfBricksInGame)
+            // {
+            //     masterStack = GameUtils.GenetateStack(briksToBuildStack);
+            // }
+            // stacksToBuild = GameUtils.SplitStackRandomly(masterStack, maxStackSize);
+
+            stacksToBuild = StackGenerator.GenerateStacks(briksToBuildStack, 2, maxStackSize);
 
             //spawnPoints = GetSpawnPoints(stacksToBuild.Count);
             spawnPoints = DiskSampledSpawnPoints(stacksToBuild.Count);
