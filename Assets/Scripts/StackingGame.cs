@@ -42,6 +42,8 @@ public class StackingGame : MonoBehaviour
 
     private int stackHeight = 2;
 
+    private GameObject table;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -180,7 +182,7 @@ public class StackingGame : MonoBehaviour
             }
 
             int[,] ids = new int[bricks.Count, 2];
-            ids = closestBricks(distArr);
+            ids = ClosestBricks(distArr);
 
             List<List<int>> stacks = FindConnectedComponents(ids);
             List<List<string>> stacksColor = new List<List<string>>();
@@ -307,7 +309,7 @@ public class StackingGame : MonoBehaviour
             .ToArray();
     }
 
-    private int[,] closestBricks(float[,] distArr)
+    private int[,] ClosestBricks(float[,] distArr)
     {
         int[,] ids = new int[distArr.GetLength(0), 2];
         for (int i = 0; i < distArr.GetLength(0); i++)

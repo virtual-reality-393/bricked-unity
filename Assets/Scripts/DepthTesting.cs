@@ -9,13 +9,7 @@ public class DepthTesting : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        var text = Shader.GetGlobalTexture(Shader.PropertyToID("_EnvironmentDepthTexture"));
-
-        if(text)
-        {
-            Graphics.Blit(text, rend);
-        }
-
+        
     }
 
 }

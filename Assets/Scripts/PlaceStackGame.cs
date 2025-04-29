@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 using static Unity.VisualScripting.Antlr3.Runtime.Tree.TreeWizard;
 
@@ -358,6 +359,25 @@ public class PlaceStackGame : MonoBehaviour
                 if (anchor.Label == MRUKAnchor.SceneLabels.TABLE)
                 {
                     anchorPoint = anchor.gameObject.transform.position;
+                    // if (anchor.PlaneRect.HasValue)
+                    // {
+                    //     var tablePlane = anchor.PlaneRect.Value;
+                    //
+                    //     foreach (var point in DiskSampling.GenerateDiskSamples(tablePlane,5,50,10))
+                    //     {
+                    //         var newObject = Instantiate(GameManager.Instance.brickPrefab, anchor.transform);
+                    //
+                    //         newObject.transform.localPosition = point;
+                    //
+                    //         newObject.transform.parent = null;
+                    //     }
+                    // }
+                    
+                    
+                    // for (int i = 0; i < 100; i++)
+                    // {
+                    //     
+                    // }
                     // displayPos.rotation = Quaternion.Euler(anchor.gameObject.transform.localRotation.eulerAngles + new Vector3(-90, 0, -180));
                 }
             }

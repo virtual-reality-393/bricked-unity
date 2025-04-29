@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StoryGameV2.unity
     guid: 55be5148fb9373744b69d7b49ffbf2ad
+  - enabled: 0
+    path: Assets/Scenes/PlaceStackGame.unity
+    guid: 8b134ce3128e52e42a2988a0e2a0d7ec
   m_configObjects:
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 152c26631e7d9ca49b14bb507bfcdbb4, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 8e860b28a6125654a9ebd074f07d2aeb, type: 2}

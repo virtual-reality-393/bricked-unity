@@ -34,7 +34,6 @@ public class LocalObjectDetector : ObjectDetector
         _objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
-        
         SetWebCam();
     }
 

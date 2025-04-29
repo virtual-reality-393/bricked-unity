@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DiskSampling
@@ -46,12 +47,21 @@ public class DiskSampling
         grid[Mathf.FloorToInt(point.x / cellSize), Mathf.FloorToInt(point.y / cellSize)] = point;
     }
 
-    public static List<Vector2> GenerateDiskSamples(float radius, int attempts, int w, int h, out Vector2[,] outGrid)
+    public static List<Vector2> GenerateDiskSamples(Rect rect,float radius,float scale,int attempts,float clearance = 0.1f)
+    {
+        var w = (int)((rect.width-clearance)*scale);
+        var h = (int)((rect.height-clearance)*scale);
+
+        var res = GenerateDiskSamples(radius, attempts, w, h);
+
+        return res.Select(x => x / scale + rect.min + new Vector2(clearance,clearance)/2).ToList();
+    }
+
+    public static List<Vector2> GenerateDiskSamples(float radius, int attempts, int w, int h)
     {
         width = w;
         height = h;
         cellSize = Mathf.FloorToInt(radius / Mathf.Sqrt(DIMS));
-        Debug.Log(cellSize);
         grid = new Vector2[Mathf.CeilToInt(width / cellSize) + 1, Mathf.CeilToInt(height / cellSize) + 1];
         for (int i = 0; i < grid.GetLength(0); i++)
         {
@@ -93,7 +103,6 @@ public class DiskSampling
                 listOfActivePoints.RemoveAt(randomIndex);
             }
         }
-        outGrid = grid;
         return points;
     }
 

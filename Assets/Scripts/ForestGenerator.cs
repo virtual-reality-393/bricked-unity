@@ -9,7 +9,7 @@ public class ForestGenerator : MonoBehaviour
     public List<GameObject> GenerateForest(float density, int width, int height, float scale)
     {
         List<GameObject> trees = new();
-        var points = DiskSampling.GenerateDiskSamples(density,10,width,height,out Vector2[,] outGrid);
+        var points = DiskSampling.GenerateDiskSamples(density,10,width,height);
         foreach (var point in points)
         {
             var newPoint = new Vector3(point.x, 0, point.y) - new Vector3(width/2f,0,height/2f);
