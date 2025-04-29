@@ -4,9 +4,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Unity.VisualScripting;
 using Unity.Mathematics;
 using UnityEngine;
-using static Unity.VisualScripting.Antlr3.Runtime.Tree.TreeWizard;
 
 public class PlaceStackGame : MonoBehaviour
 {
@@ -35,6 +35,7 @@ public class PlaceStackGame : MonoBehaviour
     string[] objectsToDetect = { "red", "green", "blue", "yellow" };
 
     List<GameObject> drawnBricks = new List<GameObject>();
+    List<GameObject> adminMenuVisuals = new List<GameObject>();
 
     float[] dists;
     bool[] complted;
@@ -43,13 +44,22 @@ public class PlaceStackGame : MonoBehaviour
    
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
+    MRUKAnchor tableAnchor = null;
 
     Vector3 anchorPoint = new Vector3(0, 0, 0);
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
     Vector3 displayOfset = new Vector3(0, 0, -0.05f);
 
+    Vector3 smallPenguinPos = new Vector3(10, 10, 10);
+
     bool runOnce = true;
+    bool debugMode = false;
+    bool canDoAdminInteraction = true;
+
+    string setupText = "To start find the needed bricks.";
+    string seprateText = "Seprate";
+    string playText = "Build the displayed stacks and place them in the cirkel.";
 
     List<List<string>> debugStatToBuild = new List<List<string>>
     {
@@ -78,15 +88,33 @@ public class PlaceStackGame : MonoBehaviour
             {
                 bricks.Add(brick);
             }
+            else if (brick.labelName == "small penguin")
+            {
+                smallPenguinPos = brick.worldPos;
+                debugMode = true;
+            }
+            else if (brick.labelName == "big penguin")
+            {
+                debugMode = false;
+                smallPenguinPos = new Vector3(10, 10, 10);
+            }
         });
     }
 
     // Update is called once per frame
     void Update()
     {
+        ClearText();
         if (runOnce)
         {
             GetRoom();
+        }
+
+        adminMenuVisuals.ForEach(Destroy);
+        adminMenuVisuals.Clear();
+        if (debugMode)
+        {
+            DebugMenu();
         }
 
         if (state == "setup")
@@ -106,15 +134,14 @@ public class PlaceStackGame : MonoBehaviour
 
     private void Setup()
     {
-        ClearText();
         ResetBricksInFrame();
         DestroySpawnPositions();
 
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
 
-        bricksInFrame = GetBricksInFrame(bricks, true);
-        GameUtils.AddText(centerCam, canvas, "Setup", displayPos + new Vector3(0,0.1f,0), Color.white, 3);
+        bricksInFrame = GetBricksInFrame(bricks, debugMode);
+        GameUtils.AddText(centerCam, canvas, setupText, displayPos + new Vector3(0,0.15f,0), Color.white, 3);
         if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 2 && bricksInFrame["blue"] == 2 && bricksInFrame["yellow"] == 3))// || bricks.Count == 4)
         {
             drawnBricks.ForEach(Destroy);
@@ -126,8 +153,7 @@ public class PlaceStackGame : MonoBehaviour
 
     private void Seprate()
     {
-        ClearText();
-        GameUtils.AddText(centerCam, canvas, "Seprate", displayPos + new Vector3(0, 0.1f, 0), Color.white, 3);
+        GameUtils.AddText(centerCam, canvas, seprateText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
         DestroyCubes(0);
         DestroyCubes(1);
 
@@ -143,8 +169,13 @@ public class PlaceStackGame : MonoBehaviour
 
     private void Play()
     {
-        ClearText();
-        GameUtils.AddText(centerCam, canvas, "Play", displayPos + new Vector3(0, 0.1f, 0), Color.white, 3);
+        GameUtils.AddText(centerCam, canvas, playText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
+
+        if (debugMode)
+        {
+            GameUtils.AddText(centerCam, canvas, "Debug mode \"On\". \nTo disable detect \"big penguin\".", displayPos + offsetDir * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f);
+        }
+
         DestroyCubes(1);
 
         if (taskComplet)
@@ -159,7 +190,10 @@ public class PlaceStackGame : MonoBehaviour
             float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
             List<int> ints = GameUtils.ClosestStacks(distMat);
 
-            DrawStacks(stacksInFrame, distMat, ints);
+            if (debugMode)
+            {
+                DrawStacks(stacksInFrame, distMat, ints);
+            }
 
             for (int i = 0; i < spawnPoints.Length; i++)
             {
@@ -180,6 +214,90 @@ public class PlaceStackGame : MonoBehaviour
             }
             taskComplet = CheckIfAllDone();
         }
+    }
+
+    private void DebugMenu()
+    {
+        Vector3 menuPos = anchorPoint + offsetDir * -0.2f;
+        Vector3 offset = new Vector3(0.07f, 0, 0);
+
+        int adminAction = -1;
+
+        GameObject adminpoint;
+        if (!canDoAdminInteraction)
+        {
+            adminpoint = GameUtils.MakeInteractionCirkle(menuPos + offsetDir * 0.1f, Color.red);
+            
+        }
+        else
+        {
+            adminpoint = GameUtils.MakeInteractionCirkle(menuPos + offsetDir * 0.1f, Color.green);
+        }
+        adminMenuVisuals.Add(adminpoint);
+        GameUtils.AddText(centerCam, canvas, "" + Vector3.Distance(smallPenguinPos, adminpoint.transform.position), menuPos + offsetDir * 0.1f + new Vector3(0, 0.01f, 0), Color.white, 0.8f);
+
+        GameObject addMax = GameUtils.MakeInteractionCirkle(menuPos + offset*0, Color.blue);
+        adminMenuVisuals.Add(addMax);
+        GameUtils.AddText(centerCam, canvas, "+1 to max size \nCurrent max size: " + maxStackSize, menuPos + offset * 0 + new Vector3(0, 0.01f, 0), Color.white, 0.8f);
+
+        GameObject removeMax = GameUtils.MakeInteractionCirkle(menuPos + offset*1, Color.blue);
+        adminMenuVisuals.Add(removeMax);
+        GameUtils.AddText(centerCam, canvas, "-1 from max size \nCurrent max size: " + maxStackSize, menuPos + offset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f);
+
+        GameObject completTask = GameUtils.MakeInteractionCirkle(menuPos + offset * 2, Color.blue);
+        adminMenuVisuals.Add(completTask);
+        GameUtils.AddText(centerCam, canvas, "Complet task", menuPos + offset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f);
+
+        GameObject toSetup = GameUtils.MakeInteractionCirkle(menuPos + offset * 3, Color.blue);
+        adminMenuVisuals.Add(toSetup);
+        GameUtils.AddText(centerCam, canvas, "To setup", menuPos + offset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f);
+
+        for (int i = 0; i < adminMenuVisuals.Count; i++)
+        {
+            float d = Vector3.Distance(smallPenguinPos, adminMenuVisuals[i].transform.position);
+
+            if (Vector3.Distance(smallPenguinPos, adminpoint.transform.position) < 0.03)
+            {
+                canDoAdminInteraction = true;
+            }
+
+            if (d < 0.03 && canDoAdminInteraction)
+            {
+                adminAction = i;
+                canDoAdminInteraction = false;
+            }
+        }
+
+        switch (adminAction)
+        {
+            case 1:
+                if (maxStackSize+1 <= briksToBuildStack.Values.Sum())
+                {
+                    maxStackSize++;
+                }
+                break;
+
+            case 2:
+                if (maxStackSize - 1 >= 1)
+                {
+                    maxStackSize--;
+                }
+                break;
+
+            case 3:
+                taskComplet = true;
+                break;
+
+            case 4:
+                state = "setup";
+                DestroyCubes(0);
+                break;
+
+            default:
+                break;
+        }
+        adminAction = -1;
+
     }
 
     private void DrawStacks(List<List<DetectedObject>> stacksInFrame, float[,] distMat, List<int> ints)
@@ -223,15 +341,20 @@ public class PlaceStackGame : MonoBehaviour
             }
 
             stack.Sort((a, b) => detectedBricks[a].worldPos.y.CompareTo(detectedBricks[b].worldPos.y));
-         
-            //Debug display
+
+   
             for (int i = 0; i < stack.Count; i++)
             {
-                GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
-                cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[detectedBricks[stack[i]].labelName];
+                //Debug display of the stacks in current frame
+                if (debugMode)
+                {
+                    GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
+                    cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[detectedBricks[stack[i]].labelName];
+                }
                 stackColorRow.Add(detectedBricks[stack[i]]);
             }
             offset += new Vector3(0.05f, 0, 0);
+            
             stacksColor.Add(stackColorRow);
         }
         return stacksColor;
@@ -358,6 +481,7 @@ public class PlaceStackGame : MonoBehaviour
             {
                 if (anchor.Label == MRUKAnchor.SceneLabels.TABLE)
                 {
+                    tableAnchor = anchor;
                     anchorPoint = anchor.gameObject.transform.position;
                     // if (anchor.PlaneRect.HasValue)
                     // {
@@ -388,7 +512,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
 
-            displayPos = anchorPoint + offsetDir * 0.2f;
+            displayPos = anchorPoint + offsetDir * 0.25f;
 
             displayOfset = offsetDir * -0.05f;
 
