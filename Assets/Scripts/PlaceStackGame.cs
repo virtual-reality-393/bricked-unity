@@ -199,12 +199,16 @@ public class PlaceStackGame : MonoBehaviour
 
                     if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
                     {
-                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = Color.green;
+                        var col = Color.green;
+                        col.a = 0.5f;
+                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
                     }
                     else
                     {
-                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = Color.white;
+                        var col = Color.white;
+                        col.a = 0.5f;
+                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                     }
                 }
             }
