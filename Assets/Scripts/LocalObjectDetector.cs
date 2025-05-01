@@ -4,11 +4,13 @@ using Unity.Sentis;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
+using System.Diagnostics;
 using System.Text;
 using Meta.XR;
 using PassthroughCameraSamples;
 using TMPro;
 using UnityEngine.Experimental.Rendering;
+using Debug = UnityEngine.Debug;
 
 public class LocalObjectDetector : ObjectDetector
 {
@@ -100,6 +102,7 @@ public class LocalObjectDetector : ObjectDetector
 
             _internalDetection = new List<DetectedObject>();
 
+
             var modelOut = (_objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
 
             List<DetectionBox> bboxes = new List<DetectionBox>();
@@ -132,7 +135,7 @@ public class LocalObjectDetector : ObjectDetector
                     }
                 }
             }
-
+            
             bboxes = ApplyNMS(bboxes);
             foreach (var bbox in bboxes)
             {
@@ -146,8 +149,10 @@ public class LocalObjectDetector : ObjectDetector
                     _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
                 }
             }
+            
 
             HandleBricksDetected(GetBricks());
+
 
             yield return null;
         }

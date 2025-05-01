@@ -194,7 +194,7 @@ public class StackingGame : MonoBehaviour
                 if (stack.Count > 2)
                 {
                     float y1 = bricks[stack[0]].worldPos.y;
-                    float y2 = bricks[stack[stack.Count - 1]].worldPos.y;
+                    float y2 = bricks[stack[^1]].worldPos.y;
                     if (y2 < y1)
                     {
                         stack.Reverse();
@@ -230,7 +230,6 @@ public class StackingGame : MonoBehaviour
                     }
                 }
             }
-
 
             if (b)
             {

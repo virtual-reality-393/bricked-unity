@@ -40,7 +40,7 @@ Shader "Custom/DepthShader"
             {
                 int eyeIndex = 0; 
 
-                float depth = SAMPLE_TEXTURE2D_ARRAY(_EnvironmentDepthTexture, sampler_EnvironmentDepthTexture, IN.uv,eyeIndex).r;
+                float depth = SampleEnvironmentDepthLinear(IN.uv);
 
                 // Visualize depth as grayscale
                 return half4(depth, depth, depth, 1.0);

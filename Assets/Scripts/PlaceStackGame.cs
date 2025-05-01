@@ -27,7 +27,7 @@ public class PlaceStackGame : MonoBehaviour
     List<string> masterStack = new List<string>();
     List<List<string>> stacksToBuild = new();
 
-    string state = "setup";
+    private GameState state = GameState.Setup;
     string[] objectsToDetect = { "red", "green", "blue", "yellow" };
 
     List<GameObject> drawnBricks = new List<GameObject>();
@@ -57,6 +57,8 @@ public class PlaceStackGame : MonoBehaviour
     string seprateText = "Seprate";
     string playText = "Build the displayed stacks and place them in the cirkel.";
 
+    private bool fixStack = false; // Pls fix the gameplay loop :|
+
     List<List<string>> debugStatToBuild = new List<List<string>>
     {
         new List<string>{ "red", "green", "yellow" },
@@ -78,6 +80,7 @@ public class PlaceStackGame : MonoBehaviour
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
     {
         bricks = new List<DetectedObject>();
+        fixStack = true;
         e.DetectedObjects.ForEach(brick =>
         {
             if (objectsToDetect.Contains(brick.labelName))
@@ -95,6 +98,8 @@ public class PlaceStackGame : MonoBehaviour
                 smallPenguinPos = new Vector3(10, 10, 10);
             }
         });
+
+
     }
 
     // Update is called once per frame
@@ -113,19 +118,18 @@ public class PlaceStackGame : MonoBehaviour
             DebugMenu();
         }
 
-        if (state == "setup" && !runOnce)
+        if (state == GameState.Setup && !runOnce)
         {
             Setup();
         }
-        else if (state == "Seprate")
+        else if (state == GameState.Separate)
         {
             Seprate();
         }
-        else if (state == "play")
+        else if (state == GameState.Play)
         {
             Play();
         }
-
     }
 
     private void Setup()
@@ -143,7 +147,7 @@ public class PlaceStackGame : MonoBehaviour
             drawnBricks.ForEach(Destroy);
             drawnBricks.Clear();
             taskComplet = true;
-            state = "play";
+            state = GameState.Play;
         }
     }
 
@@ -159,7 +163,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             NewTable();
             taskComplet = false;
-            state = "play";
+            state = GameState.Play;
         }
     }
 
@@ -183,8 +187,17 @@ public class PlaceStackGame : MonoBehaviour
         else
         {
             List<List<DetectedObject>> stacksInFrame = FindStacksInFrame(bricks);
+            if (fixStack)
+            {
+                FixStacks(stacksInFrame, bricks);
+                fixStack = false;
+                // Pls fix the gameplay loop >:(
+                
+                stacksInFrame = FindStacksInFrame(bricks);
+            }
             float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
             List<int> ints = GameUtils.ClosestStacks(distMat);
+            
 
             if (debugMode)
             {
@@ -214,6 +227,34 @@ public class PlaceStackGame : MonoBehaviour
             }
             taskComplet = CheckIfAllDone();
         }
+    }
+
+    private void FixStacks(List<List<DetectedObject>> stacksInFrame, List<DetectedObject> detectedBricks)
+    {
+        foreach(var stack in stacksInFrame)
+        {
+            var tempHeight = stack[^1].worldPos.y-displayPos.y;
+
+            var tempStack = Instantiate(GameManager.Instance.brickPrefab, stack[^1].worldPos-new Vector3(0,tempHeight/2,0), Quaternion.identity);
+            tempStack.AddComponent<BoxCollider>();
+            tempStack.transform.localScale = new Vector3(tempStack.transform.localScale.x*2, tempHeight+0.1f,
+                tempStack.transform.localScale.z);
+            tempStack.transform.forward = offsetDir;
+            tempStack.transform.parent = cubeParent.transform.GetChild(1);
+            Destroy(tempStack.GetComponent<Renderer>());
+        }
+        
+        
+
+        foreach (var brick in detectedBricks)
+        {
+            if(Physics.Raycast(centerCam.transform.position, (brick.worldPos - centerCam.transform.position + Vector3.up*0.02f).normalized,out RaycastHit hit))
+            {
+                brick.worldPos = hit.point;
+            }
+        }
+        
+        
     }
 
     private void DebugMenu()
@@ -289,7 +330,7 @@ public class PlaceStackGame : MonoBehaviour
                 break;
 
             case 4:
-                state = "setup";
+                state = GameState.Setup;
                 DestroyCubes(0);
                 break;
 
@@ -307,7 +348,7 @@ public class PlaceStackGame : MonoBehaviour
             GameObject cube = stacksInFrame[i][0].DrawSmall();
             cube.transform.parent = cubeParent.transform.GetChild(1);
             cube.GetComponent<Renderer>().material.color = Color.gray;
-           //  GameUtils.AddText(centerCam, canvas, "Id: "+ i + "\n"+distMat[i, ints[i]]+"", cube.transform.position + new Vector3(0, 0.1f, 0), Color.gray, 1.5f);
+            //  GameUtils.AddText(centerCam, canvas, "Id: "+ i + "\n"+distMat[i, ints[i]]+"", cube.transform.position + new Vector3(0, 0.1f, 0), Color.gray, 1.5f);
         }
     }
 
@@ -532,5 +573,13 @@ public class PlaceStackGame : MonoBehaviour
 
         }
     }
+}
+
+
+public enum GameState
+{
+    Setup,
+    Play,
+    Separate
 }
 
