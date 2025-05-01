@@ -297,40 +297,70 @@ public static class GameUtils
         return result;
     }
 
-    public static List<GameObject> GeneratePointsOnTable(Transform parent, GameObject prefab, int numOfPoinst, bool random = true)
+    public static Transform[] DiskSampledSpawnPoints(MRUKAnchor tableAnchor,int numberOfPoints, Transform parent)
     {
-        List<GameObject> res = new List<GameObject>(numOfPoinst);
-        if (random)
+        Transform[] points = new Transform[numberOfPoints];
+        if (tableAnchor.PlaneRect.HasValue)
         {
-            res = GenerateRandomPointsOnTable(parent, prefab, numOfPoinst);
+            var tablePlane = tableAnchor.PlaneRect.Value;
+
+            List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
+
+            for (int i = 0; i < numberOfPoints; i++)
+            {
+                var point = allPoints[Random.Range(0, allPoints.Count)];
+
+                var newObject = new GameObject();
+
+                newObject.transform.parent = tableAnchor.transform;
+
+                newObject.transform.position = tableAnchor.transform.position;
+
+                newObject.transform.localPosition = point;
+
+                newObject.transform.parent = parent;
+
+                points[i] = newObject.transform;
+                allPoints.Remove(point);
+            }
+
         }
         else
         {
-            res = GenerateFixedPointsOnTable(parent, prefab, numOfPoinst);
+            points = null;
         }
-        return res;
+
+        return points;
     }
 
-    private static List<GameObject> GenerateRandomPointsOnTable(Transform parent, GameObject prefab, int numOfPoinst)
+    public static Transform[] DiskSampledSpawnPoints(MRUKAnchor tableAnchor, int numberOfPoints, Transform parent, Rect costumRect)
     {
-        FindSpawnPositions findSpawnPositions = parent.GetComponent<FindSpawnPositions>();
-        findSpawnPositions.SpawnAmount = numOfPoinst;
-        findSpawnPositions.StartSpawn();
+        Transform[] points = new Transform[numberOfPoints];
+        var tablePlane = costumRect;
 
-        
-        List<GameObject> res = new List<GameObject>(numOfPoinst);
-        foreach (Transform t in parent)
+        List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
+
+        for (int i = 0; i < numberOfPoints; i++)
         {
-            res.Add(t.gameObject);
+            var point = allPoints[Random.Range(0, allPoints.Count)];
+
+            var newObject = new GameObject();
+
+            newObject.transform.parent = tableAnchor.transform;
+
+            newObject.transform.position = tableAnchor.transform.position;
+
+            newObject.transform.localPosition = point;
+
+            newObject.transform.parent = parent;
+
+            points[i] = newObject.transform;
+            allPoints.Remove(point);
         }
-        return res;
+
+        return points;
     }
 
-    private static List<GameObject> GenerateFixedPointsOnTable(Transform parent, GameObject prefab, int numOfPoinst)
-    {
-        throw new NotImplementedException();
-    }
-    
 
     public static DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {
