@@ -3578,6 +3578,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  stackPrefab: {fileID: 552255446577296144, guid: 7774f41fa14bc094dabddd5399980117, type: 3}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
 --- !u!114 &507105661
 MonoBehaviour:
@@ -3597,8 +3598,10 @@ MonoBehaviour:
   canvas: {fileID: 330303403}
   cubeParent: {fileID: 931900774}
   maxStackSize: 4
+  minStackSize: 2
+  sliceMethod: 0
   distThreshold: 0.05
-  stackThreshold: 0.06
+  stackThreshold: 0.08
 --- !u!1 &522474421
 GameObject:
   m_ObjectHideFlags: 0

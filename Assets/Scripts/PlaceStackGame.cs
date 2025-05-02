@@ -218,18 +218,23 @@ public class PlaceStackGame : MonoBehaviour
             List<List<DetectedObject>> stacksInFrame = FindStacksInFrame(bricks);
             if (fixStack)
             {
-                FixStacks(stacksInFrame, bricks);
-                fixStack = false;
-                // Pls fix the gameplay loop >:(
                 
-                stacksInFrame = FindStacksInFrame(bricks);
+                fixStack = true;
+                // Pls fix the gameplay loop >:(
             }
+            stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
+
+            if (debugMode)
+            {
+                DrawDebugStacks(stacksInFrame);
+            }
+            
             float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
             List<int> ints = GameUtils.ClosestStacks(distMat);
 
             if (debugMode)
             {
-                DrawStacks(stacksInFrame, distMat, ints);
+                DrawStackPositions(stacksInFrame, distMat, ints);
             }
 
             for (int i = 0; i < spawnPoints.Length; i++)
@@ -257,19 +262,19 @@ public class PlaceStackGame : MonoBehaviour
         }
     }
 
-    private void FixStacks(List<List<DetectedObject>> stacksInFrame, List<DetectedObject> detectedBricks)
+    private List<DetectedObject> FixStacks(List<List<DetectedObject>> stacksInFrame, List<DetectedObject> detectedBricks)
     {
+        var res = new List<DetectedObject>();
         foreach(var stack in stacksInFrame)
         {
             var tempHeight = stack[^1].worldPos.y-displayPos.y;
 
-            var tempStack = Instantiate(GameManager.Instance.brickPrefab, stack[^1].worldPos-new Vector3(0,tempHeight/2,0), Quaternion.identity);
-            tempStack.AddComponent<BoxCollider>();
+            var tempStack = Instantiate(GameManager.Instance.stackPrefab, stack[^1].worldPos-new Vector3(0,tempHeight/2,0), Quaternion.identity);
             tempStack.transform.localScale = new Vector3(tempStack.transform.localScale.x*2, tempHeight+0.1f,
                 tempStack.transform.localScale.z);
             tempStack.transform.forward = offsetDir;
             tempStack.transform.parent = cubeParent.transform.GetChild(1);
-            Destroy(tempStack.GetComponent<Renderer>());
+            // tempStack.GetComponent<Renderer>().enabled = debugMode;
         }
         
         
@@ -278,11 +283,12 @@ public class PlaceStackGame : MonoBehaviour
         {
             if(Physics.Raycast(centerCam.transform.position, (brick.worldPos - centerCam.transform.position + Vector3.up*0.02f).normalized,out RaycastHit hit))
             {
-                brick.worldPos = hit.point;
+                res.Add(new DetectedObject(brick.labelIdx,brick.labelName,hit.point));
             }
         }
-        
-        
+
+
+        return res;
     }
 
     private void DebugMenu()
@@ -440,7 +446,7 @@ public class PlaceStackGame : MonoBehaviour
 
     }
 
-    private void DrawStacks(List<List<DetectedObject>> stacksInFrame, float[,] distMat, List<int> ints)
+    private void DrawStackPositions(List<List<DetectedObject>> stacksInFrame, float[,] distMat, List<int> ints)
     {
         for (int i = 0; i < stacksInFrame.Count; i++)
         {
@@ -448,6 +454,23 @@ public class PlaceStackGame : MonoBehaviour
             cube.transform.parent = cubeParent.transform.GetChild(1);
             cube.GetComponent<Renderer>().material.color = Color.gray;
             //  GameUtils.AddText(centerCam, canvas, "Id: "+ i + "\n"+distMat[i, ints[i]]+"", cube.transform.position + new Vector3(0, 0.1f, 0), Color.gray, 1.5f);
+        }
+    }
+
+    private void DrawDebugStacks(List<List<DetectedObject>> stacksInFrame)
+    {
+        Vector3 pos = displayPos + offsetDir * 0.2f;
+        Vector3 offset = new Vector3(0, 0, 0);
+
+        foreach (var stack in stacksInFrame)
+        {
+            for (int i = 0; i < stack.Count; i++)
+            {
+                GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
+                cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[stack[i].labelName];
+            }
+
+            offset += new Vector3(0.05f, 0, 0);
         }
     }
 
@@ -465,11 +488,9 @@ public class PlaceStackGame : MonoBehaviour
         List<List<int>> stacks = GameUtils.FindConnectedComponents(ids);
         List<List<DetectedObject>> stacksColor = new List<List<DetectedObject>>();
         
-        Vector3 pos = displayPos + offsetDir * 0.2f;
-        Vector3 offset = new Vector3(0, 0, 0);
+        
         foreach (var stack in stacks)
         {
-            List<DetectedObject> stackColorRow = new List<DetectedObject>();
             if (stack.Count > 2)
             {
                 float y1 = detectedBricks[stack[0]].worldPos.y;
@@ -482,18 +503,8 @@ public class PlaceStackGame : MonoBehaviour
 
             stack.Sort((a, b) => detectedBricks[a].worldPos.y.CompareTo(detectedBricks[b].worldPos.y));
 
-   
-            for (int i = 0; i < stack.Count; i++)
-            {
-                //Debug display of the stacks in current frame
-                if (debugMode)
-                {
-                    GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
-                    cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[detectedBricks[stack[i]].labelName];
-                }
-                stackColorRow.Add(detectedBricks[stack[i]]);
-            }
-            offset += new Vector3(0.05f, 0, 0);
+            var stackColorRow = stack.Select(t => detectedBricks[t]).ToList();
+
             
             stacksColor.Add(stackColorRow);
         }
