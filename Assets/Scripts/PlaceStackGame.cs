@@ -17,7 +17,7 @@ public class PlaceStackGame : MonoBehaviour
 
     public int maxStackSize = 4;
     public int minStackSize = 2;
-    public SliceMethod sliceMethod = SliceMethod.Max;
+    public SliceMethod sliceMethod = SliceMethod.Random;
     public float distThreshold = 0.08f;
     public float stackThreshold = 0.06f;
 
@@ -80,6 +80,11 @@ public class PlaceStackGame : MonoBehaviour
         _findSpawnPositions.SpawnAmount = numberOfBricksInGame;
         objectDetection.OnObjectsDetected += HandleBricksDetected;
 
+        rectPos1 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
+        rectPos1.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
+
+        rectPos2 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
+        rectPos2.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f); 
     }
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
@@ -102,17 +107,37 @@ public class PlaceStackGame : MonoBehaviour
                 debugMode = false;
                 smallPenguinPos = new Vector3(10, 10, 10);
             }
-            else if(brick.labelName == "sheep" && debugMode)
+            else if (brick.labelName == "sheep" && debugMode)
             {
                 rectPos1.transform.position = brick.worldPos;
-                GameObject sheep = brick.DrawSmall();
-                adminMenuVisuals.Add(sheep);
             }
-            else if(brick.labelName == "pig" && debugMode)
+            else if (brick.labelName == "pig" && debugMode)
             {
                 rectPos2.transform.position = brick.worldPos;
-                GameObject pig = brick.DrawSmall();
-                adminMenuVisuals.Add(pig);
+            }
+            else if (brick.labelName == "human" && !debugMode)
+            {
+                maxStackSize = 4;
+                minStackSize = 2;
+                sliceMethod = SliceMethod.Random;
+            }
+            else if (brick.labelName == "sheep" && !debugMode)
+            {
+                maxStackSize = 8;
+                minStackSize = 4;
+                sliceMethod = SliceMethod.Max;
+            }
+            else if (brick.labelName == "pig" && !debugMode)
+            {
+                maxStackSize = 3;
+                minStackSize = 1;
+                sliceMethod = SliceMethod.Random;
+            }
+            else if (brick.labelName == "lion" && !debugMode)
+            {
+                offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
+                displayPos = anchorPoint + offsetDir * 0.25f;
+                displayOfset = offsetDir * -0.05f;
             }
         });
     }
@@ -128,6 +153,8 @@ public class PlaceStackGame : MonoBehaviour
 
         adminMenuVisuals.ForEach(Destroy);
         adminMenuVisuals.Clear();
+        rectPos1.SetActive(debugMode);
+        rectPos2.SetActive(debugMode);
         if (debugMode)
         {
             DebugMenu();
@@ -659,10 +686,8 @@ public class PlaceStackGame : MonoBehaviour
 
             ourPlaneRect = (Rect)tableAnchor.PlaneRect;
 
-            rectPos1 = new GameObject("rectPos1");
             rectPos1.transform.parent = tableAnchor.transform;
 
-            rectPos2 = new GameObject("rectPos2");
             rectPos2.transform.parent = tableAnchor.transform;
         }
     }

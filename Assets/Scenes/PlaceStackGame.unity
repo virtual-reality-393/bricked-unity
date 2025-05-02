@@ -3599,7 +3599,7 @@ MonoBehaviour:
   cubeParent: {fileID: 931900774}
   maxStackSize: 4
   minStackSize: 2
-  sliceMethod: 0
+  sliceMethod: 1
   distThreshold: 0.05
   stackThreshold: 0.08
 --- !u!1 &522474421
