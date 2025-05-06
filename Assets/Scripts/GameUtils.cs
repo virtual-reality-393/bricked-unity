@@ -219,7 +219,7 @@ public static class GameUtils
         {
             GameObject cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, pos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity);
             var drawColor = GameUtils.nameToColor[stack[i]];
-            drawColor.a = 0.5f;
+            drawColor.a =0.8f;
             cube.GetComponent<Renderer>().material.color = drawColor;
             res.Add(cube);
         }
@@ -409,7 +409,7 @@ public static class GameUtils
     public static GameObject MakeInteractionCirkle(Vector3 pos, Color color)
     {
         GameObject circle = GameObject.Instantiate(GameManager.Instance.cylinderPrefab, pos, Quaternion.identity);
-        color.a = 0.5f;
+        color.a = 0.4f;
         circle.GetComponent<Renderer>().material.color = color;
         circle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
         return circle;
