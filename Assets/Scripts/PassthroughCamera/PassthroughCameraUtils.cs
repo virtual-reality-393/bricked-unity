@@ -96,7 +96,7 @@ namespace PassthroughCameraSamples
             // Querying the camera resolution for which the intrinsics are provided
             // https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics#SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE
             // This is a Rect of 4 elements: [bottom, left, right, top] with (0,0) at top-left corner.
-            var sensorSize = GetCameraValueByKey<AndroidJavaObject>(cameraCharacteristics, "SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE");
+            using var sensorSize = GetCameraValueByKey<AndroidJavaObject>(cameraCharacteristics, "SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE");
 
             return new PassthroughCameraIntrinsics
             {
@@ -131,10 +131,10 @@ namespace PassthroughCameraSamples
         {
             var index = cameraEye == PassthroughCameraEye.Left ? 0 : 1;
 
-            if (true)
+            if (s_cachedCameraPosesRelativeToHead[index] == null)
             {
                 var cameraId = GetCameraIdByEye(cameraEye);
-                var cameraCharacteristics = s_cameraManager.Call<AndroidJavaObject>("getCameraCharacteristics", cameraId);
+                using var cameraCharacteristics = s_cameraManager.Call<AndroidJavaObject>("getCameraCharacteristics", cameraId);
 
                 var cameraTranslation = GetCameraValueByKey<float[]>(cameraCharacteristics, "LENS_POSE_TRANSLATION");
                 var p_headFromCamera = new Vector3(cameraTranslation[0], cameraTranslation[1], -cameraTranslation[2]);
@@ -272,6 +272,13 @@ namespace PassthroughCameraSamples
             return CameraEyeToCameraIdMap.Count == 2;
         }
 
+        internal static bool IsPassthroughEnabled()
+        {
+            return OVRManager.IsInsightPassthroughSupported() &&
+                OVRManager.IsInsightPassthroughInitialized() &&
+                OVRManager.instance.isInsightPassthroughEnabled;
+        }
+
         private static string[] GetCameraIdList()
         {
             return s_cameraManager.Call<string[]>("getCameraIdList");
@@ -317,7 +324,7 @@ namespace PassthroughCameraSamples
 
         private static T GetCameraValueByKey<T>(AndroidJavaObject cameraCharacteristics, string keyStr)
         {
-            var key = cameraCharacteristics.GetStatic<AndroidJavaObject>(keyStr);
+            using var key = cameraCharacteristics.GetStatic<AndroidJavaObject>(keyStr);
             return GetCameraValueByKey<T>(cameraCharacteristics, key);
         }
 

@@ -1463,6 +1463,7 @@ MonoBehaviour:
   webCamTextureManager: {fileID: 696750138}
   objectDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
   letterbox: {fileID: 202246612}
+  _debugRayPrefab: {fileID: 2227728202376096066, guid: 6f0d9335bc3c39544886ad951414ec17, type: 3}
 --- !u!4 &202246611
 Transform:
   m_ObjectHideFlags: 0
@@ -5528,7 +5529,7 @@ MonoBehaviour:
   _headPoseRelativeOffsetRotation: {x: 0, y: 0, z: 0}
   _headPoseRelativeOffsetTranslation: {x: 0, y: 0, z: 0}
   profilerTcpPort: 32419
-  expandMixedRealityCapturePropertySheet: 0
+  expandMixedRealityCapturePropertySheet: 1
   enableMixedReality: 0
   compositionMethod: 0
   extraHiddenLayers:
@@ -10347,6 +10348,51 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &1755649952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1755649953}
+  - component: {fileID: 1755649954}
+  m_Layer: 0
+  m_Name: Performance
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1755649953
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1755649952}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1755649954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1755649952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ca807d2eb21274787db0b744173bd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  detector: {fileID: 202246610}
 --- !u!1 &1777527096
 GameObject:
   m_ObjectHideFlags: 0
@@ -12183,3 +12229,4 @@ SceneRoots:
   - {fileID: 1777527099}
   - {fileID: 330303407}
   - {fileID: 931900775}
+  - {fileID: 1755649953}

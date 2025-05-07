@@ -25,7 +25,7 @@ public class Performance : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(FPSCounter());
+        // StartCoroutine(FPSCounter());
         detector.OnObjectsDetected += OnObjectsDetected;
         watch = new Stopwatch();
         

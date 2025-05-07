@@ -243,6 +243,12 @@ public class PlaceStackGame : MonoBehaviour
         else
         {
             List<List<DetectedObject>> stacksInFrame = FindStacksInFrame(bricks);
+
+            if (stacksInFrame.Count == 0)
+            {
+                return;
+            }
+            
             if (fixStack)
             {
                 
@@ -503,18 +509,20 @@ public class PlaceStackGame : MonoBehaviour
 
     private List<List<DetectedObject>> FindStacksInFrame(List<DetectedObject> detectedBricks)
     {
+        List<List<DetectedObject>> stacksColor = new List<List<DetectedObject>>();
+        if (detectedBricks == null || detectedBricks.Count == 0)
+        {
+            return stacksColor;
+        }
         float[,] distArr = new float[1, 1];
         if (detectedBricks.Count > 1)
         {
             distArr = GameUtils.DistMat(detectedBricks);
         }
 
-        int[,] ids = new int[detectedBricks.Count, 2];
-        ids = GameUtils.closestBricks(distArr, stackThreshold);
+        int[,] ids = GameUtils.closestBricks(distArr, stackThreshold);
 
         List<List<int>> stacks = GameUtils.FindConnectedComponents(ids);
-        List<List<DetectedObject>> stacksColor = new List<List<DetectedObject>>();
-        
         
         foreach (var stack in stacks)
         {

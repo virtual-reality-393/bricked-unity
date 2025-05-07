@@ -21,19 +21,23 @@ public class LocalObjectDetector : ObjectDetector
     private List<DetectedObject> _internalDetection;
     private Tensor<float> _modelInputTensor;
     private TextureTransform _tf;
-
+    
     private RenderTexture _modelInput;
 
     private const float NmsThreshold = 0.4f; // IoU threshold for NMS
-    private const int LayersPerFrame = 7;
-    
-    
+    private const long TimePerFrame = 8;
+
+    [SerializeField] private GameObject _debugRayPrefab;
+    private PassthroughCameraIntrinsics _intrinsics;
+
 
     void Start()
     {
+
+        _intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
         var detectionModel = ModelLoader.Load(objectDetector);
-        _internalDetection = new List<DetectedObject>();
-        _objectDetectionWorker = new Worker(detectionModel, BackendType.GPUCompute);
+        _internalDetection = new List<DetectedObject>(256);
+        _objectDetectionWorker = new Worker(detectionModel, BackendType.CPU);
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
         SetWebCam();
@@ -81,79 +85,108 @@ public class LocalObjectDetector : ObjectDetector
 
     IEnumerator ProcessImage()
     {
+        Stopwatch sw = new Stopwatch();
+        List<DetectionBox> bboxes = new List<DetectionBox>(256);
         while (true)
         {
             var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
             var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
-
-
             
-            int framesTaken = 0;
+            sw.Restart();
+            long timeTaken = 0;
             while (detectionScheduler.MoveNext())
             {
-                if (framesTaken % LayersPerFrame == 0 && framesTaken > 0)
+                
+                if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
                 {
                     yield return null;
+                    timeTaken = sw.ElapsedMilliseconds;
                 }
-
-                framesTaken++;
             }
 
-            _internalDetection = new List<DetectedObject>();
+            var output = _objectDetectionWorker.PeekOutput() as Tensor<float>;
+            
+            output.ReadbackRequest();
 
-
-            var modelOut = (_objectDetectionWorker.PeekOutput() as Tensor<float>).ReadbackAndClone();
-
-            List<DetectionBox> bboxes = new List<DetectionBox>();
-
-            float maxConf = 0;
-            for (int i = 0; i < modelOut.shape[2]; i++)
+            while (!output.IsReadbackRequestDone())
             {
-                for (int j = 0; j < modelOut.shape[1]-4; j++)
-                {
-                    maxConf = Mathf.Max(maxConf, modelOut[0, 4 + j, i]);
-                    if (modelOut[0, 4+j, i] > CONFIDENCE_LEVEL)
-                    {
-                        
-                        float x = modelOut[0, 0, i];
-                        float y = modelOut[0, 1, i];
-                        float w = modelOut[0, 2, i];
-                        float h = modelOut[0, 3, i];
-
-
-                        int x1 = (int)(x - w / 2);
-                        int x2 = (int)(x + w / 2);
-
-                        int y1 = (int)(640 - y - h / 2);
-                        int y2 = (int)(640 - y + h / 2);
-
-                        var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
-                        var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
-
-                        bboxes.Add(new DetectionBox(j,modelOut[0, 4+j, i],p1.x, p1.y, p2.x, p2.y));
-                    }
-                }
+                yield return null;
             }
             
+            var res = output.ReadbackAndClone();
+        
+            var infoLen = res.shape[1];
+
+            var pointCount = res.shape[2];
+
+            var dataArr = res.DownloadToArray();
+
+            for (int i = 0; i < pointCount; i++)
+            {
+                int idx = -1;
+
+                float conf = CONFIDENCE_LEVEL;
+                for (int j = i+4*pointCount; j < i+infoLen*pointCount; j+=pointCount)
+                {
+                    if (dataArr[j] > conf)
+                    {
+                        conf = dataArr[j];
+                        idx = (j - i - 4*pointCount)/pointCount;
+                    }
+                }
+
+                if (idx != -1)
+                {
+                    float x = dataArr[i];
+                    float y = dataArr[i+1*pointCount];
+                    float w = dataArr[i+2*pointCount];
+                    float h = dataArr[i+3*pointCount];
+                
+                    int x1 = (int)(x - w / 2);
+                    int x2 = (int)(x + w / 2);
+            
+                    int y1 = (int)(640 - y - h / 2);
+                    int y2 = (int)(640 - y + h / 2);
+                    
+                    var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
+                    var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
+
+                    bboxes.Add(new DetectionBox(idx,conf,p1.x, p1.y, p2.x, p2.y));
+                }
+            }
+
             bboxes = ApplyNMS(bboxes);
+            
+            
+
+            
+            
             foreach (var bbox in bboxes)
             {
                 var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
-                var camRay = PassthroughCameraUtils.ScreenPointToRayInCamera(PassthroughCameraEye.Left, screenPoint);
+                var directionInCamera = new Vector3
+                {
+                    x = (screenPoint.x - _intrinsics.PrincipalPoint.x) / _intrinsics.FocalLength.x,
+                    y = (screenPoint.y - _intrinsics.PrincipalPoint.y) / _intrinsics.FocalLength.y,
+                    z = 1
+                };
+                var camRay = new Ray(Vector3.zero, directionInCamera);
                 var rayDirectionInWorld = pose.rotation * camRay.direction;
 
                 if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
                 {
-
                     _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
                 }
             }
-            
 
             HandleBricksDetected(GetBricks());
 
 
+            bboxes.Clear();
+            _internalDetection.Clear();
+            res.Dispose();
+            
             yield return null;
         }
     }
