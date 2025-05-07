@@ -46,11 +46,12 @@ public class PlaceStackGame : MonoBehaviour
     Rect ourPlaneRect = new Rect(0, 0, 0, 0);
     GameObject rectPos1;
     GameObject rectPos2;
+    GameObject rectCenter;
+    Vector3 planeCenter;
 
     Vector3 anchorPoint = new Vector3(0, 0, 0);
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
-    Vector3 displayOfset = new Vector3(0, 0, -0.05f);
 
     Vector3 smallPenguinPos = new Vector3(10, 10, 10);
 
@@ -58,11 +59,25 @@ public class PlaceStackGame : MonoBehaviour
     bool debugMode = false;
     bool canDoAdminInteraction = true;
 
+    int levelsComplteded = 0;
+
     string setupText = "To start find the needed bricks.";
     string seprateText = "Seprate";
     string playText = "Build the displayed stacks and place them in the cirkel.";
 
     private bool fixStack = false; // Pls fix the gameplay loop :|
+
+
+    List<List<string>> turtoial1 = new List<List<string>>
+    {
+        new List<string>{ "red"},
+        new List<string>{ "blue" },
+    };
+
+    List<List<string>> turtoial2 = new List<List<string>>
+    {
+        new List<string>{ "red", "green", "yellow" , "blue"}
+    };
 
     List<List<string>> debugStatToBuild = new List<List<string>>
     {
@@ -84,7 +99,10 @@ public class PlaceStackGame : MonoBehaviour
         rectPos1.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
 
         rectPos2 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
-        rectPos2.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f); 
+        rectPos2.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
+
+        rectCenter = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.green);
+        rectCenter.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
     }
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
@@ -117,27 +135,37 @@ public class PlaceStackGame : MonoBehaviour
             }
             else if (brick.labelName == "human" && !debugMode)
             {
+                //Default settings
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Random;
             }
             else if (brick.labelName == "sheep" && !debugMode)
             {
+                //One big stack
                 maxStackSize = 8;
                 minStackSize = 4;
                 sliceMethod = SliceMethod.Max;
             }
             else if (brick.labelName == "pig" && !debugMode)
-            {
+            { 
+                //many small stacks
                 maxStackSize = 3;
                 minStackSize = 1;
                 sliceMethod = SliceMethod.Random;
             }
-            else if (brick.labelName == "lion" && !debugMode)
+            else if (brick.labelName == "lion")
             {
-                offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
-                displayPos = anchorPoint + offsetDir * 0.25f;
-                displayOfset = offsetDir * -0.05f;
+                if (ourPlaneRect == new Rect(0, 0, 0, 0))
+                {
+                    offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
+                    displayPos = anchorPoint + offsetDir * 0.25f;
+                }
+                else
+                {
+                    offsetDir = (planeCenter - new Vector3(centerCam.position.x, planeCenter.y, centerCam.position.z)).normalized;
+                    displayPos = planeCenter + offsetDir * 0.25f;
+                }
             }
         });
     }
@@ -155,6 +183,7 @@ public class PlaceStackGame : MonoBehaviour
         adminMenuVisuals.Clear();
         rectPos1.SetActive(debugMode);
         rectPos2.SetActive(debugMode);
+        rectCenter.SetActive(debugMode);
         if (debugMode)
         {
             DebugMenu();
@@ -178,10 +207,10 @@ public class PlaceStackGame : MonoBehaviour
     private void DisplayRect()
     {
         Rect rect = ourPlaneRect;
-        GameObject pos1 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position + new Vector3(rect.xMin, 0, rect.yMin), Color.magenta);
-        GameObject pos2 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position + new Vector3(rect.xMin, 0, rect.yMax), Color.magenta);
-        GameObject pos3 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position + new Vector3(rect.xMax, 0, rect.yMin), Color.magenta);
-        GameObject pos4 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position + new Vector3(rect.xMax, 0, rect.yMax), Color.magenta);
+        GameObject pos1 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMin, 0, rect.yMin), Color.magenta);
+        GameObject pos2 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMin, 0, rect.yMax), Color.magenta);
+        GameObject pos3 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMax, 0, rect.yMin), Color.magenta);
+        GameObject pos4 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMax, 0, rect.yMax), Color.magenta);
         adminMenuVisuals.Add(pos1);
         adminMenuVisuals.Add(pos2);
         adminMenuVisuals.Add(pos3);
@@ -279,19 +308,23 @@ public class PlaceStackGame : MonoBehaviour
                     if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
                     {
                         var col = Color.green;
-                        col.a = 0.5f;
+                        col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
                     }
                     else
                     {
                         var col = Color.white;
-                        col.a = 0.5f;
+                        col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                     }
                 }
             }
             taskComplet = CheckIfAllDone();
+            if (taskComplet)
+            {
+                levelsComplteded++;
+            }
         }
     }
 
@@ -326,7 +359,7 @@ public class PlaceStackGame : MonoBehaviour
 
     private void DebugMenu()
     {
-        Vector3 menuPos = anchorPoint + offsetDir * -0.2f;
+        Vector3 menuPos = rectCenter.transform.position + offsetDir * -0.2f;
         Vector3 offset = new Vector3(0.07f, 0, 0);
 
         int adminAction = -1;
@@ -464,12 +497,13 @@ public class PlaceStackGame : MonoBehaviour
                 float minY = Mathf.Min(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
                 float maxY = Mathf.Max(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
                 ourPlaneRect = new Rect(minX,minY,maxX-minX,maxY-minY);
-                Debug.LogWarning("Rect: " + ourPlaneRect);
+                planeCenter = Vector3.Lerp(rectPos1.transform.position, rectPos2.transform.position, 0.5f);
+                rectCenter.transform.position = planeCenter;
                 break;
-
 
             case 9:
                 ourPlaneRect = (Rect)tableAnchor.PlaneRect;
+                rectCenter.transform.position = tableAnchor.transform.position;
                 break;
 
             default:
@@ -554,6 +588,16 @@ public class PlaceStackGame : MonoBehaviour
         {
             stacksToBuild = StackGenerator.GenerateStacks(briksToBuildStack, minStackSize, maxStackSize, sliceMethod);
 
+            //Turtoial stuf
+            if (levelsComplteded == 0)
+            {
+                stacksToBuild = turtoial1;
+            }
+            else if (levelsComplteded == 1)
+            {
+                stacksToBuild = turtoial2;
+            }
+
             spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect);
             //if (ourPlaneRect == new Rect(0,0,0,0))
             //{
@@ -566,18 +610,18 @@ public class PlaceStackGame : MonoBehaviour
 
             if (spawnPoints == null)
             {
-                GameUtils.AddText(centerCam, canvas, "No spawnPoints", tableAnchor.transform.position, Color.white);
+                GameUtils.AddText(centerCam, canvas, "No spawnPoints",displayPos, Color.white);
             }
 
 
             for (int i = 0; i < stacksToBuild.Count; i++)
             {
-                List<GameObject> tempStack = GameUtils.DrawStack(stacksToBuild[i], spawnPoints[i].position + offsetDir * 0.04f);
+                List<GameObject> tempStack = GameUtils.DrawStack(stacksToBuild[i], spawnPoints[i].position + new Vector3(0,0.015f,0) + offsetDir * 0.07f);
                 foreach (GameObject item in tempStack)
                 {
                     item.transform.parent = cubeParent.transform.GetChild(0);
                 }
-                GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position + new Vector3(0, -0.03f, 0), Color.white);
+                GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position, Color.white);
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
             }
@@ -686,17 +730,17 @@ public class PlaceStackGame : MonoBehaviour
 
         if (!runOnce)
         {
-            offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
+            offsetDir = (new Vector3(anchorPoint.x, 0, anchorPoint.z) - new Vector3(centerCam.position.x, 0, centerCam.position.z)).normalized;
 
             displayPos = anchorPoint + offsetDir * 0.25f;
-
-            displayOfset = offsetDir * -0.05f;
 
             ourPlaneRect = (Rect)tableAnchor.PlaneRect;
 
             rectPos1.transform.parent = tableAnchor.transform;
 
             rectPos2.transform.parent = tableAnchor.transform;
+
+            rectCenter.transform.position = tableAnchor.transform.position;
         }
     }
 }
