@@ -1,6 +1,8 @@
 using Meta.XR.MRUtilityKit;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -43,7 +45,7 @@ public class PlaceStackGame : MonoBehaviour
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
     MRUKAnchor tableAnchor = null;
-    Rect ourPlaneRect = new Rect(0, 0, 0, 0);
+    Rect ourPlaneRect = new Rect(1, 1, -1, -1);
     GameObject rectPos1;
     GameObject rectPos2;
     GameObject rectCenter;
@@ -53,7 +55,12 @@ public class PlaceStackGame : MonoBehaviour
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
 
+    GameObject debugMenu;
+    List<GameObject> debugTestObjects = new List<GameObject>();
+    GameObject rectDisplay;
     Vector3 smallPenguinPos = new Vector3(10, 10, 10);
+
+    GameObject mainText;
 
     bool runOnce = true;
     bool debugMode = false;
@@ -103,6 +110,18 @@ public class PlaceStackGame : MonoBehaviour
 
         rectCenter = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.green);
         rectCenter.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
+
+        mainText = new GameObject("MainText");
+        GameUtils.AddText(centerCam, mainText, setupText, new Vector3(0, 0, 0), Color.white, 3f);
+
+        debugMenu = new GameObject("DebugMenu");
+        MakeDebugMenu(debugMenu);
+        debugMenu.SetActive(debugMode);
+
+        rectDisplay = new GameObject("RectDisplay");
+        MakeRectDisplay(rectDisplay);
+        rectDisplay.SetActive(debugMode);
+
     }
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
@@ -119,11 +138,15 @@ public class PlaceStackGame : MonoBehaviour
             {
                 smallPenguinPos = brick.worldPos;
                 debugMode = true;
+                debugMenu.SetActive(debugMode);
+                rectDisplay.SetActive(debugMode);
             }
             else if (brick.labelName == "big penguin")
             {
                 debugMode = false;
                 smallPenguinPos = new Vector3(10, 10, 10);
+                debugMenu.SetActive(debugMode);
+                rectDisplay.SetActive(debugMode);
             }
             else if (brick.labelName == "sheep" && debugMode)
             {
@@ -173,60 +196,62 @@ public class PlaceStackGame : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        ClearText();
+        //ClearText();
         if (runOnce)
         {
             GetRoom();
         }
 
-        adminMenuVisuals.ForEach(Destroy);
-        adminMenuVisuals.Clear();
-        rectPos1.SetActive(debugMode);
-        rectPos2.SetActive(debugMode);
-        rectCenter.SetActive(debugMode);
-        if (debugMode)
+        if (bricks.Count >= 0)
         {
-            DebugMenu();
-            DisplayRect();
+            //adminMenuVisuals.ForEach(Destroy);
+            //adminMenuVisuals.Clear();
+            rectPos1.SetActive(debugMode);
+            rectPos2.SetActive(debugMode);
+            rectCenter.SetActive(debugMode);
+            if (debugMode)
+            {
+                //DebugMenu();
+                RunDebugMenu();
+                DisplayRect();
+            }
+
+            if (state == GameState.Setup && !runOnce)
+            {
+                Setup();
+            }
+            else if (state == GameState.Separate)
+            {
+                //Seprate();
+            }
+            else if (state == GameState.Play)
+            {
+                Play();
+            }
         }
 
-        if (state == GameState.Setup && !runOnce)
-        {
-            Setup();
-        }
-        else if (state == GameState.Separate)
-        {
-            Seprate();
-        }
-        else if (state == GameState.Play)
-        {
-            Play();
-        }
+       
     }
 
     private void DisplayRect()
     {
-        Rect rect = ourPlaneRect;
-        GameObject pos1 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMin, 0, rect.yMin), Color.magenta);
-        GameObject pos2 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMin, 0, rect.yMax), Color.magenta);
-        GameObject pos3 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMax, 0, rect.yMin), Color.magenta);
-        GameObject pos4 = GameUtils.MakeInteractionCirkle(tableAnchor.transform.position - new Vector3(rect.xMax, 0, rect.yMax), Color.magenta);
-        adminMenuVisuals.Add(pos1);
-        adminMenuVisuals.Add(pos2);
-        adminMenuVisuals.Add(pos3);
-        adminMenuVisuals.Add(pos4);
+
     }
 
     private void Setup()
     {
         ResetBricksInFrame();
-        DestroySpawnPositions();
 
         drawnBricks.ForEach(Destroy);
         drawnBricks.Clear();
 
         bricksInFrame = GetBricksInFrame(bricks, debugMode);
-        GameUtils.AddText(centerCam, canvas, setupText, displayPos + new Vector3(0,0.15f,0), Color.white, 3);
+        //GameUtils.AddText(centerCam, canvas, setupText, displayPos + new Vector3(0,0.15f,0), Color.white, 3);
+        mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = setupText;
+        mainText.transform.GetChild(0).LookAt(centerCam);
+        mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
+
         if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 2 && bricksInFrame["blue"] == 2 && bricksInFrame["yellow"] == 3))// || bricks.Count == 4)
         {
             drawnBricks.ForEach(Destroy);
@@ -254,12 +279,17 @@ public class PlaceStackGame : MonoBehaviour
 
     private void Play()
     {
-        GameUtils.AddText(centerCam, canvas, playText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
+        //GameUtils.AddText(centerCam, canvas, playText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
+        mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
+        mainText.transform.GetChild(0).LookAt(centerCam);
+        mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
 
-        if (debugMode)
-        {
-            GameUtils.AddText(centerCam, canvas, "Debug mode \"On\". \nTo disable detect \"big penguin\".", displayPos + offsetDir * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f);
-        }
+
+        //if (debugMode)
+        //{
+        //    GameUtils.AddText(centerCam, canvas, "Debug mode \"On\". \nTo disable detect \"big penguin\".", displayPos + offsetDir * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f);
+        //}
 
         DestroyCubes(1);
 
@@ -294,10 +324,10 @@ public class PlaceStackGame : MonoBehaviour
             float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
             List<int> ints = GameUtils.ClosestStacks(distMat);
 
-            if (debugMode)
-            {
-                DrawStackPositions(stacksInFrame, distMat, ints);
-            }
+            //if (debugMode)
+            //{
+            //    DrawStackPositions(stacksInFrame, distMat, ints);
+            //}
 
             for (int i = 0; i < spawnPoints.Length; i++)
             {
@@ -513,6 +543,235 @@ public class PlaceStackGame : MonoBehaviour
 
     }
 
+    private void RunDebugMenu()
+    {
+
+        UpdateDebugText();
+
+        if (canDoAdminInteraction)
+        {
+            debugMenu.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.green;
+        }
+        else
+        {
+            debugMenu.transform.GetChild(0).GetComponent<Renderer>().material.color = Color.red;
+        }
+
+        int adminAction = -1;
+
+        for (int i = 0; i < debugMenu.transform.childCount; i++)
+        {
+            float d = Vector3.Distance(smallPenguinPos, debugMenu.transform.GetChild(i).position);
+
+            if (Vector3.Distance(smallPenguinPos, debugMenu.transform.GetChild(0).position) < 0.03)
+            {
+                canDoAdminInteraction = true;
+            }
+
+            if (d < 0.03 && canDoAdminInteraction)
+            {
+                adminAction = i;
+                canDoAdminInteraction = false;
+            }
+        }
+
+        switch (adminAction)
+        {
+            case 1:
+                if (maxStackSize + 1 <= briksToBuildStack.Values.Sum())
+                {
+                    maxStackSize++;
+                }
+                break;
+
+            case 2:
+                if (maxStackSize - 1 >= minStackSize)
+                {
+                    maxStackSize--;
+                }
+                break;
+
+            case 3:
+                if (minStackSize + 1 <= maxStackSize)
+                {
+                    minStackSize++;
+                }
+                break;
+
+            case 4:
+                if (minStackSize - 1 >= 1)
+                {
+                    minStackSize--;
+                }
+                break;
+
+            case 5:
+                if (sliceMethod == SliceMethod.Max)
+                {
+                    sliceMethod = SliceMethod.Min;
+                }
+                else if (sliceMethod == SliceMethod.Min)
+                {
+                    sliceMethod = SliceMethod.Random;
+                }
+                else if (sliceMethod == SliceMethod.Random)
+                {
+                    sliceMethod = SliceMethod.Equalize;
+                }
+                else if (sliceMethod == SliceMethod.Equalize)
+                {
+                    sliceMethod = SliceMethod.Even;
+                }
+                else
+                {
+                    sliceMethod = SliceMethod.Max;
+                }
+                break;
+
+            case 6:
+                taskComplet = true;
+                levelsComplteded++;
+                break;
+
+            case 7:
+                state = GameState.Setup;
+                DestroyCubes(0);
+                DestroyCubes(1);
+                break;
+
+            case 8:
+                float minX = Mathf.Min(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
+                float maxX = Mathf.Max(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
+                float minY = Mathf.Min(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
+                float maxY = Mathf.Max(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
+                ourPlaneRect = new Rect(minX, minY, maxX - minX, maxY - minY);
+                UpdateRectDispaly(ourPlaneRect);
+                planeCenter = Vector3.Lerp(rectPos1.transform.position, rectPos2.transform.position, 0.5f);
+                rectCenter.transform.position = planeCenter;
+                break;
+
+            case 9:
+                ourPlaneRect = (Rect)tableAnchor.PlaneRect;
+                UpdateRectDispaly(ourPlaneRect);
+                rectCenter.transform.position = tableAnchor.transform.position;
+                break;
+
+            default:
+                break;
+        }
+        adminAction = -1;
+    }
+
+    private void UpdateDebugText()
+    {
+        string[] texts = new string[10] {
+                         "Debug mode \"On\". \nTo disable detect \"big penguin\".",
+                         "+1 to max size \nCurrent max size: " + maxStackSize,
+                         "-1 from max size \nCurrent max size: " + maxStackSize,
+                         "+1 to min size \nCurrent min size: " + minStackSize,
+                         "-1 from min size \nCurrent min size: " + minStackSize,
+                         "Change slice mode\nCurrent: " + sliceMethod.ToString(),
+                         "Complet task",
+                         "To setup",
+                         "Make new rect",
+                         "Reset rect"};
+
+
+        for (int i = 0; i < debugTestObjects.Count; i++)
+        {
+            debugTestObjects[i].transform.GetComponent<TMP_Text>().text = texts[i];
+            if (i == 0)
+            {
+                debugTestObjects[i].transform.position = debugMenu.transform.GetChild(i).position + new Vector3(0, 0.12f, 0);
+            }
+            else
+            {
+                debugTestObjects[i].transform.position = debugMenu.transform.GetChild(i).position + new Vector3(0, 0.05f, 0);
+            }
+            //debugMenu.transform.GetChild(i).transform.GetChild(0).localScale = new Vector3(4f, 4f, 4f);
+            //debugMenu.transform.GetChild(i).transform.GetChild(0).rotation = Quaternion.identity;
+            debugTestObjects[i].transform.LookAt(centerCam);
+            debugTestObjects[i].transform.Rotate(Vector3.up, 180);
+            //debugMenu.transform.GetChild(i).transform.GetChild(0).Rotate(debugMenu.transform.right, 90);
+
+        }
+    }
+
+    private void MakeDebugMenu(GameObject parent)
+    {
+        //GameObject debugMenuText = new GameObject("DebugMenuText");
+        //debugMenuText.transform.parent = null;
+
+        Vector3 menuPos = rectCenter.transform.position;
+        Vector3 xOffset = new Vector3(0.07f, 0, 0);
+
+        GameObject adminpoint = GameUtils.MakeInteractionCirkle(menuPos + parent.transform.forward * 0.1f, Color.red);
+        adminpoint.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Debug mode \"On\". \nTo disable detect \"big penguin\".", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f));
+
+        GameObject addMax = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 4, Color.blue);
+        addMax.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("+1 to max size \nCurrent max size: " + maxStackSize, menuPos - xOffset * 4 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject removeMax = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 3, Color.blue);
+        removeMax.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("-1 from max size \nCurrent max size: " + maxStackSize, menuPos - xOffset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject addMin = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 2, Color.blue);
+        addMin.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("+1 to min size \nCurrent min size: " + minStackSize, menuPos - xOffset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject removeMin = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 1, Color.blue);
+        removeMin.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("-1 from min size \nCurrent min size: " + minStackSize, menuPos - xOffset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject newSilceMode = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 0, Color.blue);
+        newSilceMode.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Change slice mode\nCurrent: " + sliceMethod.ToString(), menuPos + xOffset * 0 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject completTask = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 1, Color.blue);
+        completTask.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Complet task", menuPos + xOffset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject toSetup = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 2, Color.blue);
+        toSetup.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("To setup", menuPos + xOffset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject makeNewRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 3, Color.blue);
+        makeNewRect.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Make new rect", menuPos + xOffset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject resteRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 4, Color.blue);
+        resteRect.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Reset rect", menuPos + xOffset * 4 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+    }
+
+    private void UpdateRectDispaly(Rect rect)
+    {
+        float minX = rect.xMin;
+        float minY = rect.yMin;
+        float maxX = rect.xMax;
+        float maxY = rect.yMax;
+
+        rectDisplay.transform.GetChild(0).transform.position = tableAnchor.transform.position - new Vector3(minX, 0, minY);
+        rectDisplay.transform.GetChild(1).transform.position = tableAnchor.transform.position - new Vector3(minX, 0, maxY);
+        rectDisplay.transform.GetChild(2).transform.position = tableAnchor.transform.position - new Vector3(maxX, 0, minY);
+        rectDisplay.transform.GetChild(3).transform.position = tableAnchor.transform.position - new Vector3(maxX, 0, maxY);
+    }
+
+    private void MakeRectDisplay(GameObject rectDisplay)
+    {
+        Rect rect = ourPlaneRect;
+        GameObject pos1 = GameUtils.MakeInteractionCirkle(new Vector3(rect.xMin, 0, rect.yMin), Color.magenta);
+        GameObject pos2 = GameUtils.MakeInteractionCirkle(new Vector3(rect.xMin, 0, rect.yMax), Color.magenta);
+        GameObject pos3 = GameUtils.MakeInteractionCirkle(new Vector3(rect.xMax, 0, rect.yMin), Color.magenta);
+        GameObject pos4 = GameUtils.MakeInteractionCirkle(new Vector3(rect.xMax, 0, rect.yMax), Color.magenta);
+        pos1.transform.parent = rectDisplay.transform;
+        pos2.transform.parent = rectDisplay.transform;
+        pos3.transform.parent = rectDisplay.transform;
+        pos4.transform.parent = rectDisplay.transform;
+    }
     private void DrawStackPositions(List<List<DetectedObject>> stacksInFrame, float[,] distMat, List<int> ints)
     {
         for (int i = 0; i < stacksInFrame.Count; i++)
@@ -735,12 +994,17 @@ public class PlaceStackGame : MonoBehaviour
             displayPos = anchorPoint + offsetDir * 0.25f;
 
             ourPlaneRect = (Rect)tableAnchor.PlaneRect;
+            UpdateRectDispaly(ourPlaneRect);
+
+            mainText.transform.position = displayPos + new Vector3(0,0.15f,0);
 
             rectPos1.transform.parent = tableAnchor.transform;
 
             rectPos2.transform.parent = tableAnchor.transform;
 
             rectCenter.transform.position = tableAnchor.transform.position;
+
+            debugMenu.transform.position = tableAnchor.transform.position + offsetDir * -0.2f;
         }
     }
 }
