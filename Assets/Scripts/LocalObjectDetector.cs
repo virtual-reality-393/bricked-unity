@@ -25,7 +25,7 @@ public class LocalObjectDetector : ObjectDetector
     private RenderTexture _modelInput;
 
     private const float NmsThreshold = 0.4f; // IoU threshold for NMS
-    private const long TimePerFrame = 8;
+    private const long TimePerFrame = 5;
 
     [SerializeField] private GameObject _debugRayPrefab;
     private PassthroughCameraIntrinsics _intrinsics;
@@ -36,11 +36,12 @@ public class LocalObjectDetector : ObjectDetector
 
         _intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
         var detectionModel = ModelLoader.Load(objectDetector);
-        _internalDetection = new List<DetectedObject>(256);
+        _internalDetection = new List<DetectedObject>();
         _objectDetectionWorker = new Worker(detectionModel, BackendType.CPU);
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
         SetWebCam();
+        
     }
 
     // Update is called once per frame
@@ -82,8 +83,7 @@ public class LocalObjectDetector : ObjectDetector
         }
     }
     
-
-    IEnumerator ProcessImage()
+     IEnumerator ProcessImage()
     {
         Stopwatch sw = new Stopwatch();
         List<DetectionBox> bboxes = new List<DetectionBox>(256);
@@ -157,10 +157,6 @@ public class LocalObjectDetector : ObjectDetector
             }
 
             bboxes = ApplyNMS(bboxes);
-            
-            
-
-            
             
             foreach (var bbox in bboxes)
             {

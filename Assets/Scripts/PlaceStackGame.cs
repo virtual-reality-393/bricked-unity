@@ -554,7 +554,7 @@ public class PlaceStackGame : MonoBehaviour
             distArr = GameUtils.DistMat(detectedBricks);
         }
 
-        int[,] ids = GameUtils.closestBricks(distArr, stackThreshold);
+        int[,] ids = GameUtils.ClosestBricks(distArr, stackThreshold);
 
         List<List<int>> stacks = GameUtils.FindConnectedComponents(ids);
         
