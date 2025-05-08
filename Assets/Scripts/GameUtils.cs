@@ -437,6 +437,26 @@ public static class GameUtils
 
     }
 
+    // Method to add a text to the UI with specified attributes.
+    public static GameObject AddText(string text, Vector3 position, Color color, float fontsize = 1)
+    {
+        // Create a new GameObject for the text and set its attributes.
+        GameObject newGameObject = new GameObject();
+        RectTransform rect = newGameObject.AddComponent<RectTransform>();
+        rect.position = position + new Vector3(0, 0.03f, 0);
+        rect.rotation = Quaternion.identity;
+        rect.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        TextMeshPro newText = newGameObject.AddComponent<TextMeshPro>();
+
+        // Set specific TextMeshPro settings, extend this as you see fit.
+        newText.text = text;
+        newText.fontSize = fontsize;
+        newText.alignment = TextAlignmentOptions.Center;
+        newText.color = color;
+
+        return newGameObject;
+    }
+
     public static List<int> ClosestStacks(float[,] distMat)
     {
         List<int> res = new List<int>();
