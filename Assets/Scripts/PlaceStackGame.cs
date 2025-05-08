@@ -140,6 +140,10 @@ public class PlaceStackGame : MonoBehaviour
                 debugMode = true;
                 debugMenu.SetActive(debugMode);
                 rectDisplay.SetActive(debugMode);
+                foreach (var item in debugTestObjects)
+                {
+                    item.SetActive(debugMode);
+                }
             }
             else if (brick.labelName == "big penguin")
             {
@@ -147,6 +151,10 @@ public class PlaceStackGame : MonoBehaviour
                 smallPenguinPos = new Vector3(10, 10, 10);
                 debugMenu.SetActive(debugMode);
                 rectDisplay.SetActive(debugMode);
+                foreach (var item in debugTestObjects)
+                {
+                    item.SetActive(debugMode);
+                }
             }
             else if (brick.labelName == "sheep" && debugMode)
             {
