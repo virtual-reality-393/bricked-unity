@@ -62,6 +62,8 @@ public class PlaceStackGame : MonoBehaviour
 
     GameObject mainText;
 
+    private GameObject firstBrick;
+
     bool runOnce = true;
     bool debugMode = false;
     bool canDoAdminInteraction = true;
@@ -69,10 +71,14 @@ public class PlaceStackGame : MonoBehaviour
     int levelsComplteded = 0;
 
     string setupText = "To start find the needed bricks.";
-    string seprateText = "Seprate";
-    string playText = "Build the displayed stacks and place them in the cirkel.";
+    string seprateText = "Separate";
+    string playText = "Build the displayed stacks and place them in the circle.";
 
     private bool fixStack = false; // Pls fix the gameplay loop :|
+
+
+    private int prevPenguin = 0;
+    private int currPenguin = 0;
 
 
     List<List<string>> turtoial1 = new List<List<string>>
@@ -94,6 +100,8 @@ public class PlaceStackGame : MonoBehaviour
         new List<string>{ "blue", "yellow" },
     };
 
+    // private GameObject penguinPosCircle;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -114,6 +122,9 @@ public class PlaceStackGame : MonoBehaviour
         mainText = new GameObject("MainText");
         GameUtils.AddText(centerCam, mainText, setupText, new Vector3(0, 0, 0), Color.white, 3f);
 
+
+        // penguinPosCircle = GameUtils.MakeInteractionCirkle(new Vector3(10,10,10),Color.black);
+
         debugMenu = new GameObject("DebugMenu");
         MakeDebugMenu(debugMenu);
         debugMenu.SetActive(debugMode);
@@ -121,6 +132,11 @@ public class PlaceStackGame : MonoBehaviour
         rectDisplay = new GameObject("RectDisplay");
         MakeRectDisplay(rectDisplay);
         rectDisplay.SetActive(debugMode);
+        
+        foreach (var item in debugTestObjects)
+        {
+            item.SetActive(debugMode);
+        }
 
     }
 
@@ -132,23 +148,32 @@ public class PlaceStackGame : MonoBehaviour
         {
             if (objectsToDetect.Contains(brick.labelName))
             {
+                if (!firstBrick)
+                {
+                    firstBrick = Instantiate(GameManager.Instance.brickPrefab, brick.worldPos, Quaternion.identity);
+                }
                 bricks.Add(brick);
             }
             else if (brick.labelName == "small penguin")
             {
                 smallPenguinPos = brick.worldPos;
-                debugMode = true;
-                debugMenu.SetActive(debugMode);
-                rectDisplay.SetActive(debugMode);
-                foreach (var item in debugTestObjects)
+                
+                currPenguin += 1;
+                if (currPenguin >= 3)
                 {
-                    item.SetActive(debugMode);
+                    debugMode = true;
+                    debugMenu.SetActive(debugMode);
+                    rectDisplay.SetActive(debugMode);
+                    foreach (var item in debugTestObjects)
+                    {
+                        item.SetActive(debugMode);
+                    }
                 }
             }
             else if (brick.labelName == "big penguin")
             {
                 debugMode = false;
-                smallPenguinPos = new Vector3(10, 10, 10);
+                // smallPenguinPos = new Vector3(10, 10, 10);
                 debugMenu.SetActive(debugMode);
                 rectDisplay.SetActive(debugMode);
                 foreach (var item in debugTestObjects)
@@ -170,6 +195,7 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Random;
+                Debug.LogError("Human detected: Slice: Random - Max Size: 4 - Min Size: 2");
             }
             else if (brick.labelName == "sheep" && !debugMode)
             {
@@ -177,6 +203,7 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 8;
                 minStackSize = 4;
                 sliceMethod = SliceMethod.Max;
+                Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4");
             }
             else if (brick.labelName == "pig" && !debugMode)
             { 
@@ -184,21 +211,27 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 3;
                 minStackSize = 1;
                 sliceMethod = SliceMethod.Random;
+                Debug.LogError("Pig detected: Slice: Random - Max Size: 3 - Min Size: 1");
             }
             else if (brick.labelName == "lion")
             {
-                if (ourPlaneRect == new Rect(0, 0, 0, 0))
-                {
-                    offsetDir = (anchorPoint - new Vector3(centerCam.position.x, anchorPoint.y, centerCam.position.z)).normalized;
-                    displayPos = anchorPoint + offsetDir * 0.25f;
-                }
-                else
-                {
-                    offsetDir = (planeCenter - new Vector3(centerCam.position.x, planeCenter.y, centerCam.position.z)).normalized;
-                    displayPos = planeCenter + offsetDir * 0.25f;
-                }
+                maxStackSize = 4;
+                minStackSize = 2;
+                sliceMethod = SliceMethod.Min;
+                
+                Debug.LogError("Lion detected: Slice: Min - Max Size: 4 - Min Size: 2");
             }
         });
+        
+        if (prevPenguin != currPenguin)
+        {
+            prevPenguin = currPenguin;
+        }
+        else
+        {
+            currPenguin = 0;
+            prevPenguin = 0;
+        }
     }
 
     // Update is called once per frame
@@ -217,6 +250,8 @@ public class PlaceStackGame : MonoBehaviour
             rectPos1.SetActive(debugMode);
             rectPos2.SetActive(debugMode);
             rectCenter.SetActive(debugMode);
+
+            // penguinPosCircle.transform.position = smallPenguinPos;
             if (debugMode)
             {
                 //DebugMenu();
@@ -237,8 +272,6 @@ public class PlaceStackGame : MonoBehaviour
                 Play();
             }
         }
-
-       
     }
 
     private void DisplayRect()
@@ -294,6 +327,12 @@ public class PlaceStackGame : MonoBehaviour
         mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
 
 
+        if (firstBrick)
+        {
+            mainText.GetComponentInChildren<TMP_Text>().text = firstBrick.transform.position.ToString();
+        }
+
+
         //if (debugMode)
         //{
         //    GameUtils.AddText(centerCam, canvas, "Debug mode \"On\". \nTo disable detect \"big penguin\".", displayPos + offsetDir * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f);
@@ -316,13 +355,12 @@ public class PlaceStackGame : MonoBehaviour
                 return;
             }
             
-            if (fixStack)
-            {
-                
-                fixStack = true;
-                // Pls fix the gameplay loop >:(
-            }
             stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
+            
+            if (stacksInFrame.Count == 0)
+            {
+                return;
+            }
 
             if (debugMode)
             {

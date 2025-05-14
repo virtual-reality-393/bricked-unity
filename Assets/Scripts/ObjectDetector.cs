@@ -24,8 +24,6 @@ public abstract class ObjectDetector : MonoBehaviour
     });
     
     [SerializeField]
-    protected EnvironmentDepthManager environmentDepthManager;
-    [SerializeField]
     protected EnvironmentRaycastManager environmentRaycastManager;
     [SerializeField]
     protected WebCamTextureManager webCamTextureManager;

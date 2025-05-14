@@ -1,18 +1,11 @@
 {
   "dependencies": {
-    "com.meta.xr.depthapi.urp": {
-      "version": "https://github.com/oculus-samples/Unity-DepthAPI.git?path=/Packages/com.meta.xr.depthapi.urp",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "221ef8690a21c8c2864a8376d3863094667e9384"
-    },
     "com.meta.xr.mrutilitykit": {
-      "version": "74.0.0",
+      "version": "76.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.meta.xr.sdk.core": "74.0.0",
+        "com.meta.xr.sdk.core": "76.0.0",
         "com.unity.textmeshpro": "3.0.6",
         "com.unity.ai.navigation": "1.1.4",
         "com.unity.nuget.newtonsoft-json": "3.0.2"
@@ -20,14 +13,14 @@
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.core": {
-      "version": "74.0.0",
+      "version": "76.0.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.meta.xr.sdk.voice": {
-      "version": "74.0.0",
+      "version": "76.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -333,7 +326,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.openxr": {
-      "version": "1.14.1",
+      "version": "1.14.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {

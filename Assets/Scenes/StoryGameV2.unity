@@ -8413,6 +8413,7 @@ MonoBehaviour:
   webCamTextureManager: {fileID: 1756451584}
   objectDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
   letterbox: {fileID: 1655954082}
+  _debugRayPrefab: {fileID: 0}
 --- !u!4 &1655954081
 Transform:
   m_ObjectHideFlags: 0
@@ -11387,6 +11388,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  stackPrefab: {fileID: 0}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
 --- !u!4 &2030986499
 Transform:
@@ -11436,45 +11438,55 @@ MonoBehaviour:
   distanceThreshold: 0.03
   instanceInfo:
   - label: red
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 664516743468533436, guid: daa6f3d3e75ae7443b0af047ebe0e7d7, type: 3}
+    keepShown: 1
   - label: green
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 3082369421290598071, guid: aaade54bff07cd547b79c323115544dd, type: 3}
+    keepShown: 1
   - label: blue
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 4026060217736480020, guid: 677fe9a12e4eda34481b65ca9ad495d4, type: 3}
+    keepShown: 1
   - label: yellow
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 7874790369943007266, guid: 0dca8722620dfaa4e87c52e81110b247, type: 3}
+    keepShown: 1
   - label: big penguin
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   - label: small penguin
     defaultLifetime: 3
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   - label: lion
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   - label: sheep
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   - label: pig
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   - label: human
-    defaultLifetime: 5
+    defaultLifetime: 8
     maxInstances: 1
     prefab: {fileID: 0}
+    keepShown: 0
   minCandidateLifetime: 3
   maxCandidateLifetime: 5
   centerCam: {fileID: 0}

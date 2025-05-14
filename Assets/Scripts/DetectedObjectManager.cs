@@ -156,10 +156,9 @@ public class DetectedObjectManager : MonoBehaviour
 
     private GameObject SpawnLifetimeObject(LifeTimeObject v)
     {
-        
         if (objectInstances[v.labelName].Count >= _instanceInfo[v.labelName].maxInstances)
         {
-            var closestObj = objectInstances[v.labelName].GetClosest(v.obj.transform.position, x => !x.activeSelf);
+            var closestObj = objectInstances[v.labelName].GetClosest(v.obj.transform.position, x => !x.activeSelf || x.name.Contains("KEEP"));
             if (closestObj != null)
             {
                 LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,_instanceInfo[v.labelName].defaultLifetime,closestObj,v.labelName));
@@ -170,6 +169,11 @@ public class DetectedObjectManager : MonoBehaviour
         }
 
         GameObject go = new GameObject(v.labelName);
+        
+        if (_instanceInfo[v.labelName].keepShown)
+        {
+            go.name = "KEEP";
+        }
         
         go.transform.position = v.obj.transform.position;
 
@@ -211,7 +215,7 @@ public class DetectedObjectManager : MonoBehaviour
             {
                 if (l[i].lifeTime <= 0)
                 {
-                    objectInstances[l[i].labelName][0].SetActive(false);
+                    objectInstances[l[i].labelName][0].SetActive(_instanceInfo[l[i].labelName].keepShown);
                     l.RemoveAt(i);
                 }
                 else
@@ -260,5 +264,6 @@ public class InstanceInfo
     public int defaultLifetime;
     public int maxInstances;
     public GameObject prefab;
+    public bool keepShown;
 }
 

@@ -9,6 +9,7 @@ using System.Text;
 using Meta.XR;
 using PassthroughCameraSamples;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine.Experimental.Rendering;
 using Debug = UnityEngine.Debug;
 
@@ -25,15 +26,22 @@ public class LocalObjectDetector : ObjectDetector
     private RenderTexture _modelInput;
 
     private const float NmsThreshold = 0.4f; // IoU threshold for NMS
-    private const long TimePerFrame = 5;
+    private const long TimePerFrame = 10;
 
     [SerializeField] private GameObject _debugRayPrefab;
     private PassthroughCameraIntrinsics _intrinsics;
+    private List<GameObject> rays = new List<GameObject>();
 
+    public Transform eye;
+
+    private Vector3 _eyeOffset;
 
     void Start()
     {
-
+        if (!EnvironmentRaycastManager.IsSupported)
+        {
+            Debug.LogError("EnvironmentRaycastManager is not supported: please read the official documentation to get more details. (https://developers.meta.com/horizon/documentation/unity/unity-depthapi-overview/)");
+        }
         _intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
         var detectionModel = ModelLoader.Load(objectDetector);
         _internalDetection = new List<DetectedObject>();
@@ -41,7 +49,6 @@ public class LocalObjectDetector : ObjectDetector
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
         SetWebCam();
-        
     }
 
     // Update is called once per frame
@@ -85,28 +92,32 @@ public class LocalObjectDetector : ObjectDetector
     
      IEnumerator ProcessImage()
     {
+        var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
+        eye.rotation = pose.rotation;
         Stopwatch sw = new Stopwatch();
         List<DetectionBox> bboxes = new List<DetectionBox>(256);
         while (true)
         {
-            var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
-            TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
-            var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
+
             
+            TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
+            // var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
             sw.Restart();
-            long timeTaken = 0;
-            while (detectionScheduler.MoveNext())
-            {
-                
-                if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
-                {
-                    yield return null;
-                    timeTaken = sw.ElapsedMilliseconds;
-                }
-            }
+            _objectDetectionWorker.Schedule(_modelInputTensor);
+            Debug.LogError($"Model Time Taken: {sw.ElapsedMilliseconds}ms");
+            // while (detectionScheduler.MoveNext())
+            // {
+            //     
+            //     if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
+            //     {
+            //         yield return null;
+            //         timeTaken = sw.ElapsedMilliseconds;
+            //     }
+            // }
+            // Debug.LogWarning($"Time taken to run model: {sw.ElapsedMilliseconds}ms");
+            sw.Restart();
 
             var output = _objectDetectionWorker.PeekOutput() as Tensor<float>;
-            
             output.ReadbackRequest();
 
             while (!output.IsReadbackRequestDone())
@@ -114,7 +125,11 @@ public class LocalObjectDetector : ObjectDetector
                 yield return null;
             }
             
+            Debug.LogError($"Readback Time Taken: {sw.ElapsedMilliseconds}ms");
+            
             var res = output.ReadbackAndClone();
+            
+            // Debug.LogWarning($"Time taken to readback data: {sw.ElapsedMilliseconds}ms");
         
             var infoLen = res.shape[1];
 
@@ -158,6 +173,9 @@ public class LocalObjectDetector : ObjectDetector
 
             bboxes = ApplyNMS(bboxes);
             
+            rays.ForEach(Destroy);
+            rays.Clear();
+            
             foreach (var bbox in bboxes)
             {
                 var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
@@ -167,11 +185,28 @@ public class LocalObjectDetector : ObjectDetector
                     y = (screenPoint.y - _intrinsics.PrincipalPoint.y) / _intrinsics.FocalLength.y,
                     z = 1
                 };
-                var camRay = new Ray(Vector3.zero, directionInCamera);
-                var rayDirectionInWorld = pose.rotation * camRay.direction;
+                // Debug.LogError($"Pose: {pose.rotation.eulerAngles}");
+                // Debug.LogError($"Eye: {eye.rotation.eulerAngles}");
+                // Debug.LogError($"Diff {eye.rotation.eulerAngles-pose.rotation.eulerAngles}");
+                var ray = new Ray(eye.position,eye.rotation*directionInCamera);
+                
+                
+                
+                
+ 
 
-                if (environmentRaycastManager.Raycast(new Ray(pose.position, rayDirectionInWorld), out EnvironmentRaycastHit hit, 1000f))
+                if (environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit, 1000f))
                 {
+                    // var newRay = Instantiate(_debugRayPrefab);
+                    // newRay.GetComponent<LineRenderer>().SetPositions(new Vector3[] {ray.origin, ray.origin + ray.direction*5f});
+                    //
+                    //
+                    // // var newRay = Instantiate(GameManager.Instance.brickPrefab, ray.origin+ray.direction, Quaternion.identity);
+                    // // newRay.transform.localScale *= 0.3f;
+                    // // newRay.transform.forward = ray.direction;
+                    //
+                    // rays.Add(newRay);
+                    //
                     _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
                 }
             }
