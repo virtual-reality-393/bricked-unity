@@ -525,17 +525,36 @@ public static class GameUtils
         return res;
     }
 
-    public static int[] GetTwoLowestIndices(float[] arr)
+    public static void GetTwoLowestIndices(float[] arr, out int minIndex1, out int minIndex2)
     {
-        return arr
-            .Select((value, index) => new { Value = value, Index = index }) // Pair values with indices
-            .OrderBy(x => x.Value) // Sort by value
-            .Take(2) // Take the two lowest
-            .Select(x => x.Index) // Extract indices
-            .ToArray();
+        minIndex1 = -1;
+        minIndex2 = -1;
+        if (arr == null || arr.Length < 2)
+            return;
+        
+        minIndex1 = 0;
+        minIndex2 = 1;
+        
+        if (arr[minIndex2] < arr[minIndex1])
+        {
+            (minIndex1, minIndex2) = (minIndex2, minIndex1);
+        }
+
+        for (int i = 2; i < arr.Length; i++)
+        {
+            if (arr[i] < arr[minIndex1])
+            {
+                minIndex2 = minIndex1;
+                minIndex1 = i;
+            }
+            else if (arr[i] < arr[minIndex2])
+            {
+                minIndex2 = i;
+            }
+        }
     }
 
-    public static int[,] closestBricks(float[,] distArr, float threshold)
+    public static int[,] ClosestBricks(float[,] distArr, float threshold)
     {
         int[,] ids = new int[distArr.GetLength(0), 2];
         for (int i = 0; i < distArr.GetLength(0); i++)
@@ -546,15 +565,16 @@ public static class GameUtils
                 row[j] = distArr[i, j];
             }
 
-            int[] rowId = GetTwoLowestIndices(row);
-            if(rowId.Length < 2)
+            GetTwoLowestIndices(row, out var minIndex1, out var minIndex2);
+            
+            if(minIndex1 == -1 || minIndex2 == -1)
             {
                 ids[i, 0] = -1;
                 ids[i, 1] = -1;
                 continue;
             }
-            ids[i, 0] = distArr[i, rowId[0]] < threshold ? rowId[0] : -1;
-            ids[i, 1] = distArr[i, rowId[1]] < threshold ? rowId[1] : -1;
+            ids[i, 0] = distArr[i, minIndex1] < threshold ? minIndex1 : -1;
+            ids[i, 1] = distArr[i, minIndex2] < threshold ? minIndex2 : -1;
         }
         return ids;
     }

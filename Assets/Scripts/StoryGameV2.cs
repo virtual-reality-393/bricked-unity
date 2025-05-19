@@ -148,7 +148,7 @@ public class StoryGameV2 : MonoBehaviour
         if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
           && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
         {
-            GameObject startCirkle = MakeInteractionCirkle(anchorPoint, Color.gray);
+            GameObject startCirkle = GameUtils.MakeInteractionCirkle(anchorPoint, Color.gray);
             drawnObjects.Add(startCirkle);
             GameUtils.AddText(centerCam, canvas, "Place player here to start the game", startCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
 
@@ -179,7 +179,7 @@ public class StoryGameV2 : MonoBehaviour
             {
                 bricksInFrame[lto.labelName]++;
                 // DrawLiftTimeObject(lto);
-                GameObject circle = MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
+                GameObject circle = GameUtils.MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
                 drawnObjects.Add(circle);
             }
         }
@@ -232,7 +232,7 @@ public class StoryGameV2 : MonoBehaviour
                     {
                         color = Color.cyan;
                     }
-                    GameObject circle = MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, color);
+                    GameObject circle = GameUtils.MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, color);
                     drawnObjects.Add(circle);
                     //drawnBricks.Add(circle);
 
@@ -249,7 +249,7 @@ public class StoryGameV2 : MonoBehaviour
 
             if (CheckIfAllVisited())
             {
-                GameObject nextCirkle = MakeInteractionCirkle(anchorPoint, Color.gray);
+                GameObject nextCirkle = GameUtils.MakeInteractionCirkle(anchorPoint, Color.gray);
                 nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
                 drawnObjects.Add(nextCirkle);
                 GameUtils.AddText(centerCam, canvas, "Place player here to make accusation", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
@@ -292,8 +292,8 @@ public class StoryGameV2 : MonoBehaviour
             }
         }
 
-        if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
-            && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
+        // if ((bricksInFrame["red"] == 1 && bricksInFrame["green"] == 1 && bricksInFrame["blue"] == 1 && bricksInFrame["yellow"] == 1
+        //     && bricksInFrame["big penguin"] == 1 && bricksInFrame["small penguin"] == 1 && bricksInFrame["pig"] == 1 && bricksInFrame["human"] == 1))// || bricks.Count == 4)
         {
             drawnObjects.ForEach(Destroy);
             drawnObjects.Clear();
@@ -305,7 +305,7 @@ public class StoryGameV2 : MonoBehaviour
 
             GameUtils.AddText(centerCam, canvas, "Make your accusation", displayPos + new Vector3(0, 0.1f, 0), Color.white, 2f);
 
-            GameObject circleWhere = MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * 0.1f, Color.white);
+            GameObject circleWhere = GameUtils.MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * 0.1f, Color.white);
             drawnObjects.Add(circleWhere);
             string text = "Where did it happen?";
             if (whereDid.labelName != "")
@@ -317,6 +317,8 @@ public class StoryGameV2 : MonoBehaviour
             for (int i = 0; i < 4; i++)
             {
                 LifeTimeObject detectedObject = GetLifeTimeObjectWithLabel(interactables[i], LifeTimeObjects);
+
+                if (detectedObject.labelName == "") continue;
                 if (Vector3.Distance(circleWhere.transform.position, detectedObject.obj.transform.position) < dist)
                 {
                     dist = Vector3.Distance(circleWhere.transform.position, detectedObject.obj.transform.position);
@@ -331,7 +333,7 @@ public class StoryGameV2 : MonoBehaviour
                 }
             }
 
-            GameObject circleWho = MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * -0.1f, Color.white);
+            GameObject circleWho = GameUtils.MakeInteractionCirkle(anchorPoint + Vector3.Cross(offsetDir, Vector3.up) * -0.1f, Color.white);
             drawnObjects.Add(circleWho);
             text = "Who did it?";
             if (whoDid.labelName != "")
@@ -343,6 +345,7 @@ public class StoryGameV2 : MonoBehaviour
             for (int i = 4; i < interactables.Length; i++)
             {
                 LifeTimeObject detectedObject = GetLifeTimeObjectWithLabel(interactables[i], LifeTimeObjects);
+                if (detectedObject.labelName == "") continue;
                 if (Vector3.Distance(circleWho.transform.position, new Vector3(detectedObject.obj.transform.position.x, circleWho.transform.position.y, detectedObject.obj.transform.position.z)) < dist)
                 {
                     dist = Vector3.Distance(circleWho.transform.position, detectedObject.obj.transform.position);
@@ -361,7 +364,7 @@ public class StoryGameV2 : MonoBehaviour
             {
                 text = "";
 
-                GameObject nextCirkle = MakeInteractionCirkle(anchorPoint + offsetDir * 0.15f, Color.gray);
+                GameObject nextCirkle = GameUtils.MakeInteractionCirkle(anchorPoint + offsetDir * 0.15f, Color.gray);
                 nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
                 drawnObjects.Add(nextCirkle);
                 GameUtils.AddText(centerCam, canvas, "Place player to confirm accusation", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
@@ -413,7 +416,7 @@ public class StoryGameV2 : MonoBehaviour
             }
         }
 
-        GameObject nextCirkle = MakeInteractionCirkle(anchorPoint + offsetDir * -0.15f, Color.gray);
+        GameObject nextCirkle = GameUtils.MakeInteractionCirkle(anchorPoint + offsetDir * -0.15f, Color.gray);
         nextCirkle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
         drawnObjects.Add(nextCirkle);
         GameUtils.AddText(centerCam, canvas, "Place player to restart game", nextCirkle.transform.position + new Vector3(0, 0.05f, 0), Color.white, 1.5f);
@@ -439,16 +442,7 @@ public class StoryGameV2 : MonoBehaviour
         }
         return true;
     }
-
-    private GameObject MakeInteractionCirkle(Vector3 pos, Color color)
-    {
-        GameObject circle = Instantiate(GameManager.Instance.cylinderPrefab, new Vector3(pos.x, displayPos.y - 0.01f, pos.z), Quaternion.identity, cubeParent.transform);
-        circle.GetComponent<Renderer>().material.color = color;
-        circle.transform.localScale = new Vector3(0.05f, 0.005f, 0.05f);
-        //circle.transform.parent = cubeParent.transform;
-        return circle;
-    }
-
+    
     private LifeTimeObject GetLifeTimeObjectWithLabel(string label, List<LifeTimeObject> objects)
     {
         foreach (var lto in objects)

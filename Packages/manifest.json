@@ -1,9 +1,8 @@
 {
   "dependencies": {
-    "com.meta.xr.depthapi.urp": "https://github.com/oculus-samples/Unity-DepthAPI.git?path=/Packages/com.meta.xr.depthapi.urp",
-    "com.meta.xr.mrutilitykit": "74.0.0",
+    "com.meta.xr.mrutilitykit": "76.0.0",
     "com.meta.xr.sdk.core": "72.0.0",
-    "com.meta.xr.sdk.voice": "74.0.0",
+    "com.meta.xr.sdk.voice": "76.0.0",
     "com.unity.ai.navigation": "2.0.5",
     "com.unity.collab-proxy": "2.7.1",
     "com.unity.ide.rider": "3.0.31",
@@ -19,7 +18,7 @@
     "com.unity.visualscripting": "1.9.5",
     "com.unity.xr.management": "4.5.0",
     "com.unity.xr.meta-openxr": "2.1.0",
-    "com.unity.xr.openxr": "1.14.1",
+    "com.unity.xr.openxr": "1.14.3",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
