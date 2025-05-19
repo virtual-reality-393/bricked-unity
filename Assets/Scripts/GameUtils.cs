@@ -498,6 +498,23 @@ public static class GameUtils
         return true;
     }
 
+    public static bool HaveSameElements(List<string> list1, List<string> list2)
+    {
+        if (list1.Count != list2.Count)
+        {
+            return false;
+        }
+
+        var grouped1 = list1.GroupBy(x => x)
+                            .ToDictionary(g => g.Key, g => g.Count());
+
+        var grouped2 = list2.GroupBy(x => x)
+                            .ToDictionary(g => g.Key, g => g.Count());
+
+        return grouped1.Count == grouped2.Count &&
+               grouped1.All(kv => grouped2.TryGetValue(kv.Key, out int count) && count == kv.Value);
+    }
+
     public static List<string> DetectedObjectListToStringList(List<DetectedObject> detectedObjects)
     {
         List<string> res = new List<string>();
