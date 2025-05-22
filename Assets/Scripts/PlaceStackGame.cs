@@ -14,6 +14,8 @@ public class PlaceStackGame : MonoBehaviour
     public GameObject canvas;
     public GameObject cubeParent;
 
+    public GameObject debugHand;
+
     private FindSpawnPositions _findSpawnPositions;
     private Transform[] spawnPoints;
 
@@ -39,6 +41,8 @@ public class PlaceStackGame : MonoBehaviour
 
     float[] dists;
     bool[] complted;
+    int[] spawnpointNoDetectionCounts;
+    int[] spawnpointWringStackCounts;
 
     List<DetectedObject> bricks = new List<DetectedObject>();
    
@@ -133,6 +137,11 @@ public class PlaceStackGame : MonoBehaviour
         MakeRectDisplay(rectDisplay);
         rectDisplay.SetActive(debugMode);
         
+        foreach (var item in debugTestObjects)
+        {
+            item.SetActive(debugMode);
+        }
+
         foreach (var item in debugTestObjects)
         {
             item.SetActive(debugMode);
@@ -379,6 +388,8 @@ public class PlaceStackGame : MonoBehaviour
             {
                 if (distMat[i, ints[i]] < distThreshold)
                 {
+                    spawnpointNoDetectionCounts[i] = 0;
+
                     List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[ints[i]]);
 
                     if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
@@ -388,14 +399,44 @@ public class PlaceStackGame : MonoBehaviour
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
                     }
+                    else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
+                    {
+                        spawnpointWringStackCounts[i] = 0;
+                        var col = Color.yellow;
+                        col.a = 0.33f;
+                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                    }
                     else
+                    {
+                        spawnpointWringStackCounts[i]++;
+                        if (spawnpointWringStackCounts[i] > 5)
+                        {
+                            var col = Color.red;
+                            col.a = 0.33f;
+                            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                            spawnpointWringStackCounts[i] = 6;
+                        }
+                    }
+                }
+                else
+                {
+                    spawnpointNoDetectionCounts[i]++;
+                    if (complted[i])
+                    {
+                        var col = Color.green;
+                        col.a = 0.33f;
+                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                    }
+                    else if (spawnpointNoDetectionCounts[i] > 5)
                     {
                         var col = Color.white;
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                        spawnpointNoDetectionCounts[i] = 6;
                     }
                 }
             }
+
             taskComplet = CheckIfAllDone();
             if (taskComplet)
             {
@@ -702,6 +743,10 @@ public class PlaceStackGame : MonoBehaviour
                 rectCenter.transform.position = tableAnchor.transform.position;
                 break;
 
+            case 10:
+                debugHand.SetActive(!debugHand.activeSelf);
+                break;
+
             default:
                 break;
         }
@@ -710,7 +755,7 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateDebugText()
     {
-        string[] texts = new string[10] {
+        string[] texts = new string[11] {
                          "Debug mode \"On\". \nTo disable detect \"big penguin\".",
                          "+1 to max size \nCurrent max size: " + maxStackSize,
                          "-1 from max size \nCurrent max size: " + maxStackSize,
@@ -720,7 +765,8 @@ public class PlaceStackGame : MonoBehaviour
                          "Complet task",
                          "To setup",
                          "Make new rect",
-                         "Reset rect"};
+                         "Reset rect",
+                         "Hand display: "+ debugHand.activeSelf };
 
 
         for (int i = 0; i < debugTestObjects.Count; i++)
@@ -790,6 +836,10 @@ public class PlaceStackGame : MonoBehaviour
         GameObject resteRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 4, Color.blue);
         resteRect.transform.parent = parent.transform;
         debugTestObjects.Add(GameUtils.AddText("Reset rect", menuPos + xOffset * 4 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
+        GameObject handDispaly = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 5, Color.blue);
+        handDispaly.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Hand display: " + debugHand.activeSelf, menuPos + xOffset * 5 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
     }
 
@@ -932,6 +982,8 @@ public class PlaceStackGame : MonoBehaviour
 
             dists = new float[stacksToBuild.Count];
             complted = new bool[stacksToBuild.Count];
+            spawnpointNoDetectionCounts = new int[stacksToBuild.Count];
+            spawnpointWringStackCounts = new int[stacksToBuild.Count];
             for (int i = 0; i < dists.Length; i++)
             {
                 dists[i] = 100;
@@ -1050,6 +1102,10 @@ public class PlaceStackGame : MonoBehaviour
             rectCenter.transform.position = tableAnchor.transform.position;
 
             debugMenu.transform.position = tableAnchor.transform.position + offsetDir * -0.2f;
+
+            debugHand.transform.position = tableAnchor.transform.position + offsetDir * 0.4f;
+            debugHand.transform.Rotate(offsetDir, -90);
+            debugHand.SetActive(false);
         }
     }
 }
