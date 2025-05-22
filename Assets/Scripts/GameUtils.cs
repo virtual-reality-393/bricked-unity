@@ -1,5 +1,6 @@
 using Meta.XR.MRUtilityKit;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -218,9 +219,56 @@ public static class GameUtils
         for (int i = 0; i < stack.Count; i++)
         {
             GameObject cube = GameObject.Instantiate(GameManager.Instance.GetBrick(stack[i]), pos + new Vector3(0, 0.0208f, 0) * i, Quaternion.identity);
+            cube.SetActive(false);
+            GameManager.Instance.StartCoroutine(
+                FallingBrickEffect(
+                    cube,
+                    pos + new Vector3(0, 0.0208f, 0) * i + Vector3.up * 0.2f,
+                    pos + new Vector3(0, 0.0208f, 0) * i,
+                    0.4f,
+                    -0.2f * i,
+                    i < stack.Count - 1,
+                   i > 0
+                    )
+                );
             res.Add(cube);
         }
         return res;
+    }
+
+    static IEnumerator FallingBrickEffect(GameObject brick, Vector3 startPos, Vector3 endPos, float timeToComplete,
+        float t = 0f, bool disableTop = false, bool disableBottom = false)
+    {
+        var spawned = false;
+        
+        
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime/timeToComplete;
+            if (t > 0)
+            {
+                if (!spawned)
+                {
+                    brick.SetActive(true);
+                    spawned = true;
+                }
+                
+                
+                brick.transform.position = Vector3.Lerp(startPos, endPos, Mathf.Clamp(t, 0f, 1f));
+            }
+            yield return null;   
+        }
+        
+        if (disableBottom)
+        {
+            brick.GetComponent<Brick>().bottom.SetActive(false);
+        }
+        
+        if (disableTop)
+        {
+            brick.GetComponent<Brick>().top.SetActive(false);
+        }
     }
 
     public static List<string> GenetateStack(List<string> sortedList)

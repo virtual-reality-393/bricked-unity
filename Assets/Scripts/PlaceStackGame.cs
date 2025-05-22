@@ -66,8 +66,6 @@ public class PlaceStackGame : MonoBehaviour
 
     GameObject mainText;
 
-    private GameObject firstBrick;
-
     bool runOnce = true;
     bool debugMode = false;
     bool canDoAdminInteraction = true;
@@ -157,10 +155,6 @@ public class PlaceStackGame : MonoBehaviour
         {
             if (objectsToDetect.Contains(brick.labelName))
             {
-                if (!firstBrick)
-                {
-                    firstBrick = Instantiate(GameManager.Instance.cubePrefab, brick.worldPos, Quaternion.identity);
-                }
                 bricks.Add(brick);
             }
             else if (brick.labelName == "small penguin")
@@ -334,12 +328,7 @@ public class PlaceStackGame : MonoBehaviour
         mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
         mainText.transform.GetChild(0).LookAt(centerCam);
         mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
-
-
-        if (firstBrick)
-        {
-            mainText.GetComponentInChildren<TMP_Text>().text = firstBrick.transform.position.ToString();
-        }
+        
 
 
         //if (debugMode)
@@ -394,10 +383,20 @@ public class PlaceStackGame : MonoBehaviour
 
                     if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
                     {
+                        if (!complted[i])
+                        {
+                            var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
+                        
+                            foreach (var system in particleSystems)
+                            {
+                                system.Play();
+                            }
+                        }
                         var col = Color.green;
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
+
                     }
                     else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
                     {

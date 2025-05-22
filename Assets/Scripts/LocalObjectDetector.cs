@@ -35,6 +35,7 @@ public class LocalObjectDetector : ObjectDetector
     public Transform eye;
 
     private Vector3 _eyeOffset;
+    public float timeTaken;
 
     void Start()
     {
@@ -101,19 +102,18 @@ public class LocalObjectDetector : ObjectDetector
 
             
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
-            // var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
+            var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
             sw.Restart();
-            _objectDetectionWorker.Schedule(_modelInputTensor);
+            // _objectDetectionWorker.Schedule(_modelInputTensor);
             // Debug.LogError($"Model Time Taken: {sw.ElapsedMilliseconds}ms");
-            // while (detectionScheduler.MoveNext())
-            // {
-            //     
-            //     if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
-            //     {
-            //         yield return null;
-            //         timeTaken = sw.ElapsedMilliseconds;
-            //     }
-            // }
+            while (detectionScheduler.MoveNext())
+            {
+                if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
+                {
+                    yield return null;
+                    timeTaken = sw.ElapsedMilliseconds;
+                }
+            }
             // Debug.LogWarning($"Time taken to run model: {sw.ElapsedMilliseconds}ms");
             sw.Restart();
 
