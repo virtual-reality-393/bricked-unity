@@ -150,7 +150,7 @@ public class PlaceStackGame : MonoBehaviour
             {
                 if (!firstBrick)
                 {
-                    firstBrick = Instantiate(GameManager.Instance.brickPrefab, brick.worldPos, Quaternion.identity);
+                    firstBrick = Instantiate(GameManager.Instance.cubePrefab, brick.worldPos, Quaternion.identity);
                 }
                 bricks.Add(brick);
             }
@@ -838,8 +838,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             for (int i = 0; i < stack.Count; i++)
             {
-                GameObject cube = Instantiate(GameManager.Instance.brickPrefab, pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
-                cube.GetComponent<Renderer>().material.color = GameUtils.nameToColor[stack[i].labelName];
+                GameObject cube = Instantiate(GameManager.Instance.GetBrick(stack[i].labelName), pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
             }
 
             offset += new Vector3(0.05f, 0, 0);

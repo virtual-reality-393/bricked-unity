@@ -3610,9 +3610,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a43c89cf2410c54d80734ad204b6f06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  cubePrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
   stackPrefab: {fileID: 552255446577296144, guid: 7774f41fa14bc094dabddd5399980117, type: 3}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
+  blueBrickPrefab: {fileID: 7331605140929913549, guid: 1d1266dff4707ff4a9918996a748a2d6, type: 3}
+  redBrickPrefab: {fileID: 7331605140929913549, guid: 4d9a829309a904f4c9a782a7e62ad666, type: 3}
+  greenBrickPrefab: {fileID: 7331605140929913549, guid: 13624ef38b52ea64dbc0009ae935e7f2, type: 3}
+  yellowBrickPrefab: {fileID: 7331605140929913549, guid: 7d801291168a1544da6597dd237dc1e6, type: 3}
 --- !u!114 &507105661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10379,51 +10383,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!1 &1755649952
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1755649953}
-  - component: {fileID: 1755649954}
-  m_Layer: 0
-  m_Name: Performance
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1755649953
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1755649952}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1755649954
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1755649952}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36ca807d2eb21274787db0b744173bd4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  detector: {fileID: 202246610}
 --- !u!1 &1777527096
 GameObject:
   m_ObjectHideFlags: 0
@@ -12260,4 +12219,3 @@ SceneRoots:
   - {fileID: 1777527099}
   - {fileID: 330303407}
   - {fileID: 931900775}
-  - {fileID: 1755649953}

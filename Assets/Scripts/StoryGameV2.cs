@@ -457,7 +457,7 @@ public class StoryGameV2 : MonoBehaviour
 
     private void DrawLiftTimeObject(LifeTimeObject lto)
     {
-        GameObject cube = Instantiate(GameManager.Instance.brickPrefab, lto.obj.transform.position, Quaternion.identity);
+        GameObject cube = Instantiate(GameManager.Instance.cubePrefab, lto.obj.transform.position, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = DetectedObject.labelToDrawColor[nameToIndex[lto.labelName]];
         cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         if (lto.labelName == playerColor)

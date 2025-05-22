@@ -1,11 +1,57 @@
 #pragma kernel CSMain
 
+float FocalLength;
+float4 _ZBufferParams;
+float4 _PrincipalPoint;
+float4 _FocalLength;
+Texture2D<half4> _ColorInput;
+Texture2D<half4> Input;
+RWStructuredBuffer<float4> Result;
+RWStructuredBuffer<float4> ColorResult;
+int _Size;
+int _Stride;
+float4x4 Homography;
 
-Texture2D<float4> Input;
-RWTexture2D<float4> Result;
-
-[numthreads(8,8,1)]
+[numthreads(4,4,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     
+    float depth = Input[id.xy*_Stride].r*10;
+    
+    float x = (id.x*_Stride - 160.f) / _FocalLength.x * _PrincipalPoint.x/320.f*2.f;
+    float y = (id.y*_Stride - 160.f) / _FocalLength.y * _PrincipalPoint.y/320.f*2.f;
+    float z = 1;
+    Result[id.x+id.y*_Size] = float4(x,y,z,0)*depth;
+    
+
+    float2 uv = float2(id.x * _Stride, id.y * _Stride);
+
+    // Apply homography
+    float3 warped = mul(Homography, float4(uv, 1.0, 0.0)).xyz;
+    float2 warpedUVTopLeft = warped.xy / warped.z;
+
+    // Convert result back to Unity bottom-left origin
+    float2 warped_uv = float2(warpedUVTopLeft.x, warpedUVTopLeft.y);
+    
+    float2 input_size = float2(_Size * _Stride, _Size * _Stride);
+    int2 pixelCoord = int2(round(warped_uv.xy));
+
+    bool in_bounds = 
+        pixelCoord.x >= 0 && pixelCoord.x < int(input_size.x) &&
+        pixelCoord.y >= 0 && pixelCoord.y < int(input_size.y);
+    
+    if (in_bounds)
+    {
+        float4 sampledColor = _ColorInput[uint2(pixelCoord)];
+        ColorResult[id.x + id.y * _Size] = pow(sampledColor, 1.0 / 2.2);
+    }
+    else
+    {
+        ColorResult[id.x + id.y * _Size] = float4(0, 0, 0, 1);
+    }
+
+    // ColorResult[id.x + id.y * _Size] = float4(Homography[0][0],Homography[0][1],Homography[0][2],Homography[0][3]);
+
+    
 }
+

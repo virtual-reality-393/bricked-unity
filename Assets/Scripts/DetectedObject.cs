@@ -41,21 +41,21 @@ public class DetectedObject
 
     public GameObject Draw()
     {
-        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab , worldPos, Quaternion.identity);
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.cubePrefab , worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = labelToDrawColor[labelIdx];
         return cube;
     }
 
     public GameObject Draw(Color color)
     {
-        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.cubePrefab, worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = color;
         return cube;
     }
 
     public GameObject DrawSmall()
     {
-        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.brickPrefab, worldPos, Quaternion.identity);
+        var cube = UnityEngine.Object.Instantiate(GameManager.Instance.cubePrefab, worldPos, Quaternion.identity);
         cube.GetComponent<Renderer>().material.color = labelToDrawColor[labelIdx];
         cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         return cube;

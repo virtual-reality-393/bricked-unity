@@ -104,7 +104,7 @@ public class LocalObjectDetector : ObjectDetector
             // var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
             sw.Restart();
             _objectDetectionWorker.Schedule(_modelInputTensor);
-            Debug.LogError($"Model Time Taken: {sw.ElapsedMilliseconds}ms");
+            // Debug.LogError($"Model Time Taken: {sw.ElapsedMilliseconds}ms");
             // while (detectionScheduler.MoveNext())
             // {
             //     
@@ -125,7 +125,7 @@ public class LocalObjectDetector : ObjectDetector
                 yield return null;
             }
             
-            Debug.LogError($"Readback Time Taken: {sw.ElapsedMilliseconds}ms");
+            // Debug.LogError($"Readback Time Taken: {sw.ElapsedMilliseconds}ms");
             
             var res = output.ReadbackAndClone();
             

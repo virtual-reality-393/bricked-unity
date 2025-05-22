@@ -217,10 +217,7 @@ public static class GameUtils
         List<GameObject> res = new List<GameObject>();
         for (int i = 0; i < stack.Count; i++)
         {
-            GameObject cube = GameObject.Instantiate(GameManager.Instance.brickPrefab, pos + new Vector3(0, 0.03f, 0) * i, Quaternion.identity);
-            var drawColor = GameUtils.nameToColor[stack[i]];
-            drawColor.a =0.8f;
-            cube.GetComponent<Renderer>().material.color = drawColor;
+            GameObject cube = GameObject.Instantiate(GameManager.Instance.GetBrick(stack[i]), pos + new Vector3(0, 0.0208f, 0) * i, Quaternion.identity);
             res.Add(cube);
         }
         return res;

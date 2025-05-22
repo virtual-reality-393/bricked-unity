@@ -12,7 +12,6 @@ RWTexture2D<float4> Result;
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float2 idx = round(id.xy*Scale);
-
     if (idx.x-OffsetX < Width && idx.y-OffsetY < Height && idx.x-OffsetX >= 0 && idx.y-OffsetY >= 0)
     {
         Result[id.xy] = pow(Input[uint2(idx.x-OffsetX,idx.y-OffsetY)],1.0f/2.2f);
