@@ -26,6 +26,7 @@ public class PlaceStackGame : MonoBehaviour
     public float stackThreshold = 0.06f;
 
     bool taskComplet = false;
+    bool makeNewLevel = false;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
     Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 2 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
@@ -306,7 +307,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             drawnBricks.ForEach(Destroy);
             drawnBricks.Clear();
-            taskComplet = true;
+            makeNewLevel = true;
             state = GameState.Play;
         }
     }
@@ -349,7 +350,7 @@ public class PlaceStackGame : MonoBehaviour
 
         DestroyCubes(1);
 
-        if (taskComplet)
+        if (makeNewLevel)
         {
             DestroyCubes(0);
             NewTable();
@@ -441,6 +442,8 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet)
             {
                 levelsComplteded++;
+                mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
+                makeNewLevel = true;
             }
         }
     }
@@ -990,6 +993,7 @@ public class PlaceStackGame : MonoBehaviour
                 complted[i] = false;
             }
             taskComplet = false;
+            makeNewLevel = false;
         }
         
     }
