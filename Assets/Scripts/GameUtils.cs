@@ -225,8 +225,8 @@ public static class GameUtils
                     cube,
                     pos + new Vector3(0, 0.0208f, 0) * i + Vector3.up * 0.2f,
                     pos + new Vector3(0, 0.0208f, 0) * i,
-                    0.4f,
-                    -0.2f * i,
+                    0.6f,
+                    -0.25f * i,
                     i < stack.Count - 1,
                    i > 0
                     )
@@ -240,8 +240,6 @@ public static class GameUtils
         float t = 0f, bool disableTop = false, bool disableBottom = false)
     {
         var spawned = false;
-        
-        
 
         while (t < 1f)
         {
@@ -259,6 +257,8 @@ public static class GameUtils
             }
             yield return null;   
         }
+
+        yield return new WaitForSeconds(0.25f*timeToComplete);
         
         if (disableBottom)
         {

@@ -1,3 +1,4 @@
+using System.Collections;
 using Meta.XR.MRUtilityKit;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +21,8 @@ public class PlaceStackGame : MonoBehaviour
     private Transform[] spawnPoints;
 
     public int maxStackSize = 4;
-    public int minStackSize = 2;
-    public SliceMethod sliceMethod = SliceMethod.Random;
+    public int minStackSize = 1;
+    public SliceMethod sliceMethod = SliceMethod.Min;
     public float distThreshold = 0.08f;
     public float stackThreshold = 0.06f;
 
@@ -70,6 +71,7 @@ public class PlaceStackGame : MonoBehaviour
     bool runOnce = true;
     bool debugMode = false;
     bool canDoAdminInteraction = true;
+    private bool levelReset;
 
     int levelsComplteded = 0;
 
@@ -324,9 +326,11 @@ public class PlaceStackGame : MonoBehaviour
 
     private void Play()
     {
+
+        if (levelReset) return;
         //GameUtils.AddText(centerCam, canvas, playText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
         mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nLevels Completed: {levelsComplteded}";
         mainText.transform.GetChild(0).LookAt(centerCam);
         mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
         
@@ -438,13 +442,21 @@ public class PlaceStackGame : MonoBehaviour
             }
 
             taskComplet = CheckIfAllDone();
-            if (taskComplet)
+            if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
                 mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
-                makeNewLevel = true;
+                StartCoroutine(WaitForTaskComplete());
             }
         }
+    }
+
+    IEnumerator WaitForTaskComplete()
+    {
+        levelReset = true;
+        yield return new WaitForSeconds(2);
+        makeNewLevel = true;
+        levelReset = false;
     }
 
     private List<DetectedObject> FixStacks(List<List<DetectedObject>> stacksInFrame, List<DetectedObject> detectedBricks)
