@@ -50,8 +50,8 @@ public class PlaceStackGame : MonoBehaviour
    
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
-    MRUKAnchor tableAnchor = null;
-    Rect ourPlaneRect = new Rect(1, 1, -1, -1);
+    public MRUKAnchor tableAnchor = null;
+    public Rect ourPlaneRect = new Rect(1, 1, -1, -1);
     GameObject rectPos1;
     GameObject rectPos2;
     GameObject rectCenter;
@@ -396,11 +396,14 @@ public class PlaceStackGame : MonoBehaviour
                             {
                                 system.Play();
                             }
+                            DataLogger.Log($"StackGeneration",$"COMPLETED;{i}");
                         }
                         var col = Color.green;
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
+                        
+                        
 
                     }
                     else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
@@ -445,6 +448,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
+                DataLogger.Log($"StackGeneration","FINISHED");
                 mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
                 StartCoroutine(WaitForTaskComplete());
             }
@@ -992,6 +996,8 @@ public class PlaceStackGame : MonoBehaviour
                 GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position, Color.white);
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
+                
+                DataLogger.Log($"StackGeneration",$"GENERATE;{i};{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")}");
             }
 
             dists = new float[stacksToBuild.Count];
@@ -1006,6 +1012,7 @@ public class PlaceStackGame : MonoBehaviour
             taskComplet = false;
             makeNewLevel = false;
         }
+        
         
     }
 

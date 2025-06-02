@@ -11,13 +11,19 @@ using PassthroughCameraSamples;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 public class LocalObjectDetector : ObjectDetector
 {
-    public ModelAsset objectDetector;
+    public ModelAsset stackDetector;
+    public ModelAsset brickDetector;
+    
+    private Worker _stackDetectionWorker;
+    private Worker _brickDetectionWorker;
+    
+    
     public Letterbox letterbox;
-    private Worker _objectDetectionWorker;
     private bool _playing;
     private List<DetectedObject> _internalDetection;
     private Tensor<float> _modelInputTensor;
@@ -36,6 +42,11 @@ public class LocalObjectDetector : ObjectDetector
 
     private Vector3 _eyeOffset;
     public float timeTaken;
+    
+    public bool includeStacks;
+
+
+    private int frame;
 
     void Start()
     {
@@ -44,9 +55,17 @@ public class LocalObjectDetector : ObjectDetector
             Debug.LogError("EnvironmentRaycastManager is not supported: please read the official documentation to get more details. (https://developers.meta.com/horizon/documentation/unity/unity-depthapi-overview/)");
         }
         _intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
-        var detectionModel = ModelLoader.Load(objectDetector);
+        var brickDetectionModel = ModelLoader.Load(brickDetector);
         _internalDetection = new List<DetectedObject>();
-        _objectDetectionWorker = new Worker(detectionModel, BackendType.CPU);
+        _brickDetectionWorker = new Worker(brickDetectionModel, BackendType.CPU);
+
+
+        if (includeStacks)
+        {
+            var stackDetectionModel = ModelLoader.Load(stackDetector);
+            _stackDetectionWorker = new Worker(stackDetectionModel, BackendType.CPU);
+        }
+        
         _tf = new TextureTransform().SetDimensions(640, 640, 3);
         _modelInputTensor = new Tensor<float>(new TensorShape(1, 3, 640, 640));
         SetWebCam();
@@ -99,116 +118,59 @@ public class LocalObjectDetector : ObjectDetector
         List<DetectionBox> bboxes = new List<DetectionBox>(256);
         while (true)
         {
-
-            
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
-            var detectionScheduler = _objectDetectionWorker.ScheduleIterable(_modelInputTensor);
-            sw.Restart();
-            // _objectDetectionWorker.Schedule(_modelInputTensor);
-            // Debug.LogError($"Model Time Taken: {sw.ElapsedMilliseconds}ms");
-            while (detectionScheduler.MoveNext())
+            var brickDetectionScheduler = _brickDetectionWorker.ScheduleIterable(_modelInputTensor);
+
+            timeTaken = Time.realtimeSinceStartup;
+            while (brickDetectionScheduler.MoveNext())
             {
-                if (sw.ElapsedMilliseconds-timeTaken >= TimePerFrame)
+                if (!(Time.realtimeSinceStartup - timeTaken >= TimePerFrame)) continue;
+                yield return null;
+                timeTaken = sw.ElapsedMilliseconds;
+            }
+
+            IEnumerator stackDetectionScheduler = null;
+
+            if (includeStacks)
+            {
+                stackDetectionScheduler = _stackDetectionWorker.ScheduleIterable(_modelInputTensor);
+            }
+            
+            timeTaken = Time.realtimeSinceStartup;
+            while (includeStacks && stackDetectionScheduler.MoveNext())
+            {
+                if (!(Time.realtimeSinceStartup - timeTaken >= TimePerFrame)) continue;
+                yield return null;
+                timeTaken = sw.ElapsedMilliseconds;
+            }
+
+            var brickOutput = _brickDetectionWorker.PeekOutput() as Tensor<float>;
+            Tensor<float> stackOutput = null;
+            
+            brickOutput.ReadbackRequest();
+            
+            if (includeStacks)
+            {
+                stackOutput = _stackDetectionWorker.PeekOutput() as Tensor<float>;
+                stackOutput.ReadbackRequest();
+                while (!stackOutput.IsReadbackRequestDone())
                 {
                     yield return null;
-                    timeTaken = sw.ElapsedMilliseconds;
                 }
             }
-            // Debug.LogWarning($"Time taken to run model: {sw.ElapsedMilliseconds}ms");
-            sw.Restart();
 
-            var output = _objectDetectionWorker.PeekOutput() as Tensor<float>;
-            output.ReadbackRequest();
-
-            while (!output.IsReadbackRequestDone())
+            while (!brickOutput.IsReadbackRequestDone())
             {
                 yield return null;
             }
             
-            // Debug.LogError($"Readback Time Taken: {sw.ElapsedMilliseconds}ms");
-            
-            var res = output.ReadbackAndClone();
-            
-            // Debug.LogWarning($"Time taken to readback data: {sw.ElapsedMilliseconds}ms");
-        
-            var infoLen = res.shape[1];
+            var brickTensor = brickOutput.ReadbackAndClone();
+            GetBrickDetections(brickTensor);
 
-            var pointCount = res.shape[2];
-
-            var dataArr = res.DownloadToArray();
-
-            for (int i = 0; i < pointCount; i++)
+            if (includeStacks)
             {
-                int idx = -1;
-
-                float conf = CONFIDENCE_LEVEL;
-                for (int j = i+4*pointCount; j < i+infoLen*pointCount; j+=pointCount)
-                {
-                    if (dataArr[j] > conf)
-                    {
-                        conf = dataArr[j];
-                        idx = (j - i - 4*pointCount)/pointCount;
-                    }
-                }
-
-                if (idx != -1)
-                {
-                    float x = dataArr[i];
-                    float y = dataArr[i+1*pointCount];
-                    float w = dataArr[i+2*pointCount];
-                    float h = dataArr[i+3*pointCount];
-                
-                    int x1 = (int)(x - w / 2);
-                    int x2 = (int)(x + w / 2);
-            
-                    int y1 = (int)(640 - y - h / 2);
-                    int y2 = (int)(640 - y + h / 2);
-                    
-                    var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
-                    var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
-
-                    bboxes.Add(new DetectionBox(idx,conf,p1.x, p1.y, p2.x, p2.y));
-                }
-            }
-
-            bboxes = ApplyNMS(bboxes);
-            
-            rays.ForEach(Destroy);
-            rays.Clear();
-            
-            foreach (var bbox in bboxes)
-            {
-                var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
-                var directionInCamera = new Vector3
-                {
-                    x = (screenPoint.x - _intrinsics.PrincipalPoint.x) / _intrinsics.FocalLength.x,
-                    y = (screenPoint.y - _intrinsics.PrincipalPoint.y) / _intrinsics.FocalLength.y,
-                    z = 1
-                };
-                // Debug.LogError($"Pose: {pose.rotation.eulerAngles}");
-                // Debug.LogError($"Eye: {eye.rotation.eulerAngles}");
-                // Debug.LogError($"Diff {eye.rotation.eulerAngles-pose.rotation.eulerAngles}");
-                var ray = new Ray(eye.position,eye.rotation*directionInCamera);
-                
-                
-                
-                
- 
-
-                if (environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit, 1000f))
-                {
-                    // var newRay = Instantiate(_debugRayPrefab);
-                    // newRay.GetComponent<LineRenderer>().SetPositions(new Vector3[] {ray.origin, ray.origin + ray.direction*5f});
-                    //
-                    //
-                    // // var newRay = Instantiate(GameManager.Instance.brickPrefab, ray.origin+ray.direction, Quaternion.identity);
-                    // // newRay.transform.localScale *= 0.3f;
-                    // // newRay.transform.forward = ray.direction;
-                    //
-                    // rays.Add(newRay);
-                    //
-                    _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
-                }
+                var stackTensor = stackOutput.ReadbackAndClone();
+                GetStackDetections(stackTensor);
             }
 
             HandleBricksDetected(GetBricks());
@@ -216,12 +178,153 @@ public class LocalObjectDetector : ObjectDetector
 
             bboxes.Clear();
             _internalDetection.Clear();
-            res.Dispose();
-            
+            brickTensor.Dispose();
+            frame++;
             yield return null;
         }
     }
-    
+
+    private List<DetectedObject> GetStackDetections(Tensor<float> stackTensor)
+    {
+        List<DetectionBox> bboxes = new List<DetectionBox>(); 
+        
+        var infoLen = stackTensor.shape[1];
+
+        var pointCount = stackTensor.shape[2];
+
+        var dataArr = stackTensor.DownloadToArray();
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            int idx = -1;
+
+            float conf = CONFIDENCE_LEVEL;
+            for (int j = i+4*pointCount; j < i+infoLen*pointCount; j+=pointCount)
+            {
+                if (dataArr[j] > conf)
+                {
+                    conf = dataArr[j];
+                    idx = (j - i - 4*pointCount)/pointCount;
+                }
+            }
+
+            if (idx != -1)
+            {
+                float x = dataArr[i];
+                float y = dataArr[i+1*pointCount];
+                float w = dataArr[i+2*pointCount];
+                float h = dataArr[i+3*pointCount];
+                
+                int x1 = (int)(x - w / 2);
+                int x2 = (int)(x + w / 2);
+            
+                int y1 = (int)(640 - y - h / 2);
+                int y2 = (int)(640 - y + h / 2);
+                    
+                var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
+                var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
+
+                bboxes.Add(new DetectionBox(idx,conf,p1.x, p1.y, p2.x, p2.y));
+            }
+        }
+
+        bboxes = ApplyNMS(bboxes);
+
+        foreach (var bbox in bboxes)
+        {
+            _internalDetection.Add(new DetectedObject(10,"stack",new Vector3(0,0,0)));
+            
+        }
+        return _internalDetection;
+    }
+
+    private List<DetectedObject> GetBrickDetections(Tensor<float> brickTensor)
+    {
+        List<DetectionBox> bboxes = new List<DetectionBox>(); 
+        
+        var infoLen = brickTensor.shape[1];
+
+        var pointCount = brickTensor.shape[2];
+
+        var dataArr = brickTensor.DownloadToArray();
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            int idx = -1;
+
+            float conf = CONFIDENCE_LEVEL;
+            for (int j = i+4*pointCount; j < i+infoLen*pointCount; j+=pointCount)
+            {
+                if (dataArr[j] > conf)
+                {
+                    conf = dataArr[j];
+                    idx = (j - i - 4*pointCount)/pointCount;
+                }
+            }
+
+            if (idx != -1)
+            {
+                float x = dataArr[i];
+                float y = dataArr[i+1*pointCount];
+                float w = dataArr[i+2*pointCount];
+                float h = dataArr[i+3*pointCount];
+                
+                int x1 = (int)(x - w / 2);
+                int x2 = (int)(x + w / 2);
+            
+                int y1 = (int)(640 - y - h / 2);
+                int y2 = (int)(640 - y + h / 2);
+                    
+                var p1 = letterbox.RescalePoint(new Vector2Int(x1, y1),webcamTexture,640f);
+                var p2 = letterbox.RescalePoint(new Vector2Int(x2, y2),webcamTexture,640f);
+
+                bboxes.Add(new DetectionBox(idx,conf,p1.x, p1.y, p2.x, p2.y));
+            }
+        }
+
+        bboxes = ApplyNMS(bboxes);
+            
+        rays.ForEach(Destroy);
+        rays.Clear();
+            
+        foreach (var bbox in bboxes)
+        {
+            var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
+            var directionInCamera = new Vector3
+            {
+                x = (screenPoint.x - _intrinsics.PrincipalPoint.x) / _intrinsics.FocalLength.x,
+                y = (screenPoint.y - _intrinsics.PrincipalPoint.y) / _intrinsics.FocalLength.y,
+                z = 1
+            };
+            // Debug.LogError($"Pose: {pose.rotation.eulerAngles}");
+            // Debug.LogError($"Eye: {eye.rotation.eulerAngles}");
+            // Debug.LogError($"Diff {eye.rotation.eulerAngles-pose.rotation.eulerAngles}");
+            var ray = new Ray(eye.position,eye.rotation*directionInCamera);
+                
+                
+                
+                
+ 
+
+            if (environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit, 1000f))
+            {
+                // var newRay = Instantiate(_debugRayPrefab);
+                // newRay.GetComponent<LineRenderer>().SetPositions(new Vector3[] {ray.origin, ray.origin + ray.direction*5f});
+                //
+                //
+                // // var newRay = Instantiate(GameManager.Instance.brickPrefab, ray.origin+ray.direction, Quaternion.identity);
+                // // newRay.transform.localScale *= 0.3f;
+                // // newRay.transform.forward = ray.direction;
+                //
+                // rays.Add(newRay);
+                //
+                _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
+            }
+        }
+
+        return _internalDetection;
+    }
+
     private string GetRawImage()
     {
         var modelInput = _modelInputTensor.ReadbackAndClone();
