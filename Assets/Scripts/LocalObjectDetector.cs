@@ -12,6 +12,7 @@ using TMPro;
 using Unity.Mathematics;
 using UnityEngine.Experimental.Rendering;
 using Debug = UnityEngine.Debug;
+using System.IO;
 
 public class LocalObjectDetector : ObjectDetector
 {
@@ -36,6 +37,8 @@ public class LocalObjectDetector : ObjectDetector
 
     private Vector3 _eyeOffset;
     public float timeTaken;
+
+    public RenderTexture colorRT;
 
     void Start()
     {
@@ -93,10 +96,12 @@ public class LocalObjectDetector : ObjectDetector
     
      IEnumerator ProcessImage()
     {
+        Texture2D outputText = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.ARGB32, false);
         var pose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
         eye.rotation = pose.rotation;
         Stopwatch sw = new Stopwatch();
         List<DetectionBox> bboxes = new List<DetectionBox>(256);
+        int imageIdx = 0;
         while (true)
         {
 
@@ -207,9 +212,17 @@ public class LocalObjectDetector : ObjectDetector
                     //
                     // rays.Add(newRay);
                     //
-                    _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
+                    _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point, screenPoint));
                 }
             }
+
+            //colorRT = RenderTexture.GetTemporary(webcamTexture.width,webcamTexture.height);
+            //Graphics.Blit(webcamTexture, colorRT);
+            //RenderTexture.active = colorRT;
+            //outputText.ReadPixels(new Rect(0, 0, webcamTexture.width, webcamTexture.height), 0, 0);
+            //outputText.Apply();
+            //File.WriteAllBytes(Path.Combine(Application.persistentDataPath, $"color{imageIdx++}.png"), outputText.EncodeToPNG());
+            //RenderTexture.ReleaseTemporary(colorRT);
 
             HandleBricksDetected(GetBricks());
 
