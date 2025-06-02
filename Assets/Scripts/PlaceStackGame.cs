@@ -23,11 +23,16 @@ public class PlaceStackGame : MonoBehaviour
     public int maxStackSize = 4;
     public int minStackSize = 1;
     public SliceMethod sliceMethod = SliceMethod.Min;
-    public float distThreshold = 0.08f;
+    public int maxNumberOfBriksToUse = 8;
+    public float maxDistHeadToSpwanpoint = 0.30f;
+    public float minDistHeadToSpwanpoint = 0.10f;
+    public float distToPointThreshold = 0.08f;
     public float stackThreshold = 0.06f;
+    public float[] variableThreshold;
 
     bool taskComplet = false;
     bool makeNewLevel = false;
+    bool frezz = false;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
     Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 2 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
@@ -44,10 +49,14 @@ public class PlaceStackGame : MonoBehaviour
     float[] dists;
     bool[] complted;
     int[] spawnpointNoDetectionCounts;
-    int[] spawnpointWringStackCounts;
+    int[] spawnpointWrongStackCounts;
+    int[] spawnpointWrongOrderCounts;
+    int[] spawnpointRightStackCounts;
+    bool newDectetion = true;
 
     List<DetectedObject> bricks = new List<DetectedObject>();
-   
+    List<List<DetectedObject>> stacksInFrame = new List<List<DetectedObject>>();
+
     MRUKRoom room;
     List<MRUKAnchor> anchors = new();
     public MRUKAnchor tableAnchor = null;
@@ -115,6 +124,8 @@ public class PlaceStackGame : MonoBehaviour
         _findSpawnPositions.SpawnAmount = numberOfBricksInGame;
         objectDetection.OnObjectsDetected += HandleBricksDetected;
 
+        variableThreshold = new float[8] { 0.08f, 0.08f, 0.08f, 0.08f, 0.10f, 0.012f, 0.14f, 0.16f };
+
         rectPos1 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
         rectPos1.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
 
@@ -152,6 +163,11 @@ public class PlaceStackGame : MonoBehaviour
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
     {
+        //if (!frezz)
+        //{
+        //    drawnBricks.ForEach(Destroy);
+        //    drawnBricks.Clear();
+        //}
         bricks = new List<DetectedObject>();
         fixStack = true;
         e.DetectedObjects.ForEach(brick =>
@@ -159,11 +175,16 @@ public class PlaceStackGame : MonoBehaviour
             if (objectsToDetect.Contains(brick.labelName))
             {
                 bricks.Add(brick);
+                //if (!frezz)
+                //{
+                //    GameObject cube = Instantiate(GameManager.Instance.GetBrick(brick.labelName), brick.worldPos, Quaternion.identity, cubeParent.transform.GetChild(0));
+                //    drawnBricks.Add(cube);
+                //}
             }
             else if (brick.labelName == "small penguin")
             {
                 smallPenguinPos = brick.worldPos;
-                
+
                 currPenguin += 1;
                 if (currPenguin >= 3)
                 {
@@ -178,6 +199,7 @@ public class PlaceStackGame : MonoBehaviour
             }
             else if (brick.labelName == "big penguin")
             {
+                frezz = false;
                 debugMode = false;
                 // smallPenguinPos = new Vector3(10, 10, 10);
                 debugMenu.SetActive(debugMode);
@@ -201,6 +223,8 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Random;
+                minDistHeadToSpwanpoint = 0.10f;
+                maxDistHeadToSpwanpoint = 0.30f;
                 Debug.LogError("Human detected: Slice: Random - Max Size: 4 - Min Size: 2");
             }
             else if (brick.labelName == "sheep" && !debugMode)
@@ -212,11 +236,13 @@ public class PlaceStackGame : MonoBehaviour
                 Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4");
             }
             else if (brick.labelName == "pig" && !debugMode)
-            { 
+            {
                 //many small stacks
                 maxStackSize = 3;
                 minStackSize = 1;
                 sliceMethod = SliceMethod.Random;
+                minDistHeadToSpwanpoint = 0.15f;
+                maxDistHeadToSpwanpoint = 0.25f;
                 Debug.LogError("Pig detected: Slice: Random - Max Size: 3 - Min Size: 1");
             }
             else if (brick.labelName == "lion")
@@ -224,25 +250,39 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Min;
-                
+
                 Debug.LogError("Lion detected: Slice: Min - Max Size: 4 - Min Size: 2");
             }
         });
-        
+
+        if (state == GameState.Play && !frezz)
+        {
+            //CalculateStacks();
+            CalculateStacksFromSpawnpoints();
+        }
+
         if (prevPenguin != currPenguin)
         {
             prevPenguin = currPenguin;
+            //frezz = true;
         }
         else
         {
             currPenguin = 0;
             prevPenguin = 0;
         }
+
+
+        //newDectetion = true;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (frezz)
+        {
+            return;
+        }
         //ClearText();
         if (runOnce)
         {
@@ -251,18 +291,14 @@ public class PlaceStackGame : MonoBehaviour
 
         if (bricks.Count >= 0)
         {
-            //adminMenuVisuals.ForEach(Destroy);
-            //adminMenuVisuals.Clear();
             rectPos1.SetActive(debugMode);
             rectPos2.SetActive(debugMode);
             rectCenter.SetActive(debugMode);
 
-            // penguinPosCircle.transform.position = smallPenguinPos;
             if (debugMode)
             {
                 //DebugMenu();
                 RunDebugMenu();
-                DisplayRect();
             }
 
             if (state == GameState.Setup && !runOnce)
@@ -278,11 +314,6 @@ public class PlaceStackGame : MonoBehaviour
                 Play();
             }
         }
-    }
-
-    private void DisplayRect()
-    {
-
     }
 
     private void Setup()
@@ -330,18 +361,11 @@ public class PlaceStackGame : MonoBehaviour
         if (levelReset) return;
         //GameUtils.AddText(centerCam, canvas, playText, displayPos + new Vector3(0, 0.15f, 0), Color.white, 3);
         mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nLevels Completed: {levelsComplteded}";
+        //mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nLevels Completed: {levelsComplteded}";
         mainText.transform.GetChild(0).LookAt(centerCam);
         mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
         
-
-
-        //if (debugMode)
-        //{
-        //    GameUtils.AddText(centerCam, canvas, "Debug mode \"On\". \nTo disable detect \"big penguin\".", displayPos + offsetDir * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f);
-        //}
-
-        DestroyCubes(1);
+        //DestroyCubes(1);
 
         if (makeNewLevel)
         {
@@ -351,47 +375,337 @@ public class PlaceStackGame : MonoBehaviour
         }
         else
         {
-            List<List<DetectedObject>> stacksInFrame = FindStacksInFrame(bricks);
 
-            if (stacksInFrame.Count == 0)
-            {
-                return;
-            }
-            
-            stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
-            
-            if (stacksInFrame.Count == 0)
-            {
-                return;
-            }
+            //stacksInFrame = FindStacksInFrame(bricks);
 
-            if (debugMode)
-            {
-                DrawDebugStacks(stacksInFrame);
-            }
-            
-            float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
-            List<int> ints = GameUtils.ClosestStacks(distMat);
+            //if (stacksInFrame.Count == 0)
+            //{
+            //    return;
+            //}
+
+            //stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
+
+            //if (stacksInFrame.Count == 0)
+            //{
+            //    return;
+            //}
+
+            //DestroyCubes(1);
+            //for (int i = 0; i < stacksInFrame.Count; i++)
+            //{
+            //    for (int j = 0; j < stacksInFrame[i].Count; j++)
+            //    {
+            //        GameObject cube = Instantiate(GameManager.Instance.GetBrick(stacksInFrame[i][j].labelName), stacksInFrame[i][j].worldPos, Quaternion.identity, cubeParent.transform.GetChild(1));
+            //    }
+            //}
+
+            //if (debugMode)
+            //{
+            //    DrawDebugStacks(stacksInFrame);
+            //}
+
+            //float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
+            //List<int> ints = GameUtils.ClosestStacks(distMat);
 
             //if (debugMode)
             //{
             //    DrawStackPositions(stacksInFrame, distMat, ints);
             //}
 
-            for (int i = 0; i < spawnPoints.Length; i++)
+            //for (int i = 0; i < spawnPoints.Length; i++)
+            //{
+            //    if (distMat[i, ints[i]] < distToPointThreshold)
+            //    {
+            //        spawnpointNoDetectionCounts[i] = 0;
+
+            //        List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[ints[i]]);
+
+            //        if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
+            //        {
+            //            spawnpointRightStackCounts[i]++;
+            //            if (spawnpointRightStackCounts[i] > 100 || complted[i])
+            //            {
+            //                if (!complted[i])
+            //                {
+            //                    var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
+
+            //                    foreach (var system in particleSystems)
+            //                    {
+            //                        system.Play();
+            //                    }
+            //                }
+            //                var col = Color.green;
+            //                col.a = 0.33f;
+            //                spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+            //                complted[i] = true;
+            //                spawnpointRightStackCounts[i] = 101;
+            //            }
+            //            spawnpointWrongOrderCounts[i] = 0;
+            //            spawnpointWrongStackCounts[i] = 0;
+            //        }
+            //        //else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
+            //        //{
+            //        //    spawnpointWrongOrderCounts[i]++;
+            //        //    if (spawnpointWrongOrderCounts[i] > 5)
+            //        //    {
+            //        //        var col = Color.yellow;
+            //        //        col.a = 0.33f;
+            //        //        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+            //        //        spawnpointWrongOrderCounts[i] = 6;
+            //        //    }
+            //        //    spawnpointWrongStackCounts[i] = 0;
+            //        //    spawnpointRightStackCounts[i] = 0;
+
+            //        //}
+            //        else
+            //        {
+            //            spawnpointWrongStackCounts[i]++;
+            //            if (spawnpointWrongStackCounts[i] > 100)
+            //            {
+            //                var col = Color.red;
+            //                col.a = 0.33f;
+            //                spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+            //                spawnpointWrongStackCounts[i] = 101;
+            //            }
+            //            spawnpointRightStackCounts[i] = 0;
+            //            spawnpointWrongOrderCounts[i] = 0;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        spawnpointNoDetectionCounts[i]++;
+            //        if (complted[i])
+            //        {
+            //            var col = Color.green;
+            //            col.a = 0.33f;
+            //            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+            //        }
+            //        else if (spawnpointNoDetectionCounts[i] > 200)
+            //        {
+            //            var col = Color.white;
+            //            col.a = 0.33f;
+            //            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+            //            spawnpointNoDetectionCounts[i] = 201;
+            //            spawnpointWrongStackCounts[i] = 0;
+            //            spawnpointRightStackCounts[i] = 0;
+            //        }
+            //    }
+            //    //Debug text
+            //    spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
+            //        $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
+            //}
+
+            taskComplet = CheckIfAllDone();
+            if (taskComplet && !levelReset)
             {
-                if (distMat[i, ints[i]] < distThreshold)
+                levelsComplteded++;
+                mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
+                StartCoroutine(WaitForTaskComplete());
+            }
+        }
+    }
+
+    private void CalculateStacksFromSpawnpoints()
+    {
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nLevels Completed: {levelsComplteded}";
+        DestroyCubes(1);
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            stacksInFrame = FindStacksInImage(bricks, variableThreshold[stacksToBuild[i].Count-1]);
+
+            if (stacksInFrame.Count == 0)
+            {
+                continue;
+            }
+            
+            //DrawDebugStacks(stacksInFrame, 0.1f * i);
+
+            //Finder distance til alle stacks
+            float[] distTostacks = new float[stacksInFrame.Count];
+            for (int j = 0; j < distTostacks.Length; j++)
+            {
+                distTostacks[j] = Vector3.Distance(spawnPoints[i].position, stacksInFrame[j][0].worldPos);
+            }
+
+            //Dinder t�teste stack
+            int idx = 0;
+            float min = 1000;
+            for (int j = 0; j < distTostacks.Length; j++)
+            {
+                if (distTostacks[j] < min)
                 {
-                    spawnpointNoDetectionCounts[i] = 0;
+                    min = distTostacks[j];
+                    idx = j;
+                }
+            }
 
-                    List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[ints[i]]);
+            if (distTostacks[idx] < distToPointThreshold)
+            {
+                spawnpointNoDetectionCounts[i] = 0;
 
-                    if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
+                //sikker at h�jere stacks er h�j nok
+                bool temp = false;
+                float hight = 0;
+                int id = -1;
+                for (int k = 0; k < stacksInFrame[idx].Count; k++)
+                {
+                    if (stacksInFrame[idx][k].worldPos.y > hight)
+                    {
+                        hight = stacksInFrame[idx][k].worldPos.y;
+                        id = k;
+                    }
+                }
+                if (stacksToBuild[i].Count > 2)
+                {
+                    temp = hight > (stacksToBuild[i].Count / 100f) + tableAnchor.transform.position.y;
+                }
+                else
+                {
+                    temp = true;
+                }
+               
+
+                //mainText.transform.GetComponentInChildren<TMP_Text>().text += $"\nTarget: {(stacksToBuild[i].Count / 100f) + tableAnchor.transform.position.y} | Highest brick: {hight} | Bool: {temp}";
+
+                List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[idx]);
+
+                if ((GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) && temp)|| complted[i])
+                {
+                    spawnpointRightStackCounts[i]++;
+                    if (spawnpointRightStackCounts[i] > 1 || complted[i])
                     {
                         if (!complted[i])
                         {
                             var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
+
+                            foreach (var system in particleSystems)
+                            {
+                                system.Play();
+                            }
+                        }
+                        var col = Color.green;
+                        col.a = 0.33f;
+                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                        complted[i] = true;
+                        spawnpointRightStackCounts[i] = 2;
+                    }
+                    spawnpointWrongStackCounts[i] = 0;
+                }
+                else
+                {
+                    spawnpointWrongStackCounts[i]++;
+                    if (spawnpointWrongStackCounts[i] > 4)
+                    {
+                        if (placedStack.Count < stacksToBuild[i].Count)
+                        {
+                            var col = Color.yellow;
+                            col.a = 0.33f;
+                            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                        }
+                        else
+                        {
+                            var col = Color.red;
+                            col.a = 0.33f;
+                            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                        }
+
+                        if (spawnpointWrongStackCounts[i] > 10)
+                        {
+                            spawnpointRightStackCounts[i]--;
+                            spawnpointWrongStackCounts[i] = 5;
+                        }
+                        if (spawnpointRightStackCounts[i] < 0) { spawnpointRightStackCounts[i] = 0; }
                         
+                    }
+                }
+            }
+            else
+            {
+                spawnpointNoDetectionCounts[i]++;
+                if (complted[i])
+                {
+                    var col = Color.green;
+                    col.a = 0.33f;
+                    spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                }
+                else if (spawnpointNoDetectionCounts[i] > 3)
+                {
+                    var col = Color.white;
+                    col.a = 0.33f;
+                    spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                    spawnpointNoDetectionCounts[i] = 4;
+                    spawnpointWrongStackCounts[i] = 0;
+                    spawnpointRightStackCounts[i] = 0;
+                }
+            }
+            //Debug text
+            //spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
+            //    $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
+
+
+        }
+    }
+
+    private void CalculateStacks()
+    {
+
+        //stacksInFrame = FindStacksInFrame(bricks);
+
+        //if (stacksInFrame.Count == 0)
+        //{
+        //    return;
+        //}
+
+        //stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
+
+        stacksInFrame = FindStacksInImage(bricks, stackThreshold);
+
+        if (stacksInFrame.Count == 0)
+        {
+            return;
+        }
+
+        DestroyCubes(1);
+        //for (int i = 0; i < stacksInFrame.Count; i++)
+        //{
+        //    for (int j = 0; j < stacksInFrame[i].Count; j++)
+        //    {
+        //        GameObject cube = Instantiate(GameManager.Instance.GetBrick(stacksInFrame[i][j].labelName), stacksInFrame[i][j].worldPos, Quaternion.identity, cubeParent.transform.GetChild(1));
+        //    }
+        //}
+
+       
+
+        if (debugMode)
+        {
+            DrawDebugStacks(stacksInFrame);
+        }
+
+        float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
+        List<int> ints = GameUtils.ClosestStacks(distMat);
+
+        //if (debugMode)
+        //{
+        //    DrawStackPositions(stacksInFrame, distMat, ints);
+        //}
+
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            if (distMat[i, ints[i]] < distToPointThreshold)
+            {
+                spawnpointNoDetectionCounts[i] = 0;
+
+                List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[ints[i]]);
+
+                if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
+                {
+                    spawnpointRightStackCounts[i]++;
+                    if (spawnpointRightStackCounts[i] > 1 || complted[i])
+                    {
+                        if (!complted[i])
+                        {
+                            var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
+
                             foreach (var system in particleSystems)
                             {
                                 system.Play();
@@ -402,47 +716,46 @@ public class PlaceStackGame : MonoBehaviour
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
                         complted[i] = true;
-                        
-                        
-
+                        spawnpointRightStackCounts[i] = 2;
                     }
-                    else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
-                    {
-                        spawnpointWringStackCounts[i] = 0;
-                        var col = Color.yellow;
-                        col.a = 0.33f;
-                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-                    }
-                    else
-                    {
-                        spawnpointWringStackCounts[i]++;
-                        if (spawnpointWringStackCounts[i] > 5)
-                        {
-                            var col = Color.red;
-                            col.a = 0.33f;
-                            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-                            spawnpointWringStackCounts[i] = 6;
-                        }
-                    }
+                    spawnpointWrongStackCounts[i] = 0;
                 }
                 else
                 {
-                    spawnpointNoDetectionCounts[i]++;
-                    if (complted[i])
+                    spawnpointWrongStackCounts[i]++;
+                    if (spawnpointWrongStackCounts[i] > 2)
                     {
-                        var col = Color.green;
+                        var col = Color.red;
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-                    }
-                    else if (spawnpointNoDetectionCounts[i] > 5)
-                    {
-                        var col = Color.white;
-                        col.a = 0.33f;
-                        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-                        spawnpointNoDetectionCounts[i] = 6;
+                        //spawnpointRightStackCounts[i]--;
+                        //if (spawnpointRightStackCounts[i] < 0) { spawnpointRightStackCounts[i] = 0;}
+                        //spawnpointWrongStackCounts[i] = 3;
                     }
                 }
             }
+            else
+            {
+                spawnpointNoDetectionCounts[i]++;
+                if (complted[i])
+                {
+                    var col = Color.green;
+                    col.a = 0.33f;
+                    spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                }
+                else if (spawnpointNoDetectionCounts[i] > 2)
+                {
+                    var col = Color.white;
+                    col.a = 0.33f;
+                    spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
+                    //spawnpointNoDetectionCounts[i] = 3;
+                    //spawnpointWrongStackCounts[i] = 0;
+                    //spawnpointRightStackCounts[i] = 0;
+                }
+            }
+            //Debug text
+            spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
+                $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
 
             taskComplet = CheckIfAllDone();
             if (taskComplet && !levelReset)
@@ -461,6 +774,36 @@ public class PlaceStackGame : MonoBehaviour
         yield return new WaitForSeconds(2);
         makeNewLevel = true;
         levelReset = false;
+    }
+
+    private List<List<DetectedObject>> FindStacksInImage(List<DetectedObject> detectedBricks, float threshold)
+    {
+        List<List<DetectedObject>> stacksColor = new List<List<DetectedObject>>();
+        if (detectedBricks == null || detectedBricks.Count == 0)
+        {
+            return stacksColor;
+        }
+        float[,] distArr = new float[1, 1];
+        if (detectedBricks.Count > 1)
+        {
+            distArr = GameUtils.DistMat(detectedBricks);
+        }
+
+        int[,] ids = GameUtils.ClosestBricks(distArr, threshold);
+
+        List<List<int>> stacks = GameUtils.FindConnectedComponents(ids);
+
+        
+
+        foreach (var stack in stacks)
+        {
+            stack.Sort((a, b) => detectedBricks[a].screenPos.y.CompareTo(detectedBricks[b].screenPos.y));
+
+            var stackColorRow = stack.Select(t => detectedBricks[t]).ToList();
+
+            stacksColor.Add(stackColorRow);
+        }
+        return stacksColor;
     }
 
     private List<DetectedObject> FixStacks(List<List<DetectedObject>> stacksInFrame, List<DetectedObject> detectedBricks)
@@ -734,8 +1077,10 @@ public class PlaceStackGame : MonoBehaviour
                 break;
 
             case 6:
-                taskComplet = true;
-                levelsComplteded++;
+                for (int i = 0; i < complted.Length; i++)
+                {
+                    complted[i] = true;
+                }
                 break;
 
             case 7:
@@ -897,19 +1242,19 @@ public class PlaceStackGame : MonoBehaviour
         }
     }
 
-    private void DrawDebugStacks(List<List<DetectedObject>> stacksInFrame)
+    private void DrawDebugStacks(List<List<DetectedObject>> stacksInFrame, float yOfset = 0)
     {
-        Vector3 pos = displayPos + offsetDir * 0.2f;
+        Vector3 pos = displayPos + offsetDir * 0.2f + Vector3.up * yOfset;
         Vector3 offset = new Vector3(0, 0, 0);
 
         foreach (var stack in stacksInFrame)
         {
             for (int i = 0; i < stack.Count; i++)
             {
-                GameObject cube = Instantiate(GameManager.Instance.GetBrick(stack[i].labelName), pos + offset + new Vector3(0, 0.03f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
+                GameObject cube = Instantiate(GameManager.Instance.GetBrick(stack[i].labelName), pos + offset + new Vector3(0, 0.024f, 0) * i, Quaternion.identity, cubeParent.transform.GetChild(1));
             }
 
-            offset += new Vector3(0.05f, 0, 0);
+            offset += new Vector3(0.07f, 0, 0);
         }
     }
 
@@ -958,7 +1303,28 @@ public class PlaceStackGame : MonoBehaviour
         DestroySpawnPositions();
         if (spawnPositions.transform.childCount == 0)
         {
-            stacksToBuild = StackGenerator.GenerateStacks(briksToBuildStack, minStackSize, maxStackSize, sliceMethod);
+            //LevelProgress();
+    
+            List<string> briks = new List<string>();
+
+            foreach (var v in briksToBuildStack)
+            {
+                for (int i = 0; i < v.Value; i++)
+                {
+                    briks.Add(v.Key);
+                }
+            }
+
+            List<string> briksToUse = new List<string>();
+            for (int i = 0; i < maxNumberOfBriksToUse; i++)
+            {
+                int idx = Random.Range(0, briks.Count);
+                briksToUse.Add(briks[idx]);
+                briks.RemoveAt(idx);
+            }
+
+
+            stacksToBuild = StackGenerator.GenerateStacks(briksToUse, minStackSize, maxStackSize, sliceMethod);
 
             //Turtoial stuf
             if (levelsComplteded == 0)
@@ -970,20 +1336,11 @@ public class PlaceStackGame : MonoBehaviour
                 stacksToBuild = turtoial2;
             }
 
-            spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect);
-            //if (ourPlaneRect == new Rect(0,0,0,0))
-            //{
-            //    spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform);
-            //}
-            //else
-            //{
-               
-            //}
+            // Random punkter p� hele boret
+            //spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect);
 
-            if (spawnPoints == null)
-            {
-                GameUtils.AddText(centerCam, canvas, "No spawnPoints",displayPos, Color.white);
-            }
+            // Random punkter med min og max distands til head
+            spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect, centerCam, minDistHeadToSpwanpoint, maxDistHeadToSpwanpoint);
 
 
             for (int i = 0; i < stacksToBuild.Count; i++)
@@ -998,12 +1355,18 @@ public class PlaceStackGame : MonoBehaviour
                 cirkel.transform.parent = spawnPoints[i];
                 
                 DataLogger.Log($"StackGeneration",$"GENERATE;{i};{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")}");
+
+                //Debug text
+                GameObject text = GameUtils.AddText("", spawnPoints[i].position + new Vector3(0, 0.06f, 0), Color.white);
+                text.transform.parent = cirkel.transform;
             }
 
             dists = new float[stacksToBuild.Count];
             complted = new bool[stacksToBuild.Count];
             spawnpointNoDetectionCounts = new int[stacksToBuild.Count];
-            spawnpointWringStackCounts = new int[stacksToBuild.Count];
+            spawnpointWrongStackCounts = new int[stacksToBuild.Count];
+            spawnpointWrongOrderCounts = new int[stacksToBuild.Count];
+            spawnpointRightStackCounts = new int[stacksToBuild.Count];
             for (int i = 0; i < dists.Length; i++)
             {
                 dists[i] = 100;
@@ -1014,6 +1377,69 @@ public class PlaceStackGame : MonoBehaviour
         }
         
         
+    }
+
+    private void LevelProgress()
+    {
+        switch (levelsComplteded)
+        {
+            case 2:
+            case 3:
+                maxNumberOfBriksToUse = 2;
+                minStackSize = 1;
+                maxStackSize = 2;
+                sliceMethod = SliceMethod.Min;
+                maxDistHeadToSpwanpoint = 0.2f;
+                break;
+
+            case 4:
+            case 5:
+                maxNumberOfBriksToUse = 4;
+                minStackSize = 2;
+                maxStackSize = 3;
+                sliceMethod = SliceMethod.Random;
+                maxDistHeadToSpwanpoint = 0.3f;
+                break;
+
+            case 6:
+            case 7:
+                maxNumberOfBriksToUse = 6;
+                minStackSize = 2;
+                maxStackSize = 3;
+                sliceMethod = SliceMethod.Equalize;
+                maxDistHeadToSpwanpoint = 0.4f;
+                break;
+
+            case 8:
+            case 9:
+                maxNumberOfBriksToUse = 8;
+                maxStackSize = 4;
+                minStackSize = 2;
+                sliceMethod = SliceMethod.Max;
+                maxDistHeadToSpwanpoint = 0.5f;
+                break;
+
+            case 10:
+            case 11:
+                maxNumberOfBriksToUse = 8;
+                maxStackSize = 8;
+                minStackSize = 4;
+                sliceMethod = SliceMethod.Max;
+                maxDistHeadToSpwanpoint = 0.6f;
+                break;
+
+            case 12:
+            case 13:
+                maxNumberOfBriksToUse = 8;
+                maxStackSize = 4;
+                minStackSize = 2;
+                sliceMethod = SliceMethod.Random;
+                maxDistHeadToSpwanpoint = 0.7f;
+                break;
+
+            default:
+                break;
+        }
     }
 
     private bool CheckIfAllDone()

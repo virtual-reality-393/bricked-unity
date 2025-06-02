@@ -324,7 +324,7 @@ public class LocalObjectDetector : ObjectDetector
 
         return _internalDetection;
     }
-
+    
     private string GetRawImage()
     {
         var modelInput = _modelInputTensor.ReadbackAndClone();

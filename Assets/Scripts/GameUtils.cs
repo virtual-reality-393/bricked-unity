@@ -406,6 +406,43 @@ public static class GameUtils
         return points;
     }
 
+    public static Transform[] DiskSampledSpawnPoints(MRUKAnchor tableAnchor, int numberOfPoints, Transform parent, Rect costumRect, Transform headPos, float minDist ,float maxDist)
+    {
+        Transform[] points = new Transform[numberOfPoints];
+        var tablePlane = costumRect;
+
+        List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
+        Vector2 pos = new Vector2(headPos.position.x, headPos.position.z);
+        List<Vector2> vaildPoints = new List<Vector2>();
+        while (vaildPoints.Count < numberOfPoints)
+        {
+            List<Vector2> minDistPoints = allPoints.Where(p => Vector2.Distance(p, pos) >= minDist).ToList();
+            vaildPoints = minDistPoints.Where(p => Vector2.Distance(p, pos) <= maxDist).ToList();
+            minDist -= 0.01f; // Decrease the minimum distance to find more valid points
+            maxDist += 0.01f; // Increase the maximum distance to find more valid points
+        }
+
+        for (int i = 0; i < numberOfPoints; i++)
+        {
+            var point = vaildPoints[Random.Range(0, vaildPoints.Count)];
+
+            var newObject = new GameObject();
+
+            newObject.transform.parent = tableAnchor.transform;
+
+            newObject.transform.position = tableAnchor.transform.position;
+
+            newObject.transform.localPosition = point;
+
+            newObject.transform.parent = parent;
+
+            points[i] = newObject.transform;
+            vaildPoints.Remove(point);
+        }
+
+        return points;
+    }
+
 
     public static DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {

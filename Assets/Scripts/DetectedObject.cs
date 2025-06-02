@@ -9,6 +9,7 @@ public class DetectedObject
     public int labelIdx;
     public string labelName;
     public Vector3 worldPos;
+    public Vector2Int screenPos;
 
     public static Dictionary<int, Color> labelToDrawColor = new Dictionary<int, Color>
     {
@@ -30,6 +31,7 @@ public class DetectedObject
         labelIdx = -1;
         labelName = "";
         worldPos = Vector3.zero;
+        screenPos = Vector2Int.zero;
     }
 
     public DetectedObject(int labelIdx, string labelName, Vector3 worldPos)
@@ -37,6 +39,14 @@ public class DetectedObject
         this.labelIdx = labelIdx;
         this.labelName = labelName;
         this.worldPos = worldPos;
+        screenPos = Vector2Int.zero;
+    }
+    public DetectedObject(int labelIdx, string labelName, Vector3 worldPos, Vector2Int screenPos)
+    {
+        this.labelIdx = labelIdx;
+        this.labelName = labelName;
+        this.worldPos = worldPos;
+        this.screenPos = screenPos;
     }
 
     public GameObject Draw()
