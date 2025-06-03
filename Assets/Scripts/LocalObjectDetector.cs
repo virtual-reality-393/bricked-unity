@@ -165,15 +165,20 @@ public class LocalObjectDetector : ObjectDetector
             }
             
             var brickTensor = brickOutput.ReadbackAndClone();
-            GetBrickDetections(brickTensor);
+            _internalDetection = GetBrickDetections(brickTensor);
 
+            
+            HandleBricksDetected(GetBricks());
+            
             if (includeStacks)
             {
                 var stackTensor = stackOutput.ReadbackAndClone();
-                GetStackDetections(stackTensor);
+                var stacks = GetStackDetections(stackTensor);
+                
+                HandleStacksDetected(stacks);
             }
-
-            HandleBricksDetected(GetBricks());
+            
+            
 
 
             bboxes.Clear();
@@ -184,7 +189,7 @@ public class LocalObjectDetector : ObjectDetector
         }
     }
 
-    private List<DetectedObject> GetStackDetections(Tensor<float> stackTensor)
+    private List<DetectedStack> GetStackDetections(Tensor<float> stackTensor)
     {
         List<DetectionBox> bboxes = new List<DetectionBox>(); 
         
@@ -230,12 +235,14 @@ public class LocalObjectDetector : ObjectDetector
 
         bboxes = ApplyNMS(bboxes);
 
+        List<DetectedStack> res = new List<DetectedStack>();
+
         foreach (var bbox in bboxes)
         {
-            _internalDetection.Add(new DetectedObject(10,"stack",new Vector3(0,0,0)));
+            res.Add(new DetectedStack(bbox.x1, bbox.y1, bbox.x2, bbox.y2));
             
         }
-        return _internalDetection;
+        return res;
     }
 
     private List<DetectedObject> GetBrickDetections(Tensor<float> brickTensor)
@@ -287,6 +294,7 @@ public class LocalObjectDetector : ObjectDetector
         rays.ForEach(Destroy);
         rays.Clear();
             
+        List<DetectedObject> res = new List<DetectedObject>();
         foreach (var bbox in bboxes)
         {
             var screenPoint = new Vector2Int(bbox.GetCenter().x, bbox.GetCenter().y);
@@ -300,12 +308,11 @@ public class LocalObjectDetector : ObjectDetector
             // Debug.LogError($"Eye: {eye.rotation.eulerAngles}");
             // Debug.LogError($"Diff {eye.rotation.eulerAngles-pose.rotation.eulerAngles}");
             var ray = new Ray(eye.position,eye.rotation*directionInCamera);
-                
-                
-                
-                
- 
 
+
+
+
+    
             if (environmentRaycastManager.Raycast(ray, out EnvironmentRaycastHit hit, 1000f))
             {
                 // var newRay = Instantiate(_debugRayPrefab);
@@ -318,11 +325,11 @@ public class LocalObjectDetector : ObjectDetector
                 //
                 // rays.Add(newRay);
                 //
-                _internalDetection.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point));
+                res.Add(new DetectedObject(bbox.label,DetectedLabelIdxToLabelName[bbox.label],hit.point,bbox.GetCenter()));
             }
         }
 
-        return _internalDetection;
+        return res;
     }
     
     private string GetRawImage()

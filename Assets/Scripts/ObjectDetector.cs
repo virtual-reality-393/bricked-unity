@@ -32,6 +32,7 @@ public abstract class ObjectDetector : MonoBehaviour
     protected readonly float CONFIDENCE_LEVEL = 0.4f;
 
     public EventHandler<ObjectDetectedEventArgs> OnObjectsDetected;
+    public EventHandler<StackDetectedEventArgs> OnStacksDetected;
 
     public abstract List<DetectedObject> GetBricks();
     
@@ -40,16 +41,32 @@ public abstract class ObjectDetector : MonoBehaviour
     {
         OnObjectsDetected?.Invoke(this,new ObjectDetectedEventArgs(detectedObjects));
     }
+
+    protected virtual void HandleStacksDetected(List<DetectedStack> detectedStacks)
+    {
+        OnStacksDetected?.Invoke(this,new StackDetectedEventArgs(detectedStacks));
+    }
 }
 
 
 public class ObjectDetectedEventArgs : EventArgs
 {
-    public List<DetectedObject> DetectedObjects;
+    public readonly List<DetectedObject> DetectedObjects;
 
     public ObjectDetectedEventArgs(List<DetectedObject> detectedObjects)
     {
         this.DetectedObjects = detectedObjects;
+    }
+}
+
+
+public class StackDetectedEventArgs : EventArgs
+{
+    public readonly List<DetectedStack> DetectedStacks;
+
+    public StackDetectedEventArgs(List<DetectedStack> detectedStacks)
+    {
+        this.DetectedStacks = detectedStacks;
     }
 }
 

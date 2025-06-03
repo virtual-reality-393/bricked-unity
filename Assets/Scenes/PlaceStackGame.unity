@@ -1461,11 +1461,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   environmentRaycastManager: {fileID: 696750140}
   webCamTextureManager: {fileID: 696750138}
-  objectDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
+  stackDetector: {fileID: 5022602860645237092, guid: b8545ea97bea525419ad4efee59d3977, type: 3}
+  brickDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
   letterbox: {fileID: 202246612}
   _debugRayPrefab: {fileID: 2227728202376096066, guid: 6f0d9335bc3c39544886ad951414ec17, type: 3}
   eye: {fileID: 249852145}
   timeTaken: 0
+  includeStacks: 1
 --- !u!4 &202246611
 Transform:
   m_ObjectHideFlags: 0
@@ -3685,8 +3687,12 @@ MonoBehaviour:
   maxStackSize: 4
   minStackSize: 2
   sliceMethod: 1
-  distThreshold: 0.05
+  maxNumberOfBriksToUse: 8
+  maxDistHeadToSpwanpoint: 0.3
+  minDistHeadToSpwanpoint: 0.1
+  distToPointThreshold: 0.08
   stackThreshold: 0.08
+  variableThreshold: []
   tableAnchor: {fileID: 0}
   ourPlaneRect:
     serializedVersion: 2

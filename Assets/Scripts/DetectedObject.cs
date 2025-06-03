@@ -73,12 +73,39 @@ public class DetectedObject
     
     public override string ToString()
     {
-        return $"DetectedObject [LabelIdx: {labelIdx}, LabelName: {labelName}, WorldPos: {worldPos}]";
+        return $"DetectedObject [LabelIdx: {labelIdx}, LabelName: {labelName}, WorldPos: {worldPos}, ScreenPos: {screenPos}]";
     }
 
 
 }
 
+public class DetectedStack
+{
+    public int x1;
+    public int x2;
+    public int y1;
+    public int y2;
+
+
+    private Rect boundingBox;
+
+
+    public DetectedStack(int x1, int x2, int y1, int y2)
+    {
+        this.x1 = x1;
+        this.x2 = x2;
+        this.y1 = y1;
+        this.y2 = y2;
+        
+        
+        boundingBox = new Rect(x1, y1, x2 - x1, y2 - y1);
+    }
+
+    public bool Contains(DetectedObject detectedObject)
+    {
+        return boundingBox.Contains(detectedObject.screenPos);
+    }
+}
 
 
 [Serializable]
