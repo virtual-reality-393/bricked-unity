@@ -239,7 +239,7 @@ public class LocalObjectDetector : ObjectDetector
 
         foreach (var bbox in bboxes)
         {
-            res.Add(new DetectedStack(bbox.x1, bbox.y1, bbox.x2, bbox.y2));
+            res.Add(new DetectedStack(bbox.x1, bbox.x2, bbox.y1, bbox.y2));
             
         }
         return res;

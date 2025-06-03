@@ -129,6 +129,7 @@ public class PlaceStackGame : MonoBehaviour
         _findSpawnPositions = spawnPositions.GetComponent<FindSpawnPositions>();
         _findSpawnPositions.SpawnAmount = numberOfBricksInGame;
         objectDetection.OnObjectsDetected += HandleBricksDetected;
+        objectDetection.OnStacksDetected += HandleStacksDetected;
 
         variableThreshold = new float[8] { 0.08f, 0.08f, 0.08f, 0.08f, 0.10f, 0.012f, 0.14f, 0.16f };
 
@@ -293,6 +294,28 @@ public class PlaceStackGame : MonoBehaviour
         //newDectetion = true;
     }
 
+    private void HandleStacksDetected(object sender, StackDetectedEventArgs e)
+    {
+        stacksInFrame = new List<List<DetectedObject>>();
+        e.DetectedStacks.ForEach(stack =>
+        {
+            List<DetectedObject> tempStack = new List<DetectedObject>();
+            foreach (var brick in bricks)
+            {
+                if (stack.Contains(brick))
+                {
+                    tempStack.Add(brick);
+                }
+            };
+
+            if (tempStack.Count > 0)
+            {
+                tempStack.Sort((a, b) => a.screenPos.y.CompareTo(b.screenPos.y));
+                stacksInFrame.Add(tempStack);
+            }
+        });
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -393,126 +416,6 @@ public class PlaceStackGame : MonoBehaviour
         }
         else
         {
-
-            //stacksInFrame = FindStacksInFrame(bricks);
-
-            //if (stacksInFrame.Count == 0)
-            //{
-            //    return;
-            //}
-
-            //stacksInFrame = FindStacksInFrame(FixStacks(stacksInFrame, bricks));
-
-            //if (stacksInFrame.Count == 0)
-            //{
-            //    return;
-            //}
-
-            //DestroyCubes(1);
-            //for (int i = 0; i < stacksInFrame.Count; i++)
-            //{
-            //    for (int j = 0; j < stacksInFrame[i].Count; j++)
-            //    {
-            //        GameObject cube = Instantiate(GameManager.Instance.GetBrick(stacksInFrame[i][j].labelName), stacksInFrame[i][j].worldPos, Quaternion.identity, cubeParent.transform.GetChild(1));
-            //    }
-            //}
-
-            //if (debugMode)
-            //{
-            //    DrawDebugStacks(stacksInFrame);
-            //}
-
-            //float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
-            //List<int> ints = GameUtils.ClosestStacks(distMat);
-
-            //if (debugMode)
-            //{
-            //    DrawStackPositions(stacksInFrame, distMat, ints);
-            //}
-
-            //for (int i = 0; i < spawnPoints.Length; i++)
-            //{
-            //    if (distMat[i, ints[i]] < distToPointThreshold)
-            //    {
-            //        spawnpointNoDetectionCounts[i] = 0;
-
-            //        List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[ints[i]]);
-
-            //        if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) || complted[i])
-            //        {
-            //            spawnpointRightStackCounts[i]++;
-            //            if (spawnpointRightStackCounts[i] > 100 || complted[i])
-            //            {
-            //                if (!complted[i])
-            //                {
-            //                    var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
-
-            //                    foreach (var system in particleSystems)
-            //                    {
-            //                        system.Play();
-            //                    }
-            //                }
-            //                var col = Color.green;
-            //                col.a = 0.33f;
-            //                spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-            //                complted[i] = true;
-            //                spawnpointRightStackCounts[i] = 101;
-            //            }
-            //            spawnpointWrongOrderCounts[i] = 0;
-            //            spawnpointWrongStackCounts[i] = 0;
-            //        }
-            //        //else if (GameUtils.HaveSameElements(stacksToBuild[i], placedStack))
-            //        //{
-            //        //    spawnpointWrongOrderCounts[i]++;
-            //        //    if (spawnpointWrongOrderCounts[i] > 5)
-            //        //    {
-            //        //        var col = Color.yellow;
-            //        //        col.a = 0.33f;
-            //        //        spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-            //        //        spawnpointWrongOrderCounts[i] = 6;
-            //        //    }
-            //        //    spawnpointWrongStackCounts[i] = 0;
-            //        //    spawnpointRightStackCounts[i] = 0;
-
-            //        //}
-            //        else
-            //        {
-            //            spawnpointWrongStackCounts[i]++;
-            //            if (spawnpointWrongStackCounts[i] > 100)
-            //            {
-            //                var col = Color.red;
-            //                col.a = 0.33f;
-            //                spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-            //                spawnpointWrongStackCounts[i] = 101;
-            //            }
-            //            spawnpointRightStackCounts[i] = 0;
-            //            spawnpointWrongOrderCounts[i] = 0;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        spawnpointNoDetectionCounts[i]++;
-            //        if (complted[i])
-            //        {
-            //            var col = Color.green;
-            //            col.a = 0.33f;
-            //            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-            //        }
-            //        else if (spawnpointNoDetectionCounts[i] > 200)
-            //        {
-            //            var col = Color.white;
-            //            col.a = 0.33f;
-            //            spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-            //            spawnpointNoDetectionCounts[i] = 201;
-            //            spawnpointWrongStackCounts[i] = 0;
-            //            spawnpointRightStackCounts[i] = 0;
-            //        }
-            //    }
-            //    //Debug text
-            //    spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
-            //        $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
-            //}
-
             taskComplet = CheckIfAllDone();
             if (taskComplet && !levelReset)
             {
@@ -529,14 +432,14 @@ public class PlaceStackGame : MonoBehaviour
         DestroyCubes(1);
         for (int i = 0; i < spawnPoints.Length; i++)
         {
-            stacksInFrame = FindStacksInImage(bricks, variableThreshold[stacksToBuild[i].Count-1]);
+            //stacksInFrame = FindStacksInImage(bricks, variableThreshold[stacksToBuild[i].Count-1]);
 
             if (stacksInFrame.Count == 0)
             {
                 continue;
             }
             
-            //DrawDebugStacks(stacksInFrame, 0.1f * i);
+            DrawDebugStacks(stacksInFrame, 0.1f * i);
 
             //Finder distance til alle stacks
             float[] distTostacks = new float[stacksInFrame.Count];
@@ -656,9 +559,9 @@ public class PlaceStackGame : MonoBehaviour
                     spawnpointRightStackCounts[i] = 0;
                 }
             }
-            //Debug text
-            //spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
-            //    $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
+            //Debug text 
+            spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
+                $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
 
 
         }
