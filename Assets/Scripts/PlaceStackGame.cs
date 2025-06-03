@@ -88,9 +88,9 @@ public class PlaceStackGame : MonoBehaviour
 
     int levelsComplteded = 0;
 
-    string setupText = "Start med at de klodser der skal bruges.\nRød: 1, Blå: 2, Grøn: 2, Gul: 3"; //"To start find the needed bricks.";
+    string setupText = "Start med at de klodser der skal bruges.\nRï¿½d: 1, Blï¿½: 2, Grï¿½n: 2, Gul: 3"; //"To start find the needed bricks.";
     string seprateText = "Separate";
-    string playText = "Stabel klodserne som vist og placer dem på den tilhørene cirkel."; //"Build the displayed stacks and place them in the circle.";
+    string playText = "Stabel klodserne som vist og placer dem pï¿½ den tilhï¿½rene cirkel."; //"Build the displayed stacks and place them in the circle.";
 
     private bool fixStack = false; // Pls fix the gameplay loop :|
 
@@ -517,7 +517,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGood gjort :)";
+                mainText.GetComponentInChildren<TMP_Text>().text = "Opgave lï¿½st.\nGood gjort :)";
                 StartCoroutine(WaitForTaskComplete());
             }
         }
@@ -525,7 +525,7 @@ public class PlaceStackGame : MonoBehaviour
 
     private void CalculateStacksFromSpawnpoints()
     {
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemført: {levelsComplteded}";
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemfï¿½rt: {levelsComplteded}";
         DestroyCubes(1);
         for (int i = 0; i < spawnPoints.Length; i++)
         {
@@ -1294,7 +1294,7 @@ public class PlaceStackGame : MonoBehaviour
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
                 
-                DataLogger.Log($"StackGeneration",$"GENERATE;{i};{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")}");
+                DataLogger.Log($"StackGeneration",$"GENERATE;{i};{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")};{spawnPoints[i].position.ToString("F5")};{string.Join(",",stacksToBuild[i])}");
 
                 //Debug text
                 GameObject text = GameUtils.AddText("", spawnPoints[i].position + new Vector3(0, 0.06f, 0), Color.white);

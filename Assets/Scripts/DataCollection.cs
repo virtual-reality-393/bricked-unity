@@ -30,7 +30,7 @@ public abstract class DataCollection : MonoBehaviour
                 {
                     TableAnchor = anchor;
                     TablePlane = (Rect)TableAnchor.PlaneRect;
-                    DataLogger.Log("tablePlane", $"{TablePlane.width.ToString()},{TablePlane.height.ToString()}");
+                    DataLogger.Log("tablePlane", $"PLANE:{TablePlane.width.ToString()},{TablePlane.height.ToString()};POSITION:{TableAnchor.transform.position};ROTATION:{TableAnchor.transform.rotation}");
                 }
             }
         }
