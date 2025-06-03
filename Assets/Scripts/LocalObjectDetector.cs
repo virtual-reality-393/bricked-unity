@@ -120,11 +120,11 @@ public class LocalObjectDetector : ObjectDetector
         {
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
             var brickDetectionScheduler = _brickDetectionWorker.ScheduleIterable(_modelInputTensor);
-
-            timeTaken = Time.realtimeSinceStartup;
+            sw.Restart();
+            timeTaken = 0;
             while (brickDetectionScheduler.MoveNext())
             {
-                if (!(Time.realtimeSinceStartup - timeTaken >= TimePerFrame)) continue;
+                if (!(sw.ElapsedMilliseconds - timeTaken >= TimePerFrame)) continue;
                 yield return null;
                 timeTaken = sw.ElapsedMilliseconds;
             }
@@ -136,10 +136,11 @@ public class LocalObjectDetector : ObjectDetector
                 stackDetectionScheduler = _stackDetectionWorker.ScheduleIterable(_modelInputTensor);
             }
             
-            timeTaken = Time.realtimeSinceStartup;
+            sw.Restart();
+            timeTaken = 0;
             while (includeStacks && stackDetectionScheduler.MoveNext())
             {
-                if (!(Time.realtimeSinceStartup - timeTaken >= TimePerFrame)) continue;
+                if (!(sw.ElapsedMilliseconds - timeTaken >= TimePerFrame)) continue;
                 yield return null;
                 timeTaken = sw.ElapsedMilliseconds;
             }

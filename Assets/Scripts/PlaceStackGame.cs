@@ -420,6 +420,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
+                DataLogger.Log($"StackGeneration","FINISHED");
                 mainText.GetComponentInChildren<TMP_Text>().text = "Opgave l�st.\nGood gjort :)";
                 StartCoroutine(WaitForTaskComplete());
             }
@@ -503,6 +504,9 @@ public class PlaceStackGame : MonoBehaviour
                             {
                                 system.Play();
                             }
+                            
+                            DataLogger.Log($"StackGeneration",$"COMPLETED;{i}");
+                            
                         }
                         var col = Color.green;
                         col.a = 0.33f;
@@ -559,11 +563,6 @@ public class PlaceStackGame : MonoBehaviour
                     spawnpointRightStackCounts[i] = 0;
                 }
             }
-            //Debug text 
-            spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
-                $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
-
-
         }
     }
 
@@ -631,7 +630,7 @@ public class PlaceStackGame : MonoBehaviour
                             {
                                 system.Play();
                             }
-                            DataLogger.Log($"StackGeneration",$"COMPLETED;{i}");
+                            
                         }
                         var col = Color.green;
                         col.a = 0.33f;
@@ -682,7 +681,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                DataLogger.Log($"StackGeneration","FINISHED");
+                
                 mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
                 StartCoroutine(WaitForTaskComplete());
             }
