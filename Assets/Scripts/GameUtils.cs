@@ -406,20 +406,86 @@ public static class GameUtils
         return points;
     }
 
-    public static Transform[] DiskSampledSpawnPoints(MRUKAnchor tableAnchor, int numberOfPoints, Transform parent, Rect costumRect, Transform headPos, float minDist ,float maxDist)
+    public static Transform[] DiskSampledSpawnPoints(MRUKAnchor tableAnchor, int numberOfPoints, Transform parent, Rect costumRect, Transform headPos, float minDist ,float maxDist,PointSide pointSide = PointSide.Both , bool showPoints = false)
     {
         Transform[] points = new Transform[numberOfPoints];
         var tablePlane = costumRect;
 
         List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
-        Vector2 pos = new Vector2(headPos.position.x, headPos.position.z);
+        Vector3 localheadPos = tableAnchor.transform.InverseTransformPoint(headPos.position);
+        Vector2 pos = new Vector2(localheadPos.x, localheadPos.y);
         List<Vector2> vaildPoints = new List<Vector2>();
         while (vaildPoints.Count < numberOfPoints)
         {
-            List<Vector2> minDistPoints = allPoints.Where(p => Vector2.Distance(p, pos) >= minDist).ToList();
-            vaildPoints = minDistPoints.Where(p => Vector2.Distance(p, pos) <= maxDist).ToList();
+            vaildPoints = new List<Vector2>();
+            List<Vector2> pointOnRightSide = new List<Vector2>();
+            for (int i = 0; i < allPoints.Count; i++)
+            {
+                if (pointSide == PointSide.Right)
+                {
+                    if (allPoints[i].x >= 0)
+                    {
+                        pointOnRightSide.Add(allPoints[i]);
+                    }
+                }
+                else if (pointSide == PointSide.Left)
+                {
+                    if (allPoints[i].x <= 0)
+                    {
+                        pointOnRightSide.Add(allPoints[i]);
+                    }
+                }
+                else
+                {
+                    pointOnRightSide.Add(allPoints[i]);
+                }
+            }
+
+            List<Vector2> minDistPoints = new List<Vector2>();
+            for (int i = 0; i < pointOnRightSide.Count; i++)
+            {
+                if (Vector2.Distance(pos, pointOnRightSide[i]) >= minDist)
+                {
+                    minDistPoints.Add(pointOnRightSide[i]);
+                }
+            }
+
+            for (int i = 0; i < minDistPoints.Count; i++)
+            {
+                if (Vector2.Distance(pos, minDistPoints[i]) <= maxDist)
+                {
+                    vaildPoints.Add(minDistPoints[i]);
+                }
+            }
+
             minDist -= 0.01f; // Decrease the minimum distance to find more valid points
             maxDist += 0.01f; // Increase the maximum distance to find more valid points
+        }
+
+        if (showPoints)
+        {
+            for (int i = 0; i < allPoints.Count; i++)
+            {
+                Color color = Color.white;
+                if (vaildPoints.Contains(allPoints[i]))
+                {
+                    color = Color.green;
+                }
+                else
+                {
+                    color = Color.blue;
+                }
+                var newObject = MakeInteractionCirkle(allPoints[i], color);
+                newObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+                newObject.transform.parent = tableAnchor.transform;
+
+                newObject.transform.position = tableAnchor.transform.position;
+
+                newObject.transform.localPosition = allPoints[i];
+
+                newObject.transform.parent = parent;
+            }
         }
 
         for (int i = 0; i < numberOfPoints; i++)

@@ -24,7 +24,7 @@ public class PlaceStackGame : MonoBehaviour
     public int minStackSize = 1;
     public SliceMethod sliceMethod = SliceMethod.Min;
     public int maxNumberOfBriksToUse = 8;
-    public float maxDistHeadToSpwanpoint = 0.30f;
+    public float maxDistHeadToSpwanpoint = 1.0f;
     public float minDistHeadToSpwanpoint = 0.10f;
     public float distToPointThreshold = 0.08f;
     public float stackThreshold = 0.06f;
@@ -70,6 +70,9 @@ public class PlaceStackGame : MonoBehaviour
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
 
+    GameObject pointDevider;
+    PointSide pointSide = PointSide.Both;
+
     GameObject debugMenu;
     List<GameObject> debugTestObjects = new List<GameObject>();
     GameObject rectDisplay;
@@ -80,13 +83,14 @@ public class PlaceStackGame : MonoBehaviour
     bool runOnce = true;
     bool debugMode = false;
     bool canDoAdminInteraction = true;
+    bool showAllPoints = false;
     private bool levelReset;
 
     int levelsComplteded = 0;
 
-    string setupText = "To start find the needed bricks.";
+    string setupText = "Start med at de klodser der skal bruges.\nRød: 1, Blå: 2, Grøn: 2, Gul: 3"; //"To start find the needed bricks.";
     string seprateText = "Separate";
-    string playText = "Build the displayed stacks and place them in the circle.";
+    string playText = "Stabel klodserne som vist og placer dem på den tilhørene cirkel."; //"Build the displayed stacks and place them in the circle.";
 
     private bool fixStack = false; // Pls fix the gameplay loop :|
 
@@ -115,6 +119,8 @@ public class PlaceStackGame : MonoBehaviour
     };
 
     // private GameObject penguinPosCircle;
+    //GameObject radiusMax;
+    //GameObject radiusMin;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -138,8 +144,11 @@ public class PlaceStackGame : MonoBehaviour
         mainText = new GameObject("MainText");
         GameUtils.AddText(centerCam, mainText, setupText, new Vector3(0, 0, 0), Color.white, 3f);
 
-
+        //pointDevider = Instantiate(GameManager.Instance.cylinderPrefab, Vector3.zero, Quaternion.identity);
+        //pointDevider.transform.localScale = new Vector3(0.01f, 0.01f, 1f);
         // penguinPosCircle = GameUtils.MakeInteractionCirkle(new Vector3(10,10,10),Color.black);
+        //radiusMax = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.black);
+        //radiusMin = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.white);
 
         debugMenu = new GameObject("DebugMenu");
         MakeDebugMenu(debugMenu);
@@ -202,6 +211,7 @@ public class PlaceStackGame : MonoBehaviour
                 frezz = false;
                 debugMode = false;
                 // smallPenguinPos = new Vector3(10, 10, 10);
+                // pointDevider.transform.position = brick.worldPos;
                 debugMenu.SetActive(debugMode);
                 rectDisplay.SetActive(debugMode);
                 foreach (var item in debugTestObjects)
@@ -223,8 +233,9 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Random;
-                minDistHeadToSpwanpoint = 0.10f;
-                maxDistHeadToSpwanpoint = 0.30f;
+                minDistHeadToSpwanpoint = 0.7f;
+                maxDistHeadToSpwanpoint = 1f;
+                pointSide = PointSide.Both;
                 Debug.LogError("Human detected: Slice: Random - Max Size: 4 - Min Size: 2");
             }
             else if (brick.labelName == "sheep" && !debugMode)
@@ -233,6 +244,9 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 8;
                 minStackSize = 4;
                 sliceMethod = SliceMethod.Max;
+                minDistHeadToSpwanpoint = 0.0f;
+                maxDistHeadToSpwanpoint = 0.4f;
+                pointSide = PointSide.Both;
                 Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4");
             }
             else if (brick.labelName == "pig" && !debugMode)
@@ -241,16 +255,19 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 3;
                 minStackSize = 1;
                 sliceMethod = SliceMethod.Random;
-                minDistHeadToSpwanpoint = 0.15f;
-                maxDistHeadToSpwanpoint = 0.25f;
+                minDistHeadToSpwanpoint = 0.55f;
+                maxDistHeadToSpwanpoint = 0.75f;
+                pointSide = PointSide.Right;
                 Debug.LogError("Pig detected: Slice: Random - Max Size: 3 - Min Size: 1");
             }
             else if (brick.labelName == "lion")
             {
                 maxStackSize = 4;
-                minStackSize = 2;
+                minStackSize = 1;
                 sliceMethod = SliceMethod.Min;
-
+                minDistHeadToSpwanpoint = 0.3f;
+                maxDistHeadToSpwanpoint = 0.6f;
+                pointSide = PointSide.Left;
                 Debug.LogError("Lion detected: Slice: Min - Max Size: 4 - Min Size: 2");
             }
         });
@@ -283,6 +300,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             return;
         }
+
         //ClearText();
         if (runOnce)
         {
@@ -499,7 +517,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                mainText.GetComponentInChildren<TMP_Text>().text = "Task completed!\nGoodjob :)";
+                mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGood gjort :)";
                 StartCoroutine(WaitForTaskComplete());
             }
         }
@@ -507,7 +525,7 @@ public class PlaceStackGame : MonoBehaviour
 
     private void CalculateStacksFromSpawnpoints()
     {
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nLevels Completed: {levelsComplteded}";
+        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemført: {levelsComplteded}";
         DestroyCubes(1);
         for (int i = 0; i < spawnPoints.Length; i++)
         {
@@ -1026,70 +1044,17 @@ public class PlaceStackGame : MonoBehaviour
         switch (adminAction)
         {
             case 1:
-                if (maxStackSize + 1 <= briksToBuildStack.Values.Sum())
-                {
-                    maxStackSize++;
-                }
+                showAllPoints = !showAllPoints;
                 break;
 
             case 2:
-                if (maxStackSize - 1 >= minStackSize)
-                {
-                    maxStackSize--;
-                }
-                break;
-
-            case 3:
-                if (minStackSize + 1 <= maxStackSize)
-                {
-                    minStackSize++;
-                }
-                break;
-
-            case 4:
-                if (minStackSize - 1 >= 1)
-                {
-                    minStackSize--;
-                }
-                break;
-
-            case 5:
-                if (sliceMethod == SliceMethod.Max)
-                {
-                    sliceMethod = SliceMethod.Min;
-                }
-                else if (sliceMethod == SliceMethod.Min)
-                {
-                    sliceMethod = SliceMethod.Random;
-                }
-                else if (sliceMethod == SliceMethod.Random)
-                {
-                    sliceMethod = SliceMethod.Equalize;
-                }
-                else if (sliceMethod == SliceMethod.Equalize)
-                {
-                    sliceMethod = SliceMethod.Even;
-                }
-                else
-                {
-                    sliceMethod = SliceMethod.Max;
-                }
-                break;
-
-            case 6:
                 for (int i = 0; i < complted.Length; i++)
                 {
                     complted[i] = true;
                 }
                 break;
 
-            case 7:
-                state = GameState.Setup;
-                DestroyCubes(0);
-                DestroyCubes(1);
-                break;
-
-            case 8:
+            case 3:
                 float minX = Mathf.Min(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float maxX = Mathf.Max(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float minY = Mathf.Min(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
@@ -1100,13 +1065,13 @@ public class PlaceStackGame : MonoBehaviour
                 rectCenter.transform.position = planeCenter;
                 break;
 
-            case 9:
+            case 4:
                 ourPlaneRect = (Rect)tableAnchor.PlaneRect;
                 UpdateRectDispaly(ourPlaneRect);
                 rectCenter.transform.position = tableAnchor.transform.position;
                 break;
 
-            case 10:
+            case 5:
                 debugHand.SetActive(!debugHand.activeSelf);
                 break;
 
@@ -1118,15 +1083,10 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateDebugText()
     {
-        string[] texts = new string[11] {
+        string[] texts = new string[6] {
                          "Debug mode \"On\". \nTo disable detect \"big penguin\".",
-                         "+1 to max size \nCurrent max size: " + maxStackSize,
-                         "-1 from max size \nCurrent max size: " + maxStackSize,
-                         "+1 to min size \nCurrent min size: " + minStackSize,
-                         "-1 from min size \nCurrent min size: " + minStackSize,
-                         "Change slice mode\nCurrent: " + sliceMethod.ToString(),
+                         "Show all points:" + showAllPoints,
                          "Complet task",
-                         "To setup",
                          "Make new rect",
                          "Reset rect",
                          "Hand display: "+ debugHand.activeSelf };
@@ -1164,45 +1124,25 @@ public class PlaceStackGame : MonoBehaviour
         adminpoint.transform.parent = parent.transform;
         debugTestObjects.Add(GameUtils.AddText("Debug mode \"On\". \nTo disable detect \"big penguin\".", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f));
 
-        GameObject addMax = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 4, Color.blue);
-        addMax.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("+1 to max size \nCurrent max size: " + maxStackSize, menuPos - xOffset * 4 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+        GameObject pointShower = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -1, Color.blue);
+        pointShower.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Show all points: " + showAllPoints, menuPos + xOffset * -1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
-        GameObject removeMax = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 3, Color.blue);
-        removeMax.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("-1 from max size \nCurrent max size: " + maxStackSize, menuPos - xOffset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
-
-        GameObject addMin = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 2, Color.blue);
-        addMin.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("+1 to min size \nCurrent min size: " + minStackSize, menuPos - xOffset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
-
-        GameObject removeMin = GameUtils.MakeInteractionCirkle(menuPos - xOffset * 1, Color.blue);
-        removeMin.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("-1 from min size \nCurrent min size: " + minStackSize, menuPos - xOffset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
-
-        GameObject newSilceMode = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 0, Color.blue);
-        newSilceMode.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("Change slice mode\nCurrent: " + sliceMethod.ToString(), menuPos + xOffset * 0 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
-
-        GameObject completTask = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 1, Color.blue);
+        GameObject completTask = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 0, Color.blue);
         completTask.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("Complet task", menuPos + xOffset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+        debugTestObjects.Add(GameUtils.AddText("Complet task", menuPos + xOffset * 0 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
-        GameObject toSetup = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 2, Color.blue);
-        toSetup.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("To setup", menuPos + xOffset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
-
-        GameObject makeNewRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 3, Color.blue);
+        GameObject makeNewRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 1, Color.blue);
         makeNewRect.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("Make new rect", menuPos + xOffset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+        debugTestObjects.Add(GameUtils.AddText("Make new rect", menuPos + xOffset * 1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
-        GameObject resteRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 4, Color.blue);
+        GameObject resteRect = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 2, Color.blue);
         resteRect.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("Reset rect", menuPos + xOffset * 4 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+        debugTestObjects.Add(GameUtils.AddText("Reset rect", menuPos + xOffset * 2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
-        GameObject handDispaly = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 5, Color.blue);
+        GameObject handDispaly = GameUtils.MakeInteractionCirkle(menuPos + xOffset * 3, Color.blue);
         handDispaly.transform.parent = parent.transform;
-        debugTestObjects.Add(GameUtils.AddText("Hand display: " + debugHand.activeSelf, menuPos + xOffset * 5 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+        debugTestObjects.Add(GameUtils.AddText("Hand display: " + debugHand.activeSelf, menuPos + xOffset * 3 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
     }
 
@@ -1303,7 +1243,7 @@ public class PlaceStackGame : MonoBehaviour
         DestroySpawnPositions();
         if (spawnPositions.transform.childCount == 0)
         {
-            //LevelProgress();
+            LevelProgress();
     
             List<string> briks = new List<string>();
 
@@ -1340,7 +1280,7 @@ public class PlaceStackGame : MonoBehaviour
             //spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect);
 
             // Random punkter med min og max distands til head
-            spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect, centerCam, minDistHeadToSpwanpoint, maxDistHeadToSpwanpoint);
+            spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect, centerCam, minDistHeadToSpwanpoint, maxDistHeadToSpwanpoint, pointSide, showAllPoints);
 
 
             for (int i = 0; i < stacksToBuild.Count; i++)
@@ -1360,6 +1300,7 @@ public class PlaceStackGame : MonoBehaviour
                 GameObject text = GameUtils.AddText("", spawnPoints[i].position + new Vector3(0, 0.06f, 0), Color.white);
                 text.transform.parent = cirkel.transform;
             }
+
 
             dists = new float[stacksToBuild.Count];
             complted = new bool[stacksToBuild.Count];
@@ -1389,7 +1330,8 @@ public class PlaceStackGame : MonoBehaviour
                 minStackSize = 1;
                 maxStackSize = 2;
                 sliceMethod = SliceMethod.Min;
-                maxDistHeadToSpwanpoint = 0.2f;
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.6f;
                 break;
 
             case 4:
@@ -1398,7 +1340,8 @@ public class PlaceStackGame : MonoBehaviour
                 minStackSize = 2;
                 maxStackSize = 3;
                 sliceMethod = SliceMethod.Random;
-                maxDistHeadToSpwanpoint = 0.3f;
+                minDistHeadToSpwanpoint = 0.3f;
+                maxDistHeadToSpwanpoint = 0.7f;
                 break;
 
             case 6:
@@ -1407,7 +1350,8 @@ public class PlaceStackGame : MonoBehaviour
                 minStackSize = 2;
                 maxStackSize = 3;
                 sliceMethod = SliceMethod.Equalize;
-                maxDistHeadToSpwanpoint = 0.4f;
+                minDistHeadToSpwanpoint = 0.3f;
+                maxDistHeadToSpwanpoint = 0.5f;
                 break;
 
             case 8:
@@ -1416,7 +1360,8 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Max;
-                maxDistHeadToSpwanpoint = 0.5f;
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.55f;
                 break;
 
             case 10:
@@ -1425,7 +1370,8 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 8;
                 minStackSize = 4;
                 sliceMethod = SliceMethod.Max;
-                maxDistHeadToSpwanpoint = 0.6f;
+                minDistHeadToSpwanpoint = 0.0f;
+                maxDistHeadToSpwanpoint = 0.4f;
                 break;
 
             case 12:
@@ -1434,7 +1380,8 @@ public class PlaceStackGame : MonoBehaviour
                 maxStackSize = 4;
                 minStackSize = 2;
                 sliceMethod = SliceMethod.Random;
-                maxDistHeadToSpwanpoint = 0.7f;
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.6f;
                 break;
 
             default:
@@ -1564,5 +1511,12 @@ public enum GameState
     Setup,
     Play,
     Separate
+}
+
+public enum PointSide
+{
+    Right,
+    Left,
+    Both
 }
 
