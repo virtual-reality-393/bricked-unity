@@ -411,7 +411,7 @@ public static class GameUtils
         Transform[] points = new Transform[numberOfPoints];
         var tablePlane = costumRect;
 
-        List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 5, 50, 10);
+        List<Vector2> allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 8, 50, 10);
         Vector3 localheadPos = tableAnchor.transform.InverseTransformPoint(headPos.position);
         Vector2 pos = new Vector2(localheadPos.x, localheadPos.y);
         List<Vector2> vaildPoints = new List<Vector2>();
@@ -509,6 +509,38 @@ public static class GameUtils
         return points;
     }
 
+    public static Vector3 ClosestPointOnSegment(Vector3 A, Vector3 B, Vector3 P)
+    {
+        Vector3 AB = B - A;
+        float t = Vector3.Dot(P - A, AB) / AB.sqrMagnitude;
+        t = Mathf.Clamp01(t); // Clamp to segment
+        return A + t * AB;
+    }
+
+    // Returns the closest point on the edge of the quadrilateral to point P
+    // The 4 corners (A,B,C,D) are ordered clockwise or counter-clockwise.
+    public static Vector3 ClosestPointOnQuadEdge(Vector3 A, Vector3 B, Vector3 C, Vector3 D, Vector3 P)
+    {
+        Vector3[] quadPoints = new Vector3[] { A, B, C, D };
+        Vector3 closestPoint = Vector3.zero;
+        float minDistance = float.MaxValue;
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 edgeStart = quadPoints[i];
+            Vector3 edgeEnd = quadPoints[(i + 1) % 4];
+            Vector3 pointOnEdge = ClosestPointOnSegment(edgeStart, edgeEnd, P);
+            float distSqr = (P - pointOnEdge).sqrMagnitude;
+
+            if (distSqr < minDistance)
+            {
+                minDistance = distSqr;
+                closestPoint = pointOnEdge;
+            }
+        }
+
+        return closestPoint;
+    }
 
     public static DetectedObject GetBrickWithColor(List<DetectedObject> bricks, string color)
     {

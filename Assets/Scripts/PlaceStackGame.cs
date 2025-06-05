@@ -67,6 +67,7 @@ public class PlaceStackGame : MonoBehaviour
     Vector3 planeCenter;
 
     Vector3 anchorPoint = new Vector3(0, 0, 0);
+    Vector3 displayAnchor = new Vector3(0, 0, 0);
     Vector3 offsetDir = new Vector3(0, 0, 0);
     Vector3 displayPos = new Vector3();
 
@@ -273,12 +274,6 @@ public class PlaceStackGame : MonoBehaviour
             }
         });
 
-        if (state == GameState.Play && !frezz)
-        {
-            //CalculateStacks();
-            CalculateStacksFromSpawnpoints();
-        }
-
         if (prevPenguin != currPenguin)
         {
             prevPenguin = currPenguin;
@@ -314,6 +309,12 @@ public class PlaceStackGame : MonoBehaviour
                 stacksInFrame.Add(tempStack);
             }
         });
+
+        if (state == GameState.Play && !frezz)
+        {
+            //CalculateStacks();
+            CalculateStacksFromSpawnpoints();
+        }
     }
 
     // Update is called once per frame
@@ -438,8 +439,10 @@ public class PlaceStackGame : MonoBehaviour
             {
                 continue;
             }
+
+            if (!spawnPoints[i]) continue;
             
-            DrawDebugStacks(stacksInFrame, 0.1f * i);
+            //DrawDebugStacks(stacksInFrame, 0.1f * i);
 
             //Finder distance til alle stacks
             float[] distTostacks = new float[stacksInFrame.Count];
@@ -465,35 +468,35 @@ public class PlaceStackGame : MonoBehaviour
                 spawnpointNoDetectionCounts[i] = 0;
 
                 //sikker at h�jere stacks er h�j nok
-                bool temp = false;
-                float hight = 0;
-                int id = -1;
-                for (int k = 0; k < stacksInFrame[idx].Count; k++)
-                {
-                    if (stacksInFrame[idx][k].worldPos.y > hight)
-                    {
-                        hight = stacksInFrame[idx][k].worldPos.y;
-                        id = k;
-                    }
-                }
-                if (stacksToBuild[i].Count > 2)
-                {
-                    temp = hight > (stacksToBuild[i].Count / 100f) + tableAnchor.transform.position.y;
-                }
-                else
-                {
-                    temp = true;
-                }
+                //bool temp = false;
+                //float hight = 0;
+                //int id = -1;
+                //for (int k = 0; k < stacksInFrame[idx].Count; k++)
+                //{
+                //    if (stacksInFrame[idx][k].worldPos.y > hight)
+                //    {
+                //        hight = stacksInFrame[idx][k].worldPos.y;
+                //        id = k;
+                //    }
+                //}
+                //if (stacksToBuild[i].Count > 2)
+                //{
+                //    temp = hight > (stacksToBuild[i].Count / 100f) + tableAnchor.transform.position.y;
+                //}
+                //else
+                //{
+                //    temp = true;
+                //}
                
 
                 //mainText.transform.GetComponentInChildren<TMP_Text>().text += $"\nTarget: {(stacksToBuild[i].Count / 100f) + tableAnchor.transform.position.y} | Highest brick: {hight} | Bool: {temp}";
 
                 List<string> placedStack = GameUtils.DetectedObjectListToStringList(stacksInFrame[idx]);
 
-                if ((GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack) && temp)|| complted[i])
+                if (GameUtils.HaveSameElementAtSameIndex(stacksToBuild[i], placedStack)|| complted[i])
                 {
                     spawnpointRightStackCounts[i]++;
-                    if (spawnpointRightStackCounts[i] > 1 || complted[i])
+                    if (spawnpointRightStackCounts[i] > 0 || complted[i]) //1
                     {
                         if (!complted[i])
                         {
@@ -515,9 +518,9 @@ public class PlaceStackGame : MonoBehaviour
                 else
                 {
                     spawnpointWrongStackCounts[i]++;
-                    if (spawnpointWrongStackCounts[i] > 4)
+                    if (spawnpointWrongStackCounts[i] > 2)//4
                     {
-                        if (placedStack.Count < stacksToBuild[i].Count)
+                        if (GameUtils.HaveSameElements(stacksToBuild[i],placedStack))
                         {
                             var col = Color.yellow;
                             col.a = 0.33f;
@@ -560,8 +563,8 @@ public class PlaceStackGame : MonoBehaviour
                 }
             }
             //Debug text 
-            spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
-                $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
+            //spawnPoints[i].GetComponentInChildren<TMP_Text>().text =
+            //    $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
 
 
         }
@@ -932,12 +935,12 @@ public class PlaceStackGame : MonoBehaviour
         {
             float d = Vector3.Distance(smallPenguinPos, debugMenu.transform.GetChild(i).position);
 
-            if (Vector3.Distance(smallPenguinPos, debugMenu.transform.GetChild(0).position) < 0.03)
+            if (Vector3.Distance(smallPenguinPos, debugMenu.transform.GetChild(0).position) < 0.05)
             {
                 canDoAdminInteraction = true;
             }
 
-            if (d < 0.03 && canDoAdminInteraction)
+            if (d < 0.04 && canDoAdminInteraction)
             {
                 adminAction = i;
                 canDoAdminInteraction = false;
@@ -947,17 +950,21 @@ public class PlaceStackGame : MonoBehaviour
         switch (adminAction)
         {
             case 1:
-                showAllPoints = !showAllPoints;
+                CalibratePosition();
                 break;
 
             case 2:
+                showAllPoints = !showAllPoints;
+                break;
+
+            case 3:
                 for (int i = 0; i < complted.Length; i++)
                 {
                     complted[i] = true;
                 }
                 break;
 
-            case 3:
+            case 4:
                 float minX = Mathf.Min(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float maxX = Mathf.Max(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float minY = Mathf.Min(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
@@ -968,13 +975,13 @@ public class PlaceStackGame : MonoBehaviour
                 rectCenter.transform.position = planeCenter;
                 break;
 
-            case 4:
+            case 5:
                 ourPlaneRect = (Rect)tableAnchor.PlaneRect;
                 UpdateRectDispaly(ourPlaneRect);
                 rectCenter.transform.position = tableAnchor.transform.position;
                 break;
 
-            case 5:
+            case 6:
                 debugHand.SetActive(!debugHand.activeSelf);
                 break;
 
@@ -986,8 +993,9 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateDebugText()
     {
-        string[] texts = new string[6] {
+        string[] texts = new string[7] {
                          "Debug mode \"On\". \nTo disable detect \"big penguin\".",
+                         "Recalibrate",             
                          "Show all points:" + showAllPoints,
                          "Complet task",
                          "Make new rect",
@@ -1027,6 +1035,10 @@ public class PlaceStackGame : MonoBehaviour
         adminpoint.transform.parent = parent.transform;
         debugTestObjects.Add(GameUtils.AddText("Debug mode \"On\". \nTo disable detect \"big penguin\".", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f));
 
+        GameObject recalibrater = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -2, Color.blue);
+        recalibrater.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Recalibrate" + showAllPoints, menuPos + xOffset * -2 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
+
         GameObject pointShower = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -1, Color.blue);
         pointShower.transform.parent = parent.transform;
         debugTestObjects.Add(GameUtils.AddText("Show all points: " + showAllPoints, menuPos + xOffset * -1 + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
@@ -1051,15 +1063,10 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateRectDispaly(Rect rect)
     {
-        float minX = rect.xMin;
-        float minY = rect.yMin;
-        float maxX = rect.xMax;
-        float maxY = rect.yMax;
-
-        rectDisplay.transform.GetChild(0).transform.position = tableAnchor.transform.position - new Vector3(minX, 0, minY);
-        rectDisplay.transform.GetChild(1).transform.position = tableAnchor.transform.position - new Vector3(minX, 0, maxY);
-        rectDisplay.transform.GetChild(2).transform.position = tableAnchor.transform.position - new Vector3(maxX, 0, minY);
-        rectDisplay.transform.GetChild(3).transform.position = tableAnchor.transform.position - new Vector3(maxX, 0, maxY);
+        rectDisplay.transform.GetChild(0).transform.position = tableAnchor.transform.position + tableAnchor.transform.right * rect.width / 2 + tableAnchor.transform.up * rect.height / 2;
+        rectDisplay.transform.GetChild(1).transform.position = tableAnchor.transform.position + tableAnchor.transform.right * rect.width / 2 - tableAnchor.transform.up * rect.height / 2;
+        rectDisplay.transform.GetChild(2).transform.position = tableAnchor.transform.position - tableAnchor.transform.right * rect.width / 2 - tableAnchor.transform.up * rect.height / 2;
+        rectDisplay.transform.GetChild(3).transform.position = tableAnchor.transform.position - tableAnchor.transform.right * rect.width / 2 + tableAnchor.transform.up * rect.height / 2;
     }
 
     private void MakeRectDisplay(GameObject rectDisplay)
@@ -1188,12 +1195,12 @@ public class PlaceStackGame : MonoBehaviour
 
             for (int i = 0; i < stacksToBuild.Count; i++)
             {
-                List<GameObject> tempStack = GameUtils.DrawStack(stacksToBuild[i], spawnPoints[i].position + new Vector3(0,0.015f,0) + offsetDir * 0.07f);
+                List<GameObject> tempStack = GameUtils.DrawStack(stacksToBuild[i], spawnPoints[i].position + new Vector3(0,0.025f,0) + offsetDir * 0.07f);
                 foreach (GameObject item in tempStack)
                 {
                     item.transform.parent = cubeParent.transform.GetChild(0);
                 }
-                GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position, Color.white);
+                GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position + new Vector3(0,0.015f,0), Color.white);
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
                 
@@ -1384,27 +1391,68 @@ public class PlaceStackGame : MonoBehaviour
 
         if (!runOnce)
         {
-            offsetDir = (new Vector3(anchorPoint.x, 0, anchorPoint.z) - new Vector3(centerCam.position.x, 0, centerCam.position.z)).normalized;
+            //GameObject cObject = Instantiate(GameManager.Instance.cubePrefab, tableAnchor.transform.position, Quaternion.identity);
+            //cObject.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+            //cObject.GetComponent<Renderer>().material.color = Color.white;
 
-            displayPos = anchorPoint + offsetDir * 0.25f;
+            //GameObject fObject = Instantiate(GameManager.Instance.cubePrefab, tableAnchor.transform.position + tableAnchor.transform.forward * 0.1f, Quaternion.identity);
+            //fObject.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+            //fObject.GetComponent<Renderer>().material.color = Color.blue;
+
+            //GameObject rObject = Instantiate(GameManager.Instance.cubePrefab, tableAnchor.transform.position + tableAnchor.transform.right * 0.1f, Quaternion.identity);
+            //rObject.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+            //rObject.GetComponent<Renderer>().material.color = Color.red;
+
+            //GameObject lObject = Instantiate(GameManager.Instance.cubePrefab, tableAnchor.transform.position - tableAnchor.transform.up * 0.1f, Quaternion.identity);
+            //lObject.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f);
+            //lObject.GetComponent<Renderer>().material.color = Color.green;
 
             ourPlaneRect = (Rect)tableAnchor.PlaneRect;
             UpdateRectDispaly(ourPlaneRect);
 
-            mainText.transform.position = displayPos + new Vector3(0,0.15f,0);
-
-            rectPos1.transform.parent = tableAnchor.transform;
-
-            rectPos2.transform.parent = tableAnchor.transform;
-
-            rectCenter.transform.position = tableAnchor.transform.position;
-
-            debugMenu.transform.position = tableAnchor.transform.position + offsetDir * -0.2f;
-
-            debugHand.transform.position = tableAnchor.transform.position + offsetDir * 0.4f;
-            debugHand.transform.Rotate(offsetDir, -90);
-            debugHand.SetActive(false);
+            CalibratePosition();
         }
+    }
+
+    private void CalibratePosition()
+    {
+        displayAnchor = GameUtils.ClosestPointOnQuadEdge(rectDisplay.transform.GetChild(0).position, rectDisplay.transform.GetChild(1).position, rectDisplay.transform.GetChild(2).position, rectDisplay.transform.GetChild(3).position, centerCam.position);
+        displayAnchor += new Vector3(0, 0.02f, 0);
+        //GameUtils.MakeInteractionCirkle(displayAnchor, Color.magenta);
+
+        offsetDir = (new Vector3(displayAnchor.x, 0, displayAnchor.z) - new Vector3(centerCam.position.x, 0, centerCam.position.z)).normalized;
+        // Tjecks if the displayAnchor is in the rect
+        if (Vector3.Dot(centerCam.forward, displayAnchor) < 0)
+        {
+            offsetDir = -offsetDir;
+        }
+        //GameUtils.MakeInteractionCirkle(displayAnchor + offsetDir * 0.70f, Color.red);
+
+        //offsetDir = (new Vector3(anchorPoint.x, 0, anchorPoint.z) - new Vector3(centerCam.position.x, 0, centerCam.position.z)).normalized;
+
+        //displayPos = anchorPoint + offsetDir * 0.25f;
+        displayPos = displayAnchor + offsetDir * 0.65f;
+
+
+        mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
+
+        rectPos1.transform.parent = tableAnchor.transform;
+
+        rectPos2.transform.parent = tableAnchor.transform;
+
+        rectCenter.transform.position = tableAnchor.transform.position;
+
+        //debugMenu.transform.position = tableAnchor.transform.position + offsetDir * -0.2f;
+
+        //debugHand.transform.position = tableAnchor.transform.position + offsetDir * 0.4f;
+        //debugHand.transform.Rotate(offsetDir, -90);
+        //debugHand.SetActive(false);
+
+        debugMenu.transform.position = displayAnchor + offsetDir * 0.15f;
+
+        debugHand.transform.position = displayAnchor + offsetDir * 0.8f;
+        debugHand.transform.Rotate(offsetDir, -90);
+        debugHand.SetActive(false);
     }
 }
 
