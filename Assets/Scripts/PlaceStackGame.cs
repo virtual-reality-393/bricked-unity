@@ -78,6 +78,7 @@ public class PlaceStackGame : MonoBehaviour
     List<GameObject> debugTestObjects = new List<GameObject>();
     GameObject rectDisplay;
     Vector3 smallPenguinPos = new Vector3(10, 10, 10);
+    string debugCurrentSettingsText = "";
 
     GameObject mainText;
 
@@ -170,6 +171,8 @@ public class PlaceStackGame : MonoBehaviour
             item.SetActive(debugMode);
         }
 
+        AudioManager.Instance.ChangeMusic(AudioManager.SoundType.Background_Music);
+
     }
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
@@ -242,11 +245,11 @@ public class PlaceStackGame : MonoBehaviour
             }
             else if (brick.labelName == "sheep" && !debugMode)
             {
-                if (canDoAdminInteraction)
-                {
-                    CalibratePosition();
-                    canDoAdminInteraction = false;
-                }
+                //if (canDoAdminInteraction)
+                //{
+                //    CalibratePosition();
+                //    canDoAdminInteraction = false;
+                //}
 
                 //One big stack
                 maxStackSize = 8;
@@ -347,6 +350,7 @@ public class PlaceStackGame : MonoBehaviour
             {
                 //DebugMenu();
                 RunDebugMenu();
+                //DrawDebugStacks(stacksInFrame);
             }
 
             if (state == GameState.Setup && !runOnce)
@@ -481,17 +485,28 @@ public class PlaceStackGame : MonoBehaviour
                     {
                         if (!complted[i])
                         {
+                            complted[i] = true;
+
                             var particleSystems = spawnPoints[i].GetComponentsInChildren<ParticleSystem>();
 
                             foreach (var system in particleSystems)
                             {
                                 system.Play();
                             }
+                            if(CheckIfAllDone())
+                            {
+                                AudioManager.Instance.Play(AudioManager.SoundType.Level_Complete);
+                            }
+                            else
+                            {
+                                AudioManager.Instance.Play(AudioManager.SoundType.Stack_Complete);
+                            }
+                           
                         }
                         var col = Color.green;
                         col.a = 0.33f;
                         spawnPoints[i].GetChild(0).GetComponent<Renderer>().material.color = col;
-                        complted[i] = true;
+                        //complted[i] = true;
                         spawnpointRightStackCounts[i] = 2;
                     }
                     spawnpointWrongStackCounts[i] = 0;
@@ -548,6 +563,10 @@ public class PlaceStackGame : MonoBehaviour
             //    $"Green: {spawnpointRightStackCounts[i]}\nRed: {spawnpointWrongStackCounts[i]}\nWhite: {spawnpointNoDetectionCounts[i]}";
 
 
+        }
+        if (debugMode)
+        {
+            DrawDebugStacks(stacksInFrame);
         }
     }
 
@@ -974,8 +993,9 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateDebugText()
     {
-        string[] texts = new string[7] {
+        string[] texts = new string[8] {
                          "Debug mode \"On\". \nTo disable detect \"big penguin\".",
+                         debugCurrentSettingsText,
                          "Recalibrate",             
                          "Show all points:" + showAllPoints,
                          "Complet task",
@@ -991,9 +1011,13 @@ public class PlaceStackGame : MonoBehaviour
             {
                 debugTestObjects[i].transform.position = debugMenu.transform.GetChild(i).position + new Vector3(0, 0.12f, 0);
             }
+            else if (i == 1)
+            {
+                debugTestObjects[i].transform.position = debugMenu.transform.GetChild(0).position + new Vector3(0, 0.18f, 0) + debugMenu.transform.right * 0.18f;
+            }
             else
             {
-                debugTestObjects[i].transform.position = debugMenu.transform.GetChild(i).position + new Vector3(0, 0.05f, 0);
+                debugTestObjects[i].transform.position = debugMenu.transform.GetChild(i-1).position + new Vector3(0, 0.05f, 0);
             }
             //debugMenu.transform.GetChild(i).transform.GetChild(0).localScale = new Vector3(4f, 4f, 4f);
             //debugMenu.transform.GetChild(i).transform.GetChild(0).rotation = Quaternion.identity;
@@ -1015,6 +1039,8 @@ public class PlaceStackGame : MonoBehaviour
         GameObject adminpoint = GameUtils.MakeInteractionCirkle(menuPos + parent.transform.forward * 0.1f, Color.red);
         adminpoint.transform.parent = parent.transform;
         debugTestObjects.Add(GameUtils.AddText("Debug mode \"On\". \nTo disable detect \"big penguin\".", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f));
+
+        debugTestObjects.Add(GameUtils.AddText("Current Settings", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.018f, 0) + transform.right * 0.18f, Color.white, 1f));
 
         GameObject recalibrater = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -3f, Color.blue);
         recalibrater.transform.parent = parent.transform;
@@ -1276,11 +1302,33 @@ public class PlaceStackGame : MonoBehaviour
                 break;
 
             default:
+                if (levelsComplteded >= 15 && levelsComplteded % 5 == 0)
+                {
+                    int newMin = Random.Range(1, 5);
+                    int newMax = Random.Range(5, 9);
+                    float newMinDist = Random.Range(0.1f, 0.3f);
+                    float newMaxDist = Random.Range(0.5f, 0.8f);
+                    
+                    minStackSize = newMin;
+                    maxStackSize = newMax;
+                    minDistHeadToSpwanpoint = newMinDist;
+                    maxDistHeadToSpwanpoint = newMaxDist;
+                    
+                    sliceMethod = (SliceMethod)Random.Range(0, 4);
+
+                    maxNumberOfBriksToUse = Random.Range(6, 9);
+                }
                 break;
         }
+        debugCurrentSettingsText = $"Current Settings:\n" +
+            $"Max number of bricks to use: {maxNumberOfBriksToUse}\n" +
+            $"Min stack size: {minStackSize}\n" +
+            $"Max stack size: {maxStackSize}\n" +
+            $"Slice method: {sliceMethod}\n" +
+            $"Min dist head to spawnpoint: {minDistHeadToSpwanpoint}\n" +
+            $"Max dist head to spawnpoint: {maxDistHeadToSpwanpoint}";
     }
-
-    private bool CheckIfAllDone()
+private bool CheckIfAllDone()
     {
         foreach (bool b in complted)
         {
