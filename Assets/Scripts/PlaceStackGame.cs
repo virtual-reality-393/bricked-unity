@@ -564,6 +564,14 @@ public class PlaceStackGame : MonoBehaviour
 
 
         }
+
+        for (int i = 0; i < stacksInFrame.Count; i++)
+        {
+            GameObject temp = GameUtils.MakeInteractionCirkle(stacksInFrame[i][0].worldPos, Color.gray);
+            temp.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
+            temp.transform.parent = cubeParent.transform.GetChild(1);
+        }
+
         if (debugMode)
         {
             DrawDebugStacks(stacksInFrame);

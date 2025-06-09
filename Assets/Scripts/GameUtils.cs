@@ -415,8 +415,10 @@ public static class GameUtils
         Vector3 localheadPos = tableAnchor.transform.InverseTransformPoint(headPos.position);
         Vector2 pos = new Vector2(localheadPos.x, localheadPos.y);
         List<Vector2> vaildPoints = new List<Vector2>();
+        int attempts = 0;
         while (vaildPoints.Count < numberOfPoints)
         {
+            Debug.Log($"Attempts: {++attempts}");
             vaildPoints = new List<Vector2>();
             List<Vector2> pointOnRightSide = new List<Vector2>();
             for (int i = 0; i < allPoints.Count; i++)
