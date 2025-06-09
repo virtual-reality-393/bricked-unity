@@ -11,12 +11,12 @@ public class HeadDataCollector : DataCollection
     {
         
         var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
-        Log($"FOCAL:{intrinsics.FocalLength};PRINCIPAL:{intrinsics.PrincipalPoint}");
+        Log($"POS_FOCAL:{intrinsics.FocalLength};POS_PRINCIPAL:{intrinsics.PrincipalPoint}");
     }
 
     protected override void UpdateTracking()
     {
-        Log($"POSITION:{head.transform.position.ToString("F5")};ROTATION:{head.transform.rotation}");
+        Log($"POS_POSITION:{head.transform.position.ToString("F5")};POS_ROTATION:{head.transform.rotation}");
         base.UpdateTracking();
     }
 }

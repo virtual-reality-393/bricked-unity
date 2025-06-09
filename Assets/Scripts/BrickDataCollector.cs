@@ -16,7 +16,7 @@ public class BrickDataCollector : DataCollection
         {
             if (IsPointWithinPlane(obj.worldPos))
             {
-                Log($"{GetPlaneNormalizedCoordinates(obj.worldPos).ToString("F5")};{obj.labelName}");       
+                Log($"POS_COORDS:{GetPlaneNormalizedCoordinates(obj.worldPos).ToString("F5")};S_NAME:{obj.labelName}");       
             }
         }
     }

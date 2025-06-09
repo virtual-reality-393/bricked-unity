@@ -32,14 +32,14 @@ public class HandDataCollector : DataCollection
             _hand.GetComponent<Renderer>().material.color = Color.red;
         }
 
-        sb.Append($"PALM:{GetPlaneNormalizedCoordinates(tableHandPos).ToString("F5")}");
+        sb.Append($"POS_PALM:{GetPlaneNormalizedCoordinates(tableHandPos).ToString("F5")}");
         
 
         for (var index = 0; index < hand.Bones.Count; index++)
         {
             sb.Append(";");
             var bone = hand.Bones[index];
-            sb.Append($"BONE-{index}:{bone.Transform.position.ToString("F5")}");
+            sb.Append($"POS_BONE{index}:{bone.Transform.position.ToString("F5")}");
         }
         Log(sb.ToString());
         base.UpdateTracking();
