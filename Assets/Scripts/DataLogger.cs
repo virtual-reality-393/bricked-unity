@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 public static class DataLogger
 {
@@ -10,6 +12,7 @@ public static class DataLogger
     private static readonly string logPath;
     private static Thread logThread;
     private static bool isRunning = false;
+    private static Stopwatch _stopwatch = new Stopwatch();
 
     static DataLogger()
     {
@@ -23,12 +26,13 @@ public static class DataLogger
 
     public static void Log(string identifier, string message)
     {
-        logQueue.Enqueue($"[{identifier}|{Time.frameCount}]{message}");
+        logQueue.Enqueue($"[{_stopwatch.ElapsedMilliseconds}|{identifier}|{Time.frameCount}]{message}");
     }
 
     private static void StartLogger()
     {
         if (isRunning) return;
+        _stopwatch.Start();
         isRunning = true;
         logThread = new Thread(ProcessQueue) { IsBackground = true };
         logThread.Start();
@@ -38,6 +42,7 @@ public static class DataLogger
     {
         isRunning = false;
         logThread?.Join();
+        _stopwatch.Stop();
     }
 
     private static void ProcessQueue()

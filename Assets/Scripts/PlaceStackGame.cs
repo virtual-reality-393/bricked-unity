@@ -420,7 +420,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                DataLogger.Log($"StackGeneration","FINISHED");
+                DataLogger.Log($"stack","S_EVENT:FINISHED");
                 mainText.GetComponentInChildren<TMP_Text>().text = "Opgave l�st.\nGood gjort :)";
                 StartCoroutine(WaitForTaskComplete());
             }
@@ -505,7 +505,7 @@ public class PlaceStackGame : MonoBehaviour
                                 system.Play();
                             }
                             
-                            DataLogger.Log($"StackGeneration",$"COMPLETED;{i}");
+                            DataLogger.Log($"stack",$"S_EVENT:COMPLETED;NUM_STACKNUM:{i}");
                             
                         }
                         var col = Color.green;
@@ -1196,7 +1196,7 @@ public class PlaceStackGame : MonoBehaviour
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
                 
-                DataLogger.Log($"StackGeneration",$"GENERATE;{i};{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")};{spawnPoints[i].position.ToString("F5")};{string.Join(",",stacksToBuild[i])}");
+                DataLogger.Log($"stack",$"S_EVENT:GENERATE;NUM_STACKNUM:{i};POS_COORDS:{DataCollection.GetPlaneNormalizedCoordinates(spawnPoints[i].position).ToString("F5")};POS_POSITION:{spawnPoints[i].position.ToString("F5")};LIST_BRICKS:{string.Join(",",stacksToBuild[i])}");
 
                 //Debug text
                 GameObject text = GameUtils.AddText("", spawnPoints[i].position + new Vector3(0, 0.06f, 0), Color.white);
