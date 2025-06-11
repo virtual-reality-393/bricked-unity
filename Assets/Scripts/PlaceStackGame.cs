@@ -79,6 +79,7 @@ public class PlaceStackGame : MonoBehaviour
     GameObject rectDisplay;
     Vector3 smallPenguinPos = new Vector3(10, 10, 10);
     string debugCurrentSettingsText = "";
+    bool musicOn = false;
 
     GameObject mainText;
 
@@ -90,9 +91,9 @@ public class PlaceStackGame : MonoBehaviour
 
     int levelsComplteded = 0;
 
-    string setupText = "Start med at de klodser der skal bruges.\nR�d: 1, Bl�: 2, Gr�n: 2, Gul: 3"; //"To start find the needed bricks.";
+    string setupText = "Start med at finde de klodser der skal bruges.\nRød: 1, Blå: 2, Grøn: 2, Gul: 3"; //"To start find the needed bricks.";
     string seprateText = "Separate";
-    string playText = "Stabel klodserne som vist og placer dem p� den tilh�rene cirkel."; //"Build the displayed stacks and place them in the circle.";
+    string playText = "Stabel klodserne som vist og placer dem på den tilhørene cirkel."; //"Build the displayed stacks and place them in the circle.";
 
     private bool fixStack = false; // Pls fix the gameplay loop :|
 
@@ -171,8 +172,11 @@ public class PlaceStackGame : MonoBehaviour
             item.SetActive(debugMode);
         }
 
-        AudioManager.Instance.ChangeMusic(AudioManager.SoundType.Background_Music);
-
+        if (musicOn)
+        {
+            AudioManager.Instance.ChangeMusic(AudioManager.SoundType.Background_Music);
+        }
+  
     }
 
     private void HandleBricksDetected(object sender, ObjectDetectedEventArgs e)
@@ -432,7 +436,7 @@ public class PlaceStackGame : MonoBehaviour
             {
                 levelsComplteded++;
                 DataLogger.Log($"stack","S_EVENT:FINISHED");
-                mainText.GetComponentInChildren<TMP_Text>().text = "Opgave l�st.\nGood gjort :)";
+                mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGodt gjort!";
                 StartCoroutine(WaitForTaskComplete());
             }
         }
@@ -440,7 +444,15 @@ public class PlaceStackGame : MonoBehaviour
 
     private void CalculateStacksFromSpawnpoints()
     {
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemf�rt: {levelsComplteded}";
+        if (levelReset)
+        {
+            mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGodt gjort!";
+        }
+        else
+        {
+            mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemført: {levelsComplteded}";
+        }
+
         DestroyCubes(1);
         for (int i = 0; i < spawnPoints.Length; i++)
         {
@@ -569,16 +581,15 @@ public class PlaceStackGame : MonoBehaviour
 
         }
 
-        for (int i = 0; i < stacksInFrame.Count; i++)
-        {
-            GameObject temp = GameUtils.MakeInteractionCirkle(stacksInFrame[i][0].worldPos, Color.gray);
-            temp.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
-            temp.transform.parent = cubeParent.transform.GetChild(1);
-        }
-
         if (debugMode)
         {
             DrawDebugStacks(stacksInFrame);
+            for (int i = 0; i < stacksInFrame.Count; i++)
+            {
+                GameObject temp = GameUtils.MakeInteractionCirkle(stacksInFrame[i][0].worldPos, Color.gray);
+                temp.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
+                temp.transform.parent = cubeParent.transform.GetChild(1);
+            }
         }
     }
 
@@ -962,21 +973,34 @@ public class PlaceStackGame : MonoBehaviour
         switch (adminAction)
         {
             case 1:
-                CalibratePosition();
+                musicOn = !musicOn;
+
+                if (musicOn)
+                {
+                    AudioManager.Instance.ChangeMusic(AudioManager.SoundType.Background_Music);
+                }
+                else
+                {
+                    AudioManager.Instance.StopMusic();
+                }
                 break;
 
             case 2:
-                showAllPoints = !showAllPoints;
+                CalibratePosition();
                 break;
 
             case 3:
+                showAllPoints = !showAllPoints;
+                break;
+
+            case 4:
                 for (int i = 0; i < complted.Length; i++)
                 {
                     complted[i] = true;
                 }
                 break;
 
-            case 4:
+            case 5:
                 float minX = Mathf.Min(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float maxX = Mathf.Max(rectPos1.transform.localPosition.x, rectPos2.transform.localPosition.x);
                 float minY = Mathf.Min(rectPos1.transform.localPosition.y, rectPos2.transform.localPosition.y);
@@ -987,13 +1011,13 @@ public class PlaceStackGame : MonoBehaviour
                 rectCenter.transform.position = planeCenter;
                 break;
 
-            case 5:
+            case 6:
                 ourPlaneRect = (Rect)tableAnchor.PlaneRect;
                 UpdateRectDispaly(ourPlaneRect);
                 rectCenter.transform.position = tableAnchor.transform.position;
                 break;
 
-            case 6:
+            case 7:
                 debugHand.SetActive(!debugHand.activeSelf);
                 break;
 
@@ -1005,9 +1029,10 @@ public class PlaceStackGame : MonoBehaviour
 
     private void UpdateDebugText()
     {
-        string[] texts = new string[8] {
+        string[] texts = new string[9] {
                          "Debug mode \"On\". \nTo disable detect \"big penguin\".",
                          debugCurrentSettingsText,
+                         "Music On: " + musicOn,
                          "Recalibrate",             
                          "Show all points:" + showAllPoints,
                          "Complet task",
@@ -1053,6 +1078,10 @@ public class PlaceStackGame : MonoBehaviour
         debugTestObjects.Add(GameUtils.AddText("Debug mode \"On\". \nTo disable detect \"big penguin\".", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.15f, 0), Color.white, 1.5f));
 
         debugTestObjects.Add(GameUtils.AddText("Current Settings", menuPos + parent.transform.forward * 0.18f + new Vector3(0, 0.018f, 0) + transform.right * 0.18f, Color.white, 1f));
+
+        GameObject music = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -4.5f, Color.blue);
+        music.transform.parent = parent.transform;
+        debugTestObjects.Add(GameUtils.AddText("Music On: " + musicOn, menuPos + xOffset * -4.5f + new Vector3(0, 0.01f, 0), Color.white, 0.8f));
 
         GameObject recalibrater = GameUtils.MakeInteractionCirkle(menuPos + xOffset * -3f, Color.blue);
         recalibrater.transform.parent = parent.transform;
@@ -1196,14 +1225,14 @@ public class PlaceStackGame : MonoBehaviour
             stacksToBuild = StackGenerator.GenerateStacks(briksToUse, minStackSize, maxStackSize, sliceMethod);
 
             //Turtoial stuf
-            if (levelsComplteded == 0)
-            {
-                stacksToBuild = turtoial1;
-            }
-            else if (levelsComplteded == 1)
-            {
-                stacksToBuild = turtoial2;
-            }
+            //if (levelsComplteded == 0)
+            //{
+            //    stacksToBuild = turtoial1;
+            //}
+            //else if (levelsComplteded == 1)
+            //{
+            //    stacksToBuild = turtoial2;
+            //}
 
             // Random punkter p� hele boret
             //spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect);
@@ -1253,8 +1282,9 @@ public class PlaceStackGame : MonoBehaviour
     {
         switch (levelsComplteded)
         {
+            case 0:
+            case 1:
             case 2:
-            case 3:
                 maxNumberOfBriksToUse = 2;
                 minStackSize = 1;
                 maxStackSize = 2;
@@ -1263,6 +1293,7 @@ public class PlaceStackGame : MonoBehaviour
                 maxDistHeadToSpwanpoint = 0.6f;
                 break;
 
+            case 3:
             case 4:
             case 5:
                 maxNumberOfBriksToUse = 4;

@@ -416,9 +416,9 @@ public static class GameUtils
         Vector2 pos = new Vector2(localheadPos.x, localheadPos.y);
         List<Vector2> vaildPoints = new List<Vector2>();
         int attempts = 0;
-        while (vaildPoints.Count < numberOfPoints)
+        while (vaildPoints.Count < numberOfPoints && attempts < 1000)
         {
-            Debug.Log($"Attempts: {++attempts}");
+            Debug.Log($"Attempts: {attempts}, Headpos: {headPos.position.ToString()}");
             vaildPoints = new List<Vector2>();
             List<Vector2> pointOnRightSide = new List<Vector2>();
             for (int i = 0; i < allPoints.Count; i++)
@@ -462,6 +462,16 @@ public static class GameUtils
 
             minDist -= 0.01f; // Decrease the minimum distance to find more valid points
             maxDist += 0.01f; // Increase the maximum distance to find more valid points
+
+            attempts++;
+
+            if (attempts >= 1000)
+            {
+                allPoints = DiskSampling.GenerateDiskSamples(tablePlane, 8, 50, 10);
+                localheadPos = tableAnchor.transform.InverseTransformPoint(headPos.position);
+                pos = new Vector2(localheadPos.x, localheadPos.y);
+                attempts = 0;
+            }
         }
 
         if (showPoints)
