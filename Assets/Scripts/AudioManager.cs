@@ -109,6 +109,14 @@ public class AudioManager : MonoBehaviour
         // Start the coroutine to play songs continuously
         _musicCoroutine = StartCoroutine(PlayMusicLoop(track));
     }
+
+    public void StopMusic()
+    {
+        _musicSource.Stop();
+        StopCoroutine(_musicCoroutine);
+        _musicCoroutine = null;
+    }
+
     private IEnumerator PlayMusicLoop(List<Sound> track)
     {
         while (true)

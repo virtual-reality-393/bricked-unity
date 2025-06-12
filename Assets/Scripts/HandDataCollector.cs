@@ -11,8 +11,8 @@ public class HandDataCollector : DataCollection
     
     protected override void StartTracking()
     {
-        _hand = Instantiate(GameManager.Instance.cubePrefab, hand.transform.position, Quaternion.identity);
-        _hand.GetComponent<Renderer>().material.color = Color.red;
+        //_hand = Instantiate(GameManager.Instance.cubePrefab, hand.transform.position, Quaternion.identity);
+        //_hand.GetComponent<Renderer>().material.color = Color.red;
         sb = new StringBuilder();
     }
 
@@ -21,16 +21,16 @@ public class HandDataCollector : DataCollection
         sb.Clear();
         Vector3 tableHandPos = hand.transform.position + hand.transform.right * (isRightHand ? -0.09f : 0.09f);
         tableHandPos.y = TableAnchor.transform.position.y;
-        _hand.transform.position = tableHandPos;
+        //_hand.transform.position = tableHandPos;
          
-        if (IsPointWithinPlane(tableHandPos))
-        {
-            _hand.GetComponent<Renderer>().material.color = Color.green;
-        }
-        else
-        {
-            _hand.GetComponent<Renderer>().material.color = Color.red;
-        }
+        //if (IsPointWithinPlane(tableHandPos))
+        //{
+        //    _hand.GetComponent<Renderer>().material.color = Color.green;
+        //}
+        //else
+        //{
+        //    _hand.GetComponent<Renderer>().material.color = Color.red;
+        //}
 
         sb.Append($"POS_PALM:{GetPlaneNormalizedCoordinates(tableHandPos).ToString("F5")}");
         

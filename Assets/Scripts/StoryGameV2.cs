@@ -179,8 +179,8 @@ public class StoryGameV2 : MonoBehaviour
             {
                 bricksInFrame[lto.labelName]++;
                 // DrawLiftTimeObject(lto);
-                GameObject circle = GameUtils.MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
-                drawnObjects.Add(circle);
+                //GameObject circle = GameUtils.MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, Color.white);
+                //drawnObjects.Add(circle);
             }
         }
 
@@ -232,8 +232,11 @@ public class StoryGameV2 : MonoBehaviour
                     {
                         color = Color.cyan;
                     }
+
                     GameObject circle = GameUtils.MakeInteractionCirkle(lto.obj.transform.position + offsetDir * -0.05f, color);
                     drawnObjects.Add(circle);
+                    
+
                     //drawnBricks.Add(circle);
 
                     //Debug code for skipping the investigating part bye only needing to talk to the "big penguin".

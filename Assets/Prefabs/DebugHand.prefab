@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _confidenceBehavior: 1
-  _systemGestureBehavior: 1
+  _systemGestureBehavior: 0
   _renderPhysicsCapsules: 0
   _skeletonMaterial: {fileID: 2100000, guid: 9c05c5a6e4902ff4082cfb34e5b64b2d, type: 2}
   _capsuleMaterial: {fileID: 0}
@@ -361,7 +361,7 @@ MonoBehaviour:
   _ovrMesh: {fileID: 0}
   _ovrSkeleton: {fileID: 0}
   _confidenceBehavior: 1
-  _systemGestureBehavior: 1
+  _systemGestureBehavior: 0
   _systemGestureMaterial: {fileID: 2100000, guid: 9d107f2f043e1ed408b970f146718017, type: 2}
 --- !u!137 &8072173080027013238
 SkinnedMeshRenderer:
