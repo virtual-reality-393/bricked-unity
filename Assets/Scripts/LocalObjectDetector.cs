@@ -119,6 +119,9 @@ public class LocalObjectDetector : ObjectDetector
         while (true)
         {
             TextureConverter.ToTensor(_modelInput, _modelInputTensor, _tf);
+
+            var position = eye.position;
+            var rotation = eye.rotation;
             var brickDetectionScheduler = _brickDetectionWorker.ScheduleIterable(_modelInputTensor);
             sw.Restart();
             timeTaken = 0;
@@ -147,7 +150,7 @@ public class LocalObjectDetector : ObjectDetector
 
             var brickOutput = _brickDetectionWorker.PeekOutput() as Tensor<float>;
             Tensor<float> stackOutput = null;
-            
+
             brickOutput.ReadbackRequest();
             
             if (includeStacks)
@@ -166,7 +169,8 @@ public class LocalObjectDetector : ObjectDetector
             }
             
             var brickTensor = brickOutput.ReadbackAndClone();
-            _internalDetection = GetBrickDetections(brickTensor);
+            
+            _internalDetection = GetBrickDetections(brickTensor,position,rotation);
 
             
             HandleBricksDetected(GetBricks());
@@ -246,7 +250,7 @@ public class LocalObjectDetector : ObjectDetector
         return res;
     }
 
-    private List<DetectedObject> GetBrickDetections(Tensor<float> brickTensor)
+    private List<DetectedObject> GetBrickDetections(Tensor<float> brickTensor,Vector3 position, Quaternion rotation)
     {
         List<DetectionBox> bboxes = new List<DetectionBox>(); 
         
@@ -308,7 +312,7 @@ public class LocalObjectDetector : ObjectDetector
             // Debug.LogError($"Pose: {pose.rotation.eulerAngles}");
             // Debug.LogError($"Eye: {eye.rotation.eulerAngles}");
             // Debug.LogError($"Diff {eye.rotation.eulerAngles-pose.rotation.eulerAngles}");
-            var ray = new Ray(eye.position,eye.rotation*directionInCamera);
+            var ray = new Ray(position,rotation*directionInCamera);
 
 
 
