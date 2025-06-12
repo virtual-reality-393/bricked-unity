@@ -1328,7 +1328,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1940031384}
   m_Father: {fileID: 1638815683}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &286439990
@@ -5033,7 +5034,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e933e81d3c20c74ea6fdc708a67e3a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useRecommendedMSAALevel: 1
   _monoscopic: 0
   _sharpenType: 0
   _enableDynamicResolution: 1
@@ -8408,12 +8408,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da81a8a10cb956e4ea98dccc376c4ad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  environmentDepthManager: {fileID: 1756451587}
   environmentRaycastManager: {fileID: 1756451586}
   webCamTextureManager: {fileID: 1756451584}
-  objectDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
+  stackDetector: {fileID: 5022602860645237092, guid: b8545ea97bea525419ad4efee59d3977, type: 3}
+  brickDetector: {fileID: 5022602860645237092, guid: 849a680b802fac34b8f0108a3cfcc807, type: 3}
   letterbox: {fileID: 1655954082}
   _debugRayPrefab: {fileID: 0}
+  eye: {fileID: 1940031384}
+  timeTaken: 0
+  includeStacks: 0
 --- !u!4 &1655954081
 Transform:
   m_ObjectHideFlags: 0
@@ -10658,6 +10661,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1347685730}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1940031383
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1940031384}
+  m_Layer: 0
+  m_Name: LeftEye
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1940031384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1940031383}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 286439989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1943601797
 GameObject:
   m_ObjectHideFlags: 0
@@ -11387,9 +11421,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a43c89cf2410c54d80734ad204b6f06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  brickPrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
-  stackPrefab: {fileID: 0}
+  cubePrefab: {fileID: 552255446577296144, guid: 36e3b2e2c692e8e41baba6e713abf099, type: 3}
+  stackPrefab: {fileID: 5694847630236803883, guid: 879084f2e54bb904499144d381cf9ccc, type: 3}
   cylinderPrefab: {fileID: 2637834737785774025, guid: 4c6cf0e2921a0e14b86a337bd78eb153, type: 3}
+  blueBrickPrefab: {fileID: 7331605140929913549, guid: 1d1266dff4707ff4a9918996a748a2d6, type: 3}
+  redBrickPrefab: {fileID: 7331605140929913549, guid: 4d9a829309a904f4c9a782a7e62ad666, type: 3}
+  greenBrickPrefab: {fileID: 7331605140929913549, guid: 13624ef38b52ea64dbc0009ae935e7f2, type: 3}
+  yellowBrickPrefab: {fileID: 7331605140929913549, guid: 7d801291168a1544da6597dd237dc1e6, type: 3}
 --- !u!4 &2030986499
 Transform:
   m_ObjectHideFlags: 0
@@ -11489,7 +11527,7 @@ MonoBehaviour:
     keepShown: 0
   minCandidateLifetime: 3
   maxCandidateLifetime: 5
-  centerCam: {fileID: 0}
+  centerCam: {fileID: 1908727816}
   anchor: {fileID: 0}
 --- !u!1 &2039127456
 GameObject:
