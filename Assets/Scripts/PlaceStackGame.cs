@@ -6,6 +6,7 @@ using System.Net;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using Meta.WitAi.Composer;
 
 public class PlaceStackGame : MonoBehaviour
 {
@@ -87,6 +88,12 @@ public class PlaceStackGame : MonoBehaviour
 
     private int prevPenguin = 0;
     private int currPenguin = 0;
+
+    List<List<string>> turtoial1 = new List<List<string>>
+    {
+        new List<string>{ "red"},
+        new List<string>{ "blue" },
+    };
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -700,6 +707,11 @@ public class PlaceStackGame : MonoBehaviour
 
             //Generate stacks to build based on current settings
             stacksToBuild = StackGenerator.GenerateStacks(briksToUse, minStackSize, maxStackSize, sliceMethod);
+
+            if (levelsComplteded == 0)
+            {
+                stacksToBuild = turtoial1;
+            }
 
             //Finds the position to place the stacks on the table
             spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect, centerCam, minDistHeadToSpwanpoint, maxDistHeadToSpwanpoint, pointSide, showAllPoints);
