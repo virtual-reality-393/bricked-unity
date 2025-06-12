@@ -16,7 +16,7 @@ public class PlaceStackGame : MonoBehaviour
     public GameObject cubeParent;
 
     public GameObject debugHand;
-    private Transform[] spawnPoints;
+    public Transform[] spawnPoints;
 
     public int maxStackSize = 4;
     public int minStackSize = 1;
@@ -34,7 +34,7 @@ public class PlaceStackGame : MonoBehaviour
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
     Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 2 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
-    List<List<string>> stacksToBuild = new();
+    public List<List<string>> stacksToBuild = new();
 
     private GameState state = GameState.Setup;
     string[] objectsToDetect = { "red", "green", "blue", "yellow" };

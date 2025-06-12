@@ -72,6 +72,7 @@ public class DetectedObjectManager : MonoBehaviour
         foreach (var detectedObject in detectedObjects)
         {
             bool shouldSpawnObject = true;
+            if (!objectInstances.ContainsKey(detectedObject.labelName)) continue;
             for (var i = 0; i < LifeTimeObjectsCandidates[detectedObject.labelName].Count; i++)
             {
                 bool shouldIncreaseLifetime = false;
