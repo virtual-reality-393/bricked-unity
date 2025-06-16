@@ -16,6 +16,8 @@ public class PlaceStackGame : MonoBehaviour
     public GameObject canvas;
     public GameObject cubeParent;
 
+    public GameObject progressBuildPrefab;
+    ProgressBuild progressBuild;
     public GameObject debugHand;
     public Transform[] spawnPoints;
 
@@ -100,6 +102,8 @@ public class PlaceStackGame : MonoBehaviour
     {
         objectDetection.OnObjectsDetected += HandleBricksDetected;
         objectDetection.OnStacksDetected += HandleStacksDetected;
+
+        progressBuild = progressBuildPrefab.GetComponent<ProgressBuild>();
 
         rectPos1 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
         rectPos1.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
@@ -344,6 +348,7 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
+                progressBuild.IncrementProgress();
                 DataLogger.Log($"stack","S_EVENT:FINISHED");
                 StartCoroutine(WaitForTaskComplete());
             }
@@ -936,11 +941,17 @@ private bool CheckIfAllDone()
         //GameUtils.MakeInteractionCirkle(displayAnchor, Color.magenta);
 
         offsetDir = (new Vector3(displayAnchor.x, 0, displayAnchor.z) - new Vector3(centerCam.position.x, 0, centerCam.position.z)).normalized;
+        
+        Vector3 offsetDirX = Vector3.Cross(Vector3.up, offsetDir).normalized;
+
         // Tjecks if the displayAnchor is in the rect
         if (Vector3.Dot(centerCam.forward, displayAnchor + offsetDir * 0.65f) < 0)
         {
             offsetDir = -offsetDir;
         }
+
+        progressBuild.transform.position = displayAnchor + offsetDir * 0.7f;// + offsetDirX * 0.5f;
+        progressBuild.transform.Rotate(Vector3.up, -90);
 
         displayPos = displayAnchor + offsetDir * 0.65f;
 
