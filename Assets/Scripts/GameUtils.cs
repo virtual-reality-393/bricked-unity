@@ -47,7 +47,7 @@ public static class GameUtils
         return res;
     }
 
-    static IEnumerator FallingBrickEffect(GameObject brick, Vector3 startPos, Vector3 endPos, float timeToComplete,
+    public static IEnumerator FallingBrickEffect(GameObject brick, Vector3 startPos, Vector3 endPos, float timeToComplete,
         float t = 0f, bool disableTop = false, bool disableBottom = false)
     {
         var spawned = false;
