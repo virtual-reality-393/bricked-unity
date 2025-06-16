@@ -43,7 +43,7 @@ public class PlaceStackGame : MonoBehaviour
     List<GameObject> drawnBricks = new List<GameObject>();
 
     float[] dists;
-    bool[] complted;
+    public bool[] complted;
     int[] spawnpointNoDetectionCounts;
     int[] spawnpointWrongStackCounts;
     int[] spawnpointRightStackCounts;
@@ -116,7 +116,7 @@ public class PlaceStackGame : MonoBehaviour
         debugMenu = new GameObject("DebugMenu");
         MakeDebugMenu(debugMenu);
         debugMenu.SetActive(debugMode);
-
+        
         rectDisplay = new GameObject("RectDisplay");
         MakeRectDisplay(rectDisplay);
         rectDisplay.SetActive(debugMode);

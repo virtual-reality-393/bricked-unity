@@ -3748,6 +3748,7 @@ MonoBehaviour:
   canvas: {fileID: 330303403}
   cubeParent: {fileID: 931900774}
   debugHand: {fileID: 436609520}
+  spawnPoints: []
   maxStackSize: 4
   minStackSize: 2
   sliceMethod: 1
@@ -10709,6 +10710,7 @@ MonoBehaviour:
   handPrefab: {fileID: 7026503122555455398, guid: 12faf0f293a797649951fc01fb4694e3, type: 3}
   targetHand: {fileID: 1662083726}
   detectedObjectManager: {fileID: 507105663}
+  game: {fileID: 507105661}
   movementSpeed: 0.5
 --- !u!4 &1757740781
 Transform:
