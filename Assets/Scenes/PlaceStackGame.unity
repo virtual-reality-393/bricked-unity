@@ -3810,6 +3810,7 @@ MonoBehaviour:
   cubeParent: {fileID: 931900774}
   progressBuildPrefab: {fileID: 101175189}
   debugHand: {fileID: 436609520}
+  spawnPoints: []
   maxStackSize: 4
   minStackSize: 2
   sliceMethod: 1
@@ -3819,6 +3820,7 @@ MonoBehaviour:
   distToPointThreshold: 0.08
   stackThreshold: 0.08
   musicOn: 1
+  complted: 
   tableAnchor: {fileID: 0}
   ourPlaneRect:
     serializedVersion: 2

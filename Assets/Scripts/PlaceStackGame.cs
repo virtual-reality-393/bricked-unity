@@ -18,8 +18,11 @@ public class PlaceStackGame : MonoBehaviour
 
     public GameObject progressBuildPrefab;
     ProgressBuild progressBuild;
+    
     public GameObject debugHand;
     public Transform[] spawnPoints;
+    
+    public List<List<GameObject>> visualStacks = new List<List<GameObject>>();
 
     public int maxStackSize = 4;
     public int minStackSize = 1;
@@ -463,7 +466,7 @@ public class PlaceStackGame : MonoBehaviour
                 }
             }
         }
-
+        
         if (debugMode)
         {
             //Display the stacks the model ses
@@ -481,7 +484,9 @@ public class PlaceStackGame : MonoBehaviour
     IEnumerator WaitForTaskComplete()
     {
         levelReset = true;
-        yield return new WaitForSeconds(2);
+        BrickDisappear.DisappearStacks(visualStacks);
+        yield return new WaitForSeconds(4);
+        visualStacks.Clear();
         makeNewLevel = true;
         levelReset = false;
     }
@@ -724,10 +729,7 @@ public class PlaceStackGame : MonoBehaviour
             for (int i = 0; i < stacksToBuild.Count; i++)
             {
                 List<GameObject> tempStack = GameUtils.DrawStack(stacksToBuild[i], spawnPoints[i].position + new Vector3(0,0.025f,0) + offsetDir * 0.07f);
-                foreach (GameObject item in tempStack)
-                {
-                    item.transform.parent = cubeParent.transform.GetChild(0);
-                }
+                visualStacks.Add(tempStack);
                 GameObject cirkel = GameUtils.MakeInteractionCirkle(spawnPoints[i].position + new Vector3(0,0.015f,0), Color.white);
                 cirkel.transform.localScale = new Vector3(0.08f, 0.001f, 0.08f);
                 cirkel.transform.parent = spawnPoints[i];
@@ -842,7 +844,7 @@ public class PlaceStackGame : MonoBehaviour
                 break;
         }
     }
-private bool CheckIfAllDone()
+    private bool CheckIfAllDone()
     {
         foreach (bool b in complted)
         {
