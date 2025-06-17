@@ -3,10 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Meta.XR.MRUtilityKit;
-using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class DetectedObjectManager : MonoBehaviour
 {
@@ -14,21 +11,17 @@ public class DetectedObjectManager : MonoBehaviour
     [Header("Detection Settings")]
     public ObjectDetector detector;
     public float distanceThreshold = 0.5f;
-    public Dictionary<string,List<LifeTimeObject>> LifeTimeObjectsCandidates = new();
-    public Dictionary<string,List<LifeTimeObject>> LifeTimeObjects = new();
     public List<InstanceInfo> instanceInfo = new();
-    private Dictionary<string, InstanceInfo> _instanceInfo = new();
-    private Dictionary<string, List<GameObject>> objectInstances;
+    public Dictionary<string,List<LifeTimeObject>> LifeTimeObjects = new();
     public int minCandidateLifetime;
     public int maxCandidateLifetime;
-
-    public Transform centerCam;
     
-    public OVRSpatialAnchor anchor;
-    private GameObject anchorObject;
+    private Dictionary<string,List<LifeTimeObject>> _lifeTimeObjectsCandidates = new();
+    private Dictionary<string, InstanceInfo> _instanceInfo = new();
+    private Dictionary<string, List<GameObject>> _objectInstances;
 
 
-    public static readonly ReadOnlyDictionary<int, string> DetectedLabelIdxToLabelName = new(new Dictionary<int, string>
+    private static readonly ReadOnlyDictionary<int, string> DetectedLabelIdxToLabelName = new(new Dictionary<int, string>
     {
         {0,"red"},
         {1,"green"},
@@ -42,41 +35,37 @@ public class DetectedObjectManager : MonoBehaviour
         {9,"human"},
     });
 
-    IEnumerator Start()
+    private IEnumerator Start()
     {
         detector.OnObjectsDetected += OnObjectDetected;
-        // anchorObject = new GameObject("DetectedObjectManager");
-        // anchor = anchorObject.AddComponent<OVRSpatialAnchor>();
-        // Debug.LogError("Creating anchor");
-        // yield return new WaitUntil(() => anchor.Created);
-        // Debug.LogError("Created anchor");
-        objectInstances = new();
+        _objectInstances = new Dictionary<string, List<GameObject>>();
         
         foreach (var maxInstance in instanceInfo)
         {
-            objectInstances.Add(maxInstance.label, new List<GameObject>());
+            _objectInstances.Add(maxInstance.label, new List<GameObject>());
             _instanceInfo.Add(maxInstance.label, maxInstance);
         }
         foreach (var labelName in DetectedLabelIdxToLabelName.Values)
         {
             LifeTimeObjects.Add(labelName,new List<LifeTimeObject>());
-            LifeTimeObjectsCandidates.Add(labelName,new List<LifeTimeObject>());
+            _lifeTimeObjectsCandidates.Add(labelName,new List<LifeTimeObject>());
         }
 
         yield return null;
     }
 
-    public void OnObjectDetected(object sender, ObjectDetectedEventArgs args)
+    private void OnObjectDetected(object sender, ObjectDetectedEventArgs args)
     {
         var detectedObjects = args.DetectedObjects;
         foreach (var detectedObject in detectedObjects)
         {
             bool shouldSpawnObject = true;
-            for (var i = 0; i < LifeTimeObjectsCandidates[detectedObject.labelName].Count; i++)
+            if (!_objectInstances.ContainsKey(detectedObject.labelName)) continue;
+            for (var i = 0; i < _lifeTimeObjectsCandidates[detectedObject.labelName].Count; i++)
             {
                 bool shouldIncreaseLifetime = false;
                 
-                var l = LifeTimeObjectsCandidates[detectedObject.labelName][i];
+                var l = _lifeTimeObjectsCandidates[detectedObject.labelName][i];
                 if (Vector3.Distance(l.obj.transform.position, detectedObject.worldPos) < distanceThreshold)
                 {
                     shouldSpawnObject = false;
@@ -93,11 +82,11 @@ public class DetectedObjectManager : MonoBehaviour
             {
                 var candiateObj = new GameObject(detectedObject.labelName);
                 candiateObj.transform.position = detectedObject.worldPos;
-                LifeTimeObjectsCandidates[detectedObject.labelName].Add(new LifeTimeObject(detectedObject.labelIdx,2,candiateObj,detectedObject.labelName));
+                _lifeTimeObjectsCandidates[detectedObject.labelName].Add(new LifeTimeObject(detectedObject.labelIdx,2,candiateObj,detectedObject.labelName));
             }
         }
 
-        foreach (var l in LifeTimeObjectsCandidates.Values)
+        foreach (var l in _lifeTimeObjectsCandidates.Values)
         {
             for (int i = l.Count-1;i>=0; i--)
             {
@@ -113,7 +102,7 @@ public class DetectedObjectManager : MonoBehaviour
             }
         }
 
-        foreach (var candidateList in LifeTimeObjectsCandidates.Values)
+        foreach (var candidateList in _lifeTimeObjectsCandidates.Values)
         {
             foreach (var lifeTimeObject in candidateList)
             {
@@ -154,18 +143,18 @@ public class DetectedObjectManager : MonoBehaviour
         UpdateLifetime();
     }
 
-    private GameObject SpawnLifetimeObject(LifeTimeObject v)
+    private void SpawnLifetimeObject(LifeTimeObject v)
     {
-        if (objectInstances[v.labelName].Count >= _instanceInfo[v.labelName].maxInstances)
+        if (_objectInstances[v.labelName].Count >= _instanceInfo[v.labelName].maxInstances)
         {
-            var closestObj = objectInstances[v.labelName].GetClosest(v.obj.transform.position, x => !x.activeSelf || x.name.Contains("KEEP"));
+            var closestObj = _objectInstances[v.labelName].GetClosest(v.obj.transform.position, x => !x.activeSelf || x.name.Contains("KEEP"));
             if (closestObj != null)
             {
                 LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,_instanceInfo[v.labelName].defaultLifetime,closestObj,v.labelName));
                 closestObj.transform.position = v.obj.transform.position;
                 closestObj.SetActive(true);
             }
-            return closestObj;
+            return;
         }
 
         GameObject go = new GameObject(v.labelName);
@@ -183,10 +172,7 @@ public class DetectedObjectManager : MonoBehaviour
         }
         
         LifeTimeObjects[v.labelName].Add(new LifeTimeObject(v.labelIdx,_instanceInfo[v.labelName].defaultLifetime,go,v.labelName));
-        objectInstances[v.labelName].Add(go);
-
-
-        return go;
+        _objectInstances[v.labelName].Add(go);
     }
 
 
@@ -215,12 +201,12 @@ public class DetectedObjectManager : MonoBehaviour
             {
                 if (l[i].lifeTime <= 0)
                 {
-                    objectInstances[l[i].labelName][0].SetActive(_instanceInfo[l[i].labelName].keepShown);
+                    _objectInstances[l[i].labelName][0].SetActive(_instanceInfo[l[i].labelName].keepShown);
                     l.RemoveAt(i);
                 }
                 else
                 {
-                    objectInstances[l[i].labelName][0].SetActive(true);
+                    _objectInstances[l[i].labelName][0].SetActive(true);
                 }
             }
         }
