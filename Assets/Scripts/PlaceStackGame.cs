@@ -106,7 +106,15 @@ public class PlaceStackGame : MonoBehaviour
         objectDetection.OnObjectsDetected += HandleBricksDetected;
         objectDetection.OnStacksDetected += HandleStacksDetected;
 
-        progressBuild = progressBuildPrefab.GetComponent<ProgressBuild>();
+        if(progressBuildPrefab == null)
+        {
+            Debug.LogError("ProgressBuild prefab is not assigned in the inspector.");
+            return;
+        }
+        else
+        {
+            progressBuild = progressBuildPrefab.GetComponent<ProgressBuild>();
+        }
 
         rectPos1 = GameUtils.MakeInteractionCirkle(new Vector3(0, 0, 0), Color.cyan);
         rectPos1.transform.localScale = new Vector3(0.03f, 0.001f, 0.03f);
@@ -351,7 +359,11 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                progressBuild.IncrementProgress();
+                if(progressBuild != null)
+                {
+                    //progressBuild.IncrementProgress();
+                    progressBuild.IncrementRandom();
+                }
                 DataLogger.Log($"stack","S_EVENT:FINISHED");
                 StartCoroutine(WaitForTaskComplete());
             }
@@ -695,7 +707,7 @@ public class PlaceStackGame : MonoBehaviour
         DestroySpawnPositions();
         if (spawnPositions.transform.childCount == 0)
         {
-            //LevelProgress();
+            LevelProgress();
     
             List<string> briks = new List<string>();
 

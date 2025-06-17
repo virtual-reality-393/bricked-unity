@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class ProgressBuild : MonoBehaviour
 {
-
+    public int minProgressValue = 3;
+    public int maxProgressValue = 5;
     int progress = 0; // Progress value, can be set in the Inspector or modified at runtime
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -34,6 +35,15 @@ public class ProgressBuild : MonoBehaviour
         Vector3 position = brick.transform.position; // Get the position of the current child object
         GameManager.Instance.StartCoroutine(GameUtils.FallingBrickEffect(brick, position + Vector3.up * 0.12f, position, 0.8f)); // Start the falling effect coroutine
         progress++;
+    }
+
+    public void IncrementRandom()
+    {
+        int randomProgress = Random.Range(minProgressValue, maxProgressValue + 1); // Generate a random progress value between v1 and v2
+        for (int i = 0; i < randomProgress; i++)
+        {
+            IncrementProgress(); // Increment progress for the random value
+        }
     }
 
     // Method to reset progress to zero
