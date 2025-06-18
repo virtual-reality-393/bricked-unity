@@ -202,27 +202,25 @@ public class PlaceStackGame : MonoBehaviour
                 //Default settings
                 maxStackSize = 5;
                 minStackSize = 2;
+                maxNumberOfBriksToUse = 8;
                 sliceMethod = SliceMethod.Random;
                 minDistHeadToSpwanpoint = 0.2f;
-                maxDistHeadToSpwanpoint = 0.7f;
+                maxDistHeadToSpwanpoint = 0.6f;
                 pointSide = PointSide.Both;
-                Debug.LogError("Human detected: Slice: Random - Max Size: 5 - Min Size: 2 - Range: 0.2-0.7");
+                Debug.LogError("Human detected: Slice: Random - Max Size: 5 - Min Size: 2 - Nr. briks: 8 - Range: 0.2-0.6");
 
-                if(!endlessMode)
-                {
-                    progressBuild.ComplteBuild();
-                }
             }
             else if (brick.labelName == "sheep" && !debugMode)
             {
                 //One big stack
                 maxStackSize = 8;
                 minStackSize = 4;
+                maxNumberOfBriksToUse = 8;
                 sliceMethod = SliceMethod.Max;
                 minDistHeadToSpwanpoint = 0.1f;
                 maxDistHeadToSpwanpoint = 0.4f;
                 pointSide = PointSide.Both;
-                Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4 - Range: 0.1-0.4");
+                Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4 - Nr. briks: 8 - Range: 0.1-0.4");
 
                 if (progressBuild.IsBuildComplete())
                 {
@@ -244,21 +242,29 @@ public class PlaceStackGame : MonoBehaviour
                 //many small stacks
                 maxStackSize = 3;
                 minStackSize = 1;
+                maxNumberOfBriksToUse = 6;
                 sliceMethod = SliceMethod.Random;
                 minDistHeadToSpwanpoint = 0.5f;
-                maxDistHeadToSpwanpoint = 0.8f;
+                maxDistHeadToSpwanpoint = 0.7f;
                 pointSide = PointSide.Both;
-                Debug.LogError("Pig detected: Slice: Random - Max Size: 3 - Min Size: 1 - Range: 0.5-0.8");
+                Debug.LogError("Pig detected: Slice: Random - Max Size: 3 - Min Size: 1 - Nr. briks: 6 - Range: 0.5-0.7");
             }
             else if (brick.labelName == "lion")
             {
-                maxStackSize = 4;
-                minStackSize = 2;
-                sliceMethod = SliceMethod.Min;
-                minDistHeadToSpwanpoint = 0.2f;
-                maxDistHeadToSpwanpoint = 0.5f;
-                pointSide = PointSide.Both;
-                Debug.LogError("Lion detected: Slice: Min - Max Size: 4 - Min Size: 2 - Range: 0.2-0.5");
+                int newMin = Random.Range(1, 5);
+                int newMax = Random.Range(5, 9);
+                float newMinDist = Random.Range(0.1f, 0.3f);
+                float newMaxDist = Random.Range(0.5f, 0.8f);
+
+                minStackSize = newMin;
+                maxStackSize = newMax;
+                minDistHeadToSpwanpoint = newMinDist;
+                maxDistHeadToSpwanpoint = newMaxDist;
+
+                sliceMethod = (SliceMethod)Random.Range(0, 4);
+
+                maxNumberOfBriksToUse = Random.Range(6, 9);
+                Debug.LogError($"Lion detected: Slice: {sliceMethod} - Max Size: {maxStackSize} - Min Size: {minStackSize} - Nr. briks: {maxNumberOfBriksToUse} - Range: {minDistHeadToSpwanpoint.ToString("0.00")}-{maxDistHeadToSpwanpoint.ToString("0.00")}");
             }
         });
 
@@ -767,7 +773,7 @@ public class PlaceStackGame : MonoBehaviour
         DestroySpawnPositions();
         if (spawnPositions.transform.childCount == 0)
         {
-            LevelProgress();
+            //LevelProgress();
     
             List<string> briks = new List<string>();
 
@@ -790,10 +796,12 @@ public class PlaceStackGame : MonoBehaviour
             //Generate stacks to build based on current settings
             stacksToBuild = StackGenerator.GenerateStacks(briksToUse, minStackSize, maxStackSize, sliceMethod);
 
-            if (levelsComplteded == 0)
-            {
-                stacksToBuild = turtoial1;
-            }
+            TurtoialLevels();
+
+            //if (levelsComplteded == 0)
+            //{
+            //    stacksToBuild = turtoial1;
+            //}
 
             //Finds the position to place the stacks on the table
             spawnPoints = GameUtils.DiskSampledSpawnPoints(tableAnchor, stacksToBuild.Count, spawnPositions.transform, ourPlaneRect, centerCam, minDistHeadToSpwanpoint, maxDistHeadToSpwanpoint, pointSide, showAllPoints);
@@ -913,6 +921,67 @@ public class PlaceStackGame : MonoBehaviour
 
                     maxNumberOfBriksToUse = Random.Range(6, 9);
                 }
+                break;
+        }
+    }
+
+    private void TurtoialLevels()
+    {
+        switch (levelsComplteded)
+        {
+            case 0:
+                stacksToBuild = new List<List<string>>
+                                {
+                                    new List<string>{ "red"},
+                                    new List<string>{ "blue" },
+                                };
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.4f;
+                break;
+
+            case 1:
+                stacksToBuild = new List<List<string>>
+                                {
+                                    new List<string>{ "red"},
+                                    new List<string>{ "green"},
+                                    new List<string>{ "blue"},
+                                    new List<string>{ "yellow"},
+                                };
+                minDistHeadToSpwanpoint = 0.3f;
+                maxDistHeadToSpwanpoint = 0.7f;
+                break;
+
+            case 2:
+                stacksToBuild = new List<List<string>>
+                                {
+                                    new List<string>{ "red", "blue"},
+                                    new List<string>{ "green", "yellow" },
+                                };
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.4f;
+                break;
+
+            case 3:
+                stacksToBuild = new List<List<string>>
+                                {
+                                    new List<string>{ "blue", "yellow", "red", "green" },
+                                };
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.6f;
+                break;
+
+            case 4:
+                stacksToBuild = new List<List<string>>
+                                {
+                                    new List<string>{ "yellow"},
+                                    new List<string>{ "blue" , "green"},
+                                    new List<string>{ "green" , "yellow", "blue", "red"},
+                                };
+                minDistHeadToSpwanpoint = 0.2f;
+                maxDistHeadToSpwanpoint = 0.7f;
+                break;
+
+            default:
                 break;
         }
     }
