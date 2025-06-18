@@ -40,7 +40,7 @@ public class BrickDisappear : MonoBehaviour
                             i > 0));
                     }
                     
-                    circle.transform.DOScale(Vector3.zero, 1f).SetEase(Ease.InCubic).SetDelay(0.25f * (stack.Count)+0.2f+timeTaken).Play().onComplete = () => Destroy(circle,0.2f);
+                    circle.transform.DOScale(Vector3.zero, 1f).SetEase(Ease.InCubic).SetDelay((0.25f * (stack.Count))*0.6f+0.2f+timeTaken).Play().onComplete = () => Destroy(circle,0.2f);
 
                     
                 };
