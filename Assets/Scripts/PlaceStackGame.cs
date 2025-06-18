@@ -37,6 +37,7 @@ public class PlaceStackGame : MonoBehaviour
 
     bool taskComplet = false;
     bool makeNewLevel = false;
+    bool endlessMode = false;
 
     Dictionary<string, int> bricksInFrame = new Dictionary<string, int>();
     Dictionary<string, int> briksToBuildStack = new Dictionary<string, int> { { "red", 1 }, { "green", 2 }, { "blue", 2 }, { "yellow", 3 }, { "magenta", 0 } };
@@ -206,6 +207,11 @@ public class PlaceStackGame : MonoBehaviour
                 maxDistHeadToSpwanpoint = 0.7f;
                 pointSide = PointSide.Both;
                 Debug.LogError("Human detected: Slice: Random - Max Size: 5 - Min Size: 2 - Range: 0.2-0.7");
+
+                if(!endlessMode)
+                {
+                    progressBuild.ComplteBuild();
+                }
             }
             else if (brick.labelName == "sheep" && !debugMode)
             {
@@ -217,6 +223,10 @@ public class PlaceStackGame : MonoBehaviour
                 maxDistHeadToSpwanpoint = 0.4f;
                 pointSide = PointSide.Both;
                 Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4 - Range: 0.1-0.4");
+                
+                endlessMode = true;
+                progressBuild.ResetProgress();
+                state = GameState.Play;
             }
             else if (brick.labelName == "pig" && !debugMode)
             {
@@ -315,6 +325,10 @@ public class PlaceStackGame : MonoBehaviour
             {
                 Play();
             }
+            else if (state == GameState.End)
+            {
+                End();
+            }
         }
     }
 
@@ -344,7 +358,7 @@ public class PlaceStackGame : MonoBehaviour
     private void Play()
     {
         if (levelReset) return;
-        mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
+        mainText.transform.position = displayPos + new Vector3(0, 0.25f, 0);
         mainText.transform.GetChild(0).LookAt(centerCam);
         mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
 
@@ -359,15 +373,36 @@ public class PlaceStackGame : MonoBehaviour
             if (taskComplet && !levelReset)
             {
                 levelsComplteded++;
-                if(progressBuild != null)
+                if(progressBuild != null && !endlessMode)
                 {
                     //progressBuild.IncrementProgress();
                     progressBuild.IncrementRandom();
                 }
                 DataLogger.Log($"stack","S_EVENT:FINISHED");
+                
+                if (progressBuild.IsBuildComplete() && !endlessMode)
+                {
+                    state = GameState.End;
+                    return;
+                }
+
                 StartCoroutine(WaitForTaskComplete());
             }
         }
+    }
+
+    public void End()
+    {
+        DestroyCubes(0);
+        DestroySpawnPositions();
+
+        mainText.transform.position = displayPos + new Vector3(0, 0.30f, 0);
+        mainText.transform.GetChild(0).LookAt(centerCam);
+        mainText.transform.GetChild(0).Rotate(Vector3.up, 180);
+        mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGodt gjort!";
+
+        progressBuild.transform.position = displayAnchor + offsetDir * 0.4f;
+        progressBuild.transform.Rotate(Vector3.up, 10 * Time.deltaTime);
     }
 
     private void CalculateStacks()
@@ -376,9 +411,13 @@ public class PlaceStackGame : MonoBehaviour
         {
             mainText.GetComponentInChildren<TMP_Text>().text = "Opgave løst.\nGodt gjort!";
         }
-        else
+        else if (endlessMode)
         {
             mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemført: {levelsComplteded}";
+        }
+        else
+        {
+            mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
         }
 
         float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
@@ -964,12 +1003,12 @@ public class PlaceStackGame : MonoBehaviour
             offsetDir = -offsetDir;
         }
 
-        progressBuild.transform.position = displayAnchor + offsetDir * 0.7f;// + offsetDirX * 0.5f;
+        progressBuild.transform.position = displayAnchor + offsetDir * 0.73f;// + offsetDirX * 0.5f;
         progressBuild.transform.Rotate(Vector3.up, -90);
 
         displayPos = displayAnchor + offsetDir * 0.65f;
 
-        mainText.transform.position = displayPos + new Vector3(0, 0.15f, 0);
+        mainText.transform.position = displayPos + new Vector3(0, 0.25f, 0);
 
         rectPos1.transform.parent = tableAnchor.transform;
         rectPos2.transform.parent = tableAnchor.transform;
@@ -987,7 +1026,8 @@ public class PlaceStackGame : MonoBehaviour
 public enum GameState
 {
     Setup,
-    Play
+    Play,
+    End
 }
 
 public enum PointSide

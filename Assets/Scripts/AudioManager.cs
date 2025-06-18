@@ -10,7 +10,8 @@ public class AudioManager : MonoBehaviour
     {
         Stack_Complete,
         Level_Complete,
-        Background_Music
+        Background_Music,
+        legoBuild
         // Add more sound types as needed
     }
 
