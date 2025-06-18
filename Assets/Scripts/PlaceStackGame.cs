@@ -290,6 +290,7 @@ public class PlaceStackGame : MonoBehaviour
     private void HandleStacksDetected(object sender, StackDetectedEventArgs e)
     {
         stacksInFrame = new List<List<DetectedObject>>();
+        
         e.DetectedStacks.ForEach(stack =>
         {
             List<DetectedObject> tempStack = new List<DetectedObject>();
@@ -441,7 +442,8 @@ public class PlaceStackGame : MonoBehaviour
         else
         {
             mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
-        }
+        } 
+        
 
         float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
         List<int> ints = GameUtils.ClosestStacks(distMat);
@@ -563,7 +565,7 @@ public class PlaceStackGame : MonoBehaviour
             t.gameObject.SetActive(false);
         }
         BrickDisappear.DisappearStacks(visualStacks);
-        yield return new WaitForSeconds(4);
+        yield return new WaitForSeconds(5);
         visualStacks.Clear();
         makeNewLevel = true;
         levelReset = false;
@@ -831,8 +833,10 @@ public class PlaceStackGame : MonoBehaviour
                 dists[i] = 100;
                 complted[i] = false;
             }
-            taskComplet = false;
+
+            levelReset = false;
             makeNewLevel = false;
+
         }
         
         
@@ -994,7 +998,7 @@ public class PlaceStackGame : MonoBehaviour
                 return false;
             }
         }
-        return true;
+        return complted.Length > 0;
     }
 
     private void DestroySpawnPositions()
@@ -1037,7 +1041,6 @@ public class PlaceStackGame : MonoBehaviour
     private void GetRoom()
     {
         room = MRUK.Instance.GetCurrentRoom();
-        Debug.LogWarning(room != null);
         if (room != null)
         {
             anchors = room.Anchors;
