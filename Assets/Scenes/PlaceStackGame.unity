@@ -3748,6 +3748,7 @@ MonoBehaviour:
   cubeParent: {fileID: 931900774}
   progressBuildPrefab: {fileID: 1755649952}
   debugHand: {fileID: 436609520}
+  spawnPoints: []
   maxStackSize: 4
   minStackSize: 2
   sliceMethod: 1
@@ -3757,6 +3758,7 @@ MonoBehaviour:
   distToPointThreshold: 0.08
   stackThreshold: 0.08
   musicOn: 1
+  complted: 
   tableAnchor: {fileID: 0}
   ourPlaneRect:
     serializedVersion: 2
@@ -3816,6 +3818,10 @@ MonoBehaviour:
   - Type: 2
     Clip: {fileID: 8300000, guid: 11c54d46207f2564ebf9f992a859e659, type: 3}
     Volume: 0.07
+    Source: {fileID: 0}
+  - Type: 3
+    Clip: {fileID: 8300000, guid: f3b30a7f13bcc8149beb2e16caff7e61, type: 3}
+    Volume: 0.9
     Source: {fileID: 0}
 --- !u!1 &522474421
 GameObject:

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static AudioManager;
 using Random = UnityEngine.Random;
 
 public static class GameUtils
@@ -80,6 +81,42 @@ public static class GameUtils
         {
             brick.GetComponent<Brick>().top.SetActive(false);
         }
+    }
+
+    public static IEnumerator BuildBrickEffect(GameObject brick, Vector3 startPos, Vector3 endPos, float timeToComplete, float t = 0f, Action doneCallback = null)
+    {
+        var spawned = false;
+        var sound = false;
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / timeToComplete;
+            if (t > 0)
+            {
+                if (!spawned)
+                {
+                    brick.SetActive(true);
+                    spawned = true;
+                }
+
+                if (!sound && t > 0.7f)
+                {
+                    AudioManager.Instance.Play(SoundType.legoBuild);
+                    sound = true;
+                }
+
+                brick.transform.position = Vector3.Lerp(startPos, endPos, Mathf.Clamp(t, 0f, 1f));
+            }
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.25f * timeToComplete);
+
+        if(doneCallback != null)
+        {
+            doneCallback.Invoke();
+        }
+        
     }
 
     public static List<string> GenetateStack(List<string> sortedList)
