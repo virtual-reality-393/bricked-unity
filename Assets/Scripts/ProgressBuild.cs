@@ -52,7 +52,8 @@ public class ProgressBuild : MonoBehaviour
             }
             GameObject brick = transform.GetChild(progress).gameObject;
             Vector3 position = brick.transform.position; // Get the position of the current child object
-            GameManager.Instance.StartCoroutine(GameUtils.BuildBrickEffect(brick, position + Vector3.up * 0.2f, position, 0.8f, -0.25f * i, () =>
+            Vector3 startPos = new Vector3(position.x, transform.position.y + 0.4f, position.z); // Start position for the effect
+            GameManager.Instance.StartCoroutine(GameUtils.BuildBrickEffect(brick, startPos, position, 0.8f, -0.25f * i - 1.2f, () =>
             {
                 if (progress >= transform.childCount-1) // Check if progress exceeds the number of child objects
                 {

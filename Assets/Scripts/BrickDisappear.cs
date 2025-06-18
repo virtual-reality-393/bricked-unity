@@ -31,6 +31,7 @@ public class BrickDisappear : MonoBehaviour
                             renderer.material.SetFloat("_YCutoff",circleHeight);
                         }
 
+                        maxTime = Mathf.Max(Vector3.Distance(brick.transform.position, brick.transform.position - (0.0208f * (stack.Count - 1) + 0.4f) * Vector3.up), maxTime);
                         GameManager.Instance.StartCoroutine(FallingBrickEffect(brick,
                             brick.transform.position,
                             brick.transform.position - (0.0208f * (stack.Count - 1) + 0.4f) * Vector3.up,
@@ -40,7 +41,7 @@ public class BrickDisappear : MonoBehaviour
                             i > 0));
                     }
                     
-                    circle.transform.DOScale(Vector3.zero, 1f).SetEase(Ease.InCubic).SetDelay((0.25f * (stack.Count))*0.6f+0.2f+timeTaken).Play().onComplete = () => Destroy(circle,0.2f);
+                    circle.transform.DOScale(Vector3.zero, 1f).SetEase(Ease.InCubic).SetDelay(0.25f * (stack.Count-1)*0.6f+maxTime).Play().onComplete = () => Destroy(circle,0.2f);
 
                     
                 };

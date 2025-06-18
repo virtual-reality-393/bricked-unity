@@ -3757,7 +3757,7 @@ MonoBehaviour:
   minDistHeadToSpwanpoint: 0.1
   distToPointThreshold: 0.08
   stackThreshold: 0.08
-  musicOn: 1
+  musicOn: 0
   complted: 
   tableAnchor: {fileID: 0}
   ourPlaneRect:
@@ -8827,11 +8827,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4137710391590395825, guid: 39acb5d8dc30a61419eb4bec72334975, type: 3}
       propertyPath: maxProgressValue
-      value: 10
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 4137710391590395825, guid: 39acb5d8dc30a61419eb4bec72334975, type: 3}
       propertyPath: minProgressValue
-      value: 6
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 4212050071615239988, guid: 39acb5d8dc30a61419eb4bec72334975, type: 3}
       propertyPath: m_LocalPosition.x
