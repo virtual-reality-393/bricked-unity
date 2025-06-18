@@ -437,7 +437,7 @@ public class PlaceStackGame : MonoBehaviour
         {
             mainText.transform.GetComponentInChildren<TMP_Text>().text = playText;
         } 
-        mainText.transform.GetComponentInChildren<TMP_Text>().text = playText + $"\nNiveauer gennemført: {levelsComplteded}";
+        
 
         float[,] distMat = GameUtils.PointsStackDistansMat(stacksInFrame, spawnPoints);
         List<int> ints = GameUtils.ClosestStacks(distMat);

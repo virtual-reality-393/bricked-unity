@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: Bricked
-  productName: PlaceStackGame
+  productName: PlaceStackGameLego
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.12156863, g: 0.12156863, b: 0.1254902, a: 1}
@@ -164,7 +164,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.bricked.placestackgame
+    Android: com.bricked.placestackgamelego
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -291,7 +291,7 @@ PlayerSettings:
   - m_BuildTarget: 
     m_Icons:
     - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: de02663be4476e74bbed6048d7240fdc, type: 3}
+      m_Icon: {fileID: 2800000, guid: 95ba58c3840d5c341b2be6802ce72c81, type: 3}
       m_Width: 128
       m_Height: 128
       m_Kind: 0
