@@ -223,10 +223,21 @@ public class PlaceStackGame : MonoBehaviour
                 maxDistHeadToSpwanpoint = 0.4f;
                 pointSide = PointSide.Both;
                 Debug.LogError("Sheep detected: Slice: Max - Max Size: 8 - Min Size: 4 - Range: 0.1-0.4");
-                
-                endlessMode = true;
-                progressBuild.ResetProgress();
-                state = GameState.Play;
+
+                if (progressBuild.IsBuildComplete())
+                {
+                    foreach (var t in spawnPoints)
+                    {
+                        t.gameObject.SetActive(true);
+                    }
+                    foreach (Transform t in cubeParent.transform.GetChild(0))
+                    {
+                        t.gameObject.SetActive(true);
+                    }
+                    endlessMode = true;
+                    progressBuild.ResetProgress();
+                    state = GameState.Play;
+                }
             }
             else if (brick.labelName == "pig" && !debugMode)
             {
@@ -393,8 +404,14 @@ public class PlaceStackGame : MonoBehaviour
 
     public void End()
     {
-        DestroyCubes(0);
-        DestroySpawnPositions();
+        foreach (var t in spawnPoints)
+        {
+            t.gameObject.SetActive(false);
+        }
+        foreach (Transform t in cubeParent.transform.GetChild(0))
+        {
+            t.gameObject.SetActive(false);
+        }
 
         mainText.transform.position = displayPos + new Vector3(0, 0.30f, 0);
         mainText.transform.GetChild(0).LookAt(centerCam);
@@ -535,6 +552,10 @@ public class PlaceStackGame : MonoBehaviour
     IEnumerator WaitForTaskComplete()
     {
         levelReset = true;
+        foreach (var t in spawnPoints)
+        {
+            t.gameObject.SetActive(false);
+        }
         BrickDisappear.DisappearStacks(visualStacks);
         yield return new WaitForSeconds(4);
         visualStacks.Clear();
