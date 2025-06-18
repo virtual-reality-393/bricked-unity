@@ -23,7 +23,7 @@ public class StackGenerator : MonoBehaviour
         return GenerateStacks(input, minSlice, maxSlice, sliceMethod);
     }
     
-    public static List<List<string>> GenerateStacks(List<string> bricks, int minSlice = 1, int maxSlice = 2, SliceMethod sliceMethod=SliceMethod.Random)
+    public static List<List<string>> GenerateStacks(List<string> bricks, int minSlice = 1, int maxSlice = 2, SliceMethod sliceMethod=SliceMethod.Random, int numToUse = 1)
     {
 
         if (minSlice < 1 || maxSlice < 1)
@@ -31,7 +31,11 @@ public class StackGenerator : MonoBehaviour
             throw new ArgumentException("Slices must be positive");
         }
         var validStack = GenerateValidStack(bricks);
+        
         var res =  new List<List<string>>();
+
+        validStack = validStack.GetRange(0, numToUse);
+
         
         switch (sliceMethod)
         {

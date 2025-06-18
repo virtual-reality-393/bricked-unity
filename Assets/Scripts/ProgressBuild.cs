@@ -5,6 +5,8 @@ public class ProgressBuild : MonoBehaviour
     public int minProgressValue = 3;
     public int maxProgressValue = 5;
 
+    public MeshStitch stitch;
+
     int progress = 0; // Progress value, can be set in the Inspector or modified at runtime
 
     bool isBuildComplete = false; // Flag to check if the build is complete
@@ -53,12 +55,22 @@ public class ProgressBuild : MonoBehaviour
             GameObject brick = transform.GetChild(progress).gameObject;
             Vector3 position = brick.transform.position; // Get the position of the current child object
             Vector3 startPos = new Vector3(position.x, transform.position.y + 0.4f, position.z); // Start position for the effect
+            int test = i;
             GameManager.Instance.StartCoroutine(GameUtils.BuildBrickEffect(brick, startPos, position, 0.8f, -0.25f * i - 1.2f, () =>
             {
                 if (progress >= transform.childCount-1) // Check if progress exceeds the number of child objects
                 {
                     isBuildComplete = true; // Set build complete flag to true
                     Debug.Log("Build complete!");
+                }
+
+                if (test == randomProgress - 1)
+                {
+                    stitch.CreateMesh(progress-1);
+                    for (int j = 0; j < transform.childCount; j++)
+                    {
+                        transform.GetChild(j).gameObject.SetActive(false);
+                    }
                 }
             })); // Start the falling effect coroutine
             progress++;

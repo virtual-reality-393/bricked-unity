@@ -157,7 +157,7 @@ public class MeshStitch : MonoBehaviour
         _meshTest.MarkDynamic();
         gridPositions = positions.ToArray();
         GetComponent<MeshFilter>().mesh = _meshTest;
-        CreateMesh(10000);
+        // CreateMesh(10000);
         
         transform.rotation = rotation;
     }
@@ -171,6 +171,8 @@ public class MeshStitch : MonoBehaviour
 
     public void CreateMesh(int currIdx)
     {
+        
+        var meshOffset = new Vector3(_offset.x * StudLength, _offset.y*StudHeight,_offset.z*StudLength);
         int vertexCount = 0;
         foreach (var v in gridPositions)
         {
@@ -197,7 +199,7 @@ public class MeshStitch : MonoBehaviour
                         {
                             var newVertex =
                                 new Vector3((i + vertex.x) * StudLength, (j + vertex.y) * StudHeight,
-                                    (k + vertex.z) * StudLength);
+                                    (k + vertex.z) * StudLength)+meshOffset;
                             
                             vertices.Add(newVertex);
                             vertexCount++;
@@ -218,7 +220,7 @@ public class MeshStitch : MonoBehaviour
                             {
                                 var newVertex =
                                     new Vector3(vertex.x + i * StudLength, vertex.y + j * StudHeight + StudHeight * 1f/2f,
-                                        vertex.z + k * StudLength);
+                                        vertex.z + k * StudLength)+meshOffset;
                                 vertices.Add(newVertex);
                                 vertexCount++;
                                 colors.Add(studToColor[voxelGrid[i, j, k].Item1]);
