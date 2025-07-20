@@ -1,2 +1,2 @@
 # bricked-unity
-the unity version of bricked :O
+The unity version of a MR game made during a master's thesis at DTU  
